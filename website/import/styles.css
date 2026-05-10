@@ -1,0 +1,97 @@
+.install-shell {
+  min-height: 100vh;
+}
+
+.install-header {
+  padding-bottom: 18px;
+}
+
+.install-main {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 120px);
+}
+
+.install-card {
+  width: min(720px, 100%);
+  padding: 32px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px var(--shadow);
+}
+
+.install-card h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.8vw, 2.7rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.install-copy,
+.install-note,
+.install-details dd {
+  color: var(--muted);
+}
+
+.install-copy {
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+
+.install-details {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0 0;
+}
+
+.install-detail-row {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-soft);
+}
+
+.install-detail-row dt {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.install-detail-row dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.install-actions {
+  margin-top: 24px;
+}
+
+.install-note {
+  margin: 16px 0 0;
+  font-size: 0.92rem;
+}
+
+.install-error {
+  margin: 20px 0 0;
+  color: #d94841;
+  font-weight: 600;
+}
+
+.button.disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .install-card {
+    padding: 24px;
+  }
+}

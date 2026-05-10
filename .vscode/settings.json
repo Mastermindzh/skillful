@@ -1,0 +1,18 @@
+{
+    "cSpell.words": [
+        "bunx",
+        "dirents",
+        "fflate",
+        "junie",
+        "mainview",
+        "mantine",
+        "metainfo",
+        "overscan",
+        "pacman",
+        "Rescan",
+        "TOCTOU"
+    ],
+    "chat.tools.terminal.autoApprove": {
+        "bunx": true
+    }
+}

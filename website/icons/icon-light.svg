@@ -1,0 +1,91 @@
+<svg width="512" height="512" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="8" x2="118" y2="122" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBF8FF"/>
+      <stop offset="0.55" stop-color="#F4EEFC"/>
+      <stop offset="1" stop-color="#ECE3FA"/>
+    </linearGradient>
+    <linearGradient id="amethystMain" x1="24" y1="22" x2="102" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B66DC"/>
+      <stop offset="0.55" stop-color="#6C3CB4"/>
+      <stop offset="1" stop-color="#582CA0"/>
+    </linearGradient>
+    <linearGradient id="amethystSoft" x1="30" y1="30" x2="90" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E6D9F8"/>
+    </linearGradient>
+    <linearGradient id="emberAccent" x1="76" y1="35" x2="94" y2="55" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8A15C"/>
+      <stop offset="1" stop-color="#D97A2D"/>
+    </linearGradient>
+    <filter id="shadow" x="13" y="12" width="110" height="114" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="7"/>
+      <feGaussianBlur stdDeviation="6"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.423529 0 0 0 0 0.235294 0 0 0 0 0.705882 0 0 0 0.16 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+    <filter id="innerGlow" x="18" y="16" width="100" height="104" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="-1"/>
+      <feGaussianBlur stdDeviation="2"/>
+      <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.42 0"/>
+      <feBlend mode="normal" in2="shape" result="effect1_innerShadow_1_1"/>
+    </filter>
+  </defs>
+
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#bg)"/>
+  <rect x="4.75" y="4.75" width="118.5" height="118.5" rx="29.25" stroke="#DCCEF1" stroke-width="1.5"/>
+
+  <g filter="url(#shadow)">
+    <path
+      d="M33 39.5C33 35.91 35.91 33 39.5 33H58.8C60.43 33 61.99 33.65 63.14 34.8L66.7 38.35C67.45 39.11 68.47 39.53 69.53 39.53H88.5C92.09 39.53 95 42.44 95 46.03V88.5C95 92.09 92.09 95 88.5 95H39.5C35.91 95 33 92.09 33 88.5V39.5Z"
+      fill="url(#amethystMain)"
+    />
+    <path
+      d="M38.5 43.5C38.5 41.84 39.84 40.5 41.5 40.5H57.54C58.61 40.5 59.63 40.93 60.39 41.68L62.79 44.08C63.35 44.64 64.1 44.95 64.89 44.95H85.5C87.16 44.95 88.5 46.29 88.5 47.95V57.25H38.5V43.5Z"
+      fill="url(#amethystSoft)"
+      fill-opacity="0.92"
+    />
+    <path
+      d="M38.5 58.5H88.5V86.5C88.5 88.16 87.16 89.5 85.5 89.5H41.5C39.84 89.5 38.5 88.16 38.5 86.5V58.5Z"
+      fill="#F7F1FE"
+      fill-opacity="0.18"
+    />
+  </g>
+
+  <g filter="url(#innerGlow)">
+    <path
+      d="M45.5 49.5C45.5 47.57 47.07 46 49 46H76.79C78.06 46 79.28 46.5 80.18 47.41L82.59 49.82C83.13 50.36 83.86 50.67 84.63 50.67H92C93.93 50.67 95.5 52.23 95.5 54.17V86C95.5 87.93 93.93 89.5 92 89.5H49C47.07 89.5 45.5 87.93 45.5 86V49.5Z"
+      fill="url(#amethystMain)"
+    />
+    <path
+      d="M53.67 56.16C52.83 56.16 52.16 56.83 52.16 57.67C52.16 58.5 52.83 59.18 53.67 59.18H80.95C81.79 59.18 82.47 58.5 82.47 57.67C82.47 56.83 81.79 56.16 80.95 56.16H53.67Z"
+      fill="white"
+      fill-opacity="0.32"
+    />
+    <path
+      d="M53.67 63.65C52.83 63.65 52.16 64.33 52.16 65.16C52.16 66 52.83 66.67 53.67 66.67H86.45C87.29 66.67 87.96 66 87.96 65.16C87.96 64.33 87.29 63.65 86.45 63.65H53.67Z"
+      fill="white"
+      fill-opacity="0.32"
+    />
+  </g>
+
+    <g opacity="0.58">
+      <path d="M59.5 78.5L69 72.8L79 78.5" stroke="#F7F0FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M69 72.8V83.2" stroke="#F7F0FC" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="59.5" cy="78.5" r="2.85" fill="#FFF9FF" fill-opacity="0.78"/>
+      <circle cx="69" cy="72.8" r="2.85" fill="#FFF9FF" fill-opacity="0.72"/>
+      <circle cx="79" cy="78.5" r="2.85" fill="#FFF9FF" fill-opacity="0.76"/>
+      <circle cx="69" cy="83.2" r="2.85" fill="#FFF9FF" fill-opacity="0.74"/>
+      <circle cx="59.5" cy="78.5" r="0.95" fill="#8D59CE" fill-opacity="0.76"/>
+      <circle cx="69" cy="72.8" r="0.95" fill="#8D59CE" fill-opacity="0.68"/>
+      <circle cx="79" cy="78.5" r="0.95" fill="#8D59CE" fill-opacity="0.74"/>
+      <circle cx="69" cy="83.2" r="0.95" fill="#8D59CE" fill-opacity="0.72"/>
+    </g>
+</svg>

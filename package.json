@@ -1,0 +1,205 @@
+{
+  "name": "skillful",
+  "version": "1.0.0",
+  "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
+  "author": "Mastermindzh",
+  "license": "FSL-1.1-MIT",
+  "homepage": "https://skillful.md",
+  "keywords": [
+    "ai",
+    "agents",
+    "skills",
+    "desktop",
+    "electron"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mastermindzh/skillful.git"
+  },
+  "scripts": {
+    "dev": "SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 bun run build && SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 electron .",
+    "dev:devtools": "SKILLFUL_ELECTRON_DEVTOOLS=1 bun run dev",
+    "dev:hmr": "SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.main.config.mts && SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.preload.config.mts && concurrently \"vite --port 5173\" \"wait-on http://127.0.0.1:5173 && SKILLFUL_CONFIG_NAME=skillful-dev electron .\"",
+    "build": "vite build && vite build --config vite.electron.main.config.mts && vite build --config vite.electron.preload.config.mts",
+    "build:web": "vite build",
+    "dist": "bun run build && electron-builder --publish never",
+    "dist:linux": "bun run build && electron-builder --linux AppImage deb rpm pacman --publish never",
+    "dist:snap": "bun run build && electron-builder --linux snap --publish never",
+    "dist:flatpak": "bun run build && electron-builder --linux flatpak --publish never",
+    "dist:flatpak:debug": "bun run build && DEBUG=@malept/flatpak-bundler DEBUG_COLORS=0 electron-builder --linux flatpak --publish never",
+    "dist:win": "bun run build && electron-builder --win --publish never",
+    "dist:mac": "bun run build && electron-builder --mac --publish never",
+    "publish": "bun run build && electron-builder --publish always",
+    "pack": "bun run build && electron-builder --dir",
+    "generateStressCollection": "npx tsx scripts/generate-collection.ts --name stressTest --count 5000 --ratio 0.7",
+    "e2e:dev": "vite --mode e2e",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "PLAYWRIGHT_SLOW_MO=250 playwright test --headed --workers=1",
+    "test:e2e:debug": "PLAYWRIGHT_SLOW_MO=1000 playwright test --headed --workers=1",
+    "test:e2e:report": "playwright test && playwright show-report",
+    "test:e2e:show-report": "playwright show-report",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:all": "vitest run && playwright test",
+    "check": "biome check . && bunx tsc --noEmit",
+    "fix": "biome check --write . && bunx tsc --noEmit",
+    "format": "biome format --write .",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@fontsource-variable/ubuntu-sans": "^5.2.10",
+    "@mantine/core": "^9.1.1",
+    "@mantine/hooks": "^9.1.1",
+    "@mantine/notifications": "^9.1.1",
+    "@tanstack/react-virtual": "^3.13.24",
+    "@uiw/react-codemirror": "^4.25.9",
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3",
+    "fflate": "^0.8.2",
+    "i18next": "^26.0.8",
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-i18next": "^17.0.6",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "yaml": "^2.8.4",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "@playwright/test": "^1.59.1",
+    "@types/bun": "latest",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.5",
+    "concurrently": "^9.2.1",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5",
+    "wait-on": "^9.0.5"
+  },
+  "main": "dist-electron/main.cjs",
+  "build": {
+    "appId": "tech.mastermindzh.skillful",
+    "productName": "Skillful",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "assets/icons/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets/icons",
+      "output": "release"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Mastermindzh",
+      "repo": "skillful"
+    },
+    "protocols": [
+      {
+        "name": "Skillful Import",
+        "schemes": [
+          "skillful"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "assets/icons/app-icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "icon": "linux",
+      "synopsis": "Local AI skill and agent manager",
+      "description": "Skillful is a desktop app for building reusable AI skills and agents as folders you own. Edit markdown and supporting files, then install them into tools like Claude Code, Codex, Copilot, Gemini, Cursor, Junie, and opencode without duplicating files.",
+      "category": "Utility",
+      "maintainer": "Mastermindzh <info@rickvanlieshout.com>",
+      "vendor": "Mastermindzh",
+      "desktop": {
+        "entry": {
+          "Comment": "Manage local AI skills and agents",
+          "Keywords": "AI;Skills;Agents;Claude;Codex;Copilot;"
+        }
+      },
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm",
+        "pacman",
+        "snap",
+        "flatpak"
+      ]
+    },
+    "deb": {
+      "packageCategory": "utils",
+      "fpm": [
+        "assets/metainfo/tech.mastermindzh.skillful.metainfo.xml=/usr/share/metainfo/tech.mastermindzh.skillful.metainfo.xml"
+      ]
+    },
+    "rpm": {
+      "packageCategory": "Applications/Productivity",
+      "fpm": [
+        "assets/metainfo/tech.mastermindzh.skillful.metainfo.xml=/usr/share/metainfo/tech.mastermindzh.skillful.metainfo.xml"
+      ]
+    },
+    "pacman": {
+      "fpm": [
+        "assets/metainfo/tech.mastermindzh.skillful.metainfo.xml=/usr/share/metainfo/tech.mastermindzh.skillful.metainfo.xml"
+      ]
+    },
+    "snap": {
+      "summary": "Local AI skill and agent manager",
+      "description": "Skillful is a desktop app for building reusable AI skills and agents as folders you own. Edit markdown and supporting files, then install them into tools like Claude Code, Codex, Copilot, Gemini, Cursor, Junie, and opencode without duplicating files.",
+      "confinement": "strict",
+      "grade": "stable",
+      "title": "Skillful",
+      "plugs": [
+        "default",
+        "home",
+        "removable-media"
+      ]
+    },
+    "flatpak": {
+      "synopsis": "Local AI skill and agent manager",
+      "description": "Skillful is a desktop app for building reusable AI skills and agents as folders you own. Edit markdown and supporting files, then install them into tools like Claude Code, Codex, Copilot, Gemini, Cursor, Junie, and opencode without duplicating files.",
+      "runtimeVersion": "23.08",
+      "baseVersion": "23.08",
+      "files": [
+        [
+          "assets/metainfo/tech.mastermindzh.skillful.metainfo.xml",
+          "/share/metainfo/tech.mastermindzh.skillful.metainfo.xml"
+        ]
+      ],
+      "finishArgs": [
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--device=dri",
+        "--share=network",
+        "--filesystem=home"
+      ]
+    },
+    "mac": {
+      "icon": "assets/icons/app-icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "dmg": {
+      "backgroundColor": "#242424"
+    }
+  }
+}

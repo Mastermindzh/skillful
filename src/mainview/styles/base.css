@@ -1,0 +1,140 @@
+@import "@fontsource-variable/ubuntu-sans";
+
+/*
+ * Firefox-style minimal scrollbars across the whole app.
+ *
+ * Chromium (Electron) supports `::-webkit-scrollbar`; Firefox uses the standard
+ * `scrollbar-width` / `scrollbar-color` properties. We set both so Electron, the
+ * Playwright-driven Chromium harness, and any Firefox-based tooling behave the same.
+ *
+ * The track is transparent and the thumb starts at 6px. Hovering a scroll container
+ * expands the thumb to 10px and darkens it slightly so it becomes discoverable without
+ * permanently stealing layout space.
+ */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(90, 60, 140, 0.35) transparent;
+}
+
+[data-mantine-color-scheme="dark"] * {
+	scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+	background: transparent;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(90, 60, 140, 0.28);
+	border-radius: 999px;
+	transition: background-color 120ms ease, width 120ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(90, 60, 140, 0.55);
+}
+
+:hover::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+[data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.18);
+}
+
+[data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.42);
+}
+
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+:root {
+	font-family: "Ubuntu Sans Variable", "Segoe UI", sans-serif;
+	--app-shell-bg: radial-gradient(circle at top left, rgba(160, 120, 220, 0.35), transparent 28%), linear-gradient(135deg, #2e1f4e 0%, #3a2560 52%, #2a1b45 100%);
+	--app-sidebar-bg: transparent;
+	--app-sidebar-fg: rgba(255, 255, 255, 0.92);
+	--app-sidebar-muted: rgba(255, 255, 255, 0.56);
+	--app-panel-bg: rgba(255, 255, 255, 0.92);
+	--app-panel-border: rgba(90, 60, 140, 0.10);
+	--app-panel-muted: #6c3cb4;
+	--app-panel-muted-strong: #481f8a;
+	--skill-row-hover: rgba(90, 60, 140, 0.04);
+	--skill-row-selected-bg: rgba(108, 60, 180, 0.12);
+	--sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+	--sidebar-active-bg: rgba(255, 255, 255, 0.12);
+	--focus-ring: rgba(108, 60, 180, 0.22);
+	--focus-ring-row: rgba(108, 60, 180, 0.28);
+	--additional-file-border: rgba(90, 60, 140, 0.08);
+	--additional-file-bg: rgba(90, 60, 140, 0.025);
+	--btn-filled-bg: linear-gradient(180deg, rgba(108, 60, 180, 0.92), rgba(88, 44, 160, 0.92));
+	--btn-filled-bg-hover: linear-gradient(180deg, rgba(120, 72, 192, 0.95), rgba(100, 56, 172, 0.95));
+	--btn-filled-border: rgba(108, 60, 180, 0.92);
+	--btn-filled-fg: #ffffff;
+	--btn-light-bg: rgba(108, 60, 180, 0.08);
+	--btn-light-border: rgba(108, 60, 180, 0.14);
+	--btn-light-fg: rgba(68, 32, 120, 0.92);
+	--btn-disabled-bg: rgba(90, 60, 140, 0.04);
+	--btn-disabled-border: rgba(90, 60, 140, 0.08);
+	--btn-disabled-fg: rgba(90, 60, 140, 0.32);
+	--editor-focus-border: rgba(108, 60, 180, 0.38);
+	--editor-focus-shadow: rgba(108, 60, 180, 0.12);
+}
+
+[data-mantine-color-scheme="dark"] {
+	--app-shell-bg: radial-gradient(circle at top left, rgba(196, 122, 51, 0.14), transparent 20%), linear-gradient(135deg, #1b1b1b 0%, #202020 52%, #191919 100%);
+	--app-sidebar-bg: transparent;
+	--app-sidebar-fg: rgba(255, 255, 255, 0.94);
+	--app-sidebar-muted: rgba(255, 255, 255, 0.56);
+	--app-panel-bg: rgba(43, 43, 43, 0.92);
+	--app-panel-border: rgba(77, 77, 77, 0.68);
+	--app-panel-muted: rgba(255, 255, 255, 0.56);
+	--app-panel-muted-strong: rgba(255, 255, 255, 0.66);
+	--skill-row-hover: rgba(255, 255, 255, 0.03);
+	--skill-row-selected-bg: rgba(217, 142, 79, 0.18);
+	--sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+	--sidebar-active-bg: rgba(217, 142, 79, 0.22);
+	--focus-ring: rgba(255, 143, 52, 0.18);
+	--focus-ring-row: rgba(217, 142, 79, 0.24);
+	--additional-file-border: rgba(255, 255, 255, 0.05);
+	--additional-file-bg: rgba(255, 255, 255, 0.02);
+	--btn-filled-bg: linear-gradient(180deg, rgba(224, 136, 63, 0.95), rgba(198, 109, 36, 0.95));
+	--btn-filled-bg-hover: linear-gradient(180deg, rgba(229, 151, 83, 0.98), rgba(214, 128, 51, 0.98));
+	--btn-filled-border: rgba(224, 136, 63, 0.95);
+	--btn-filled-fg: #fff8f1;
+	--btn-light-bg: rgba(217, 142, 79, 0.12);
+	--btn-light-border: rgba(217, 142, 79, 0.18);
+	--btn-light-fg: rgba(255, 244, 235, 0.92);
+	--btn-disabled-bg: rgba(255, 255, 255, 0.04);
+	--btn-disabled-border: rgba(255, 255, 255, 0.08);
+	--btn-disabled-fg: rgba(255, 255, 255, 0.34);
+	--editor-focus-border: rgba(217, 142, 79, 0.42);
+	--editor-focus-shadow: rgba(217, 142, 79, 0.15);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--app-shell-bg);
+	overflow: hidden;
+}
+

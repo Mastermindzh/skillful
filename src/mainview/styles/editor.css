@@ -1,0 +1,574 @@
+.file-tabs-scroller {
+	min-width: 0;
+	flex: 1;
+}
+
+.file-tab-count {
+	min-width: 1.15rem;
+	padding-inline: 0.35rem;
+}
+
+.file-tab {
+	min-width: 0;
+	max-width: min(18rem, 36vw);
+}
+
+.file-tab-additional {
+	max-width: none;
+}
+
+.file-tab-label-slot {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.file-tab-section {
+	flex-shrink: 0;
+}
+
+.file-tab-label {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.editor-tabs {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+}
+
+.editor-tabs-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.editor-tabs .mantine-Tabs-list {
+	overflow: hidden;
+	min-width: 0;
+	flex-wrap: nowrap;
+}
+
+.editor-tabs .mantine-Tabs-panel {
+	flex: 1;
+	min-height: 0;
+}
+
+.detail-pane-layout {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.detail-pane-main {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 16px;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+}
+
+.detail-pane-content {
+	display: flex;
+	flex: 1 1 240px;
+	min-height: 240px;
+	overflow: hidden;
+}
+
+.editor-toolbar {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 16px;
+	align-items: start;
+}
+
+.editor-toolbar-copy {
+	min-width: 0;
+}
+
+.editor-toolbar-description {
+	max-width: 72ch;
+	min-height: calc(2lh);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.editor-actions {
+	overflow-x: auto;
+	align-self: start;
+	justify-self: end;
+	padding-bottom: 2px;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.editor-action-button {
+	min-width: 0;
+	max-width: min(16rem, 28vw);
+}
+
+.editor-actions .mantine-Button-root {
+	min-width: 0;
+	max-width: min(16rem, 28vw);
+}
+
+.editor-actions .mantine-Button-inner,
+.editor-actions .mantine-Button-label {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.editor-action-button-text {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.editor-view-toggle {
+	margin-right: 6px;
+	flex: 0 0 auto;
+}
+
+.editor-save-split {
+	border-radius: 6px;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.editor-save-split-main {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.editor-save-split-chevron {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.tool-preset-quick-add {
+	padding: 12px;
+	border-radius: 10px;
+	border: 1px dashed var(--app-panel-border);
+	background: var(--additional-file-bg);
+}
+
+.tool-preset-add-button {
+	font-weight: 500;
+}
+
+.missing-tool-parent-path {
+	display: block;
+	padding: 10px 12px;
+	border: 1px solid var(--app-panel-border);
+	border-radius: 8px;
+	background: var(--additional-file-bg);
+	overflow-wrap: anywhere;
+	color: var(--mantine-color-text);
+}
+
+.mantine-Modal-close:focus,
+.mantine-Modal-close:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.editor-actions .mantine-Button-root.editor-view-toggle {
+	max-width: none;
+}
+
+.editor-tools-block {
+	display: grid;
+	gap: 6px;
+	margin-top: 12px;
+}
+
+.metadata-warning-panel {
+	margin-top: -4px;
+}
+
+.markdown-preview {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding: 18px 20px 28px;
+	border: 1px solid var(--app-panel-border);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--app-panel-bg) 92%, transparent);
+	color: var(--mantine-color-text);
+}
+
+.markdown-preview > :first-child {
+	margin-top: 0;
+}
+
+.markdown-preview > :last-child {
+	margin-bottom: 0;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+	margin: 1.1em 0 0.45em;
+	line-height: 1.2;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--mantine-primary-color-filled);
+}
+
+.markdown-preview h1 {
+	font-size: 1.95rem;
+}
+
+.markdown-preview h2 {
+	font-size: 1.55rem;
+	padding-bottom: 0.18rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--mantine-primary-color-filled) 22%, var(--app-panel-border));
+}
+
+.markdown-preview h3 {
+	font-size: 1.2rem;
+	color: var(--mantine-color-text);
+}
+
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+	color: var(--app-panel-muted-strong);
+}
+
+.markdown-preview h4 {
+	font-size: 1.05rem;
+}
+
+.markdown-preview h5,
+.markdown-preview h6 {
+	font-size: 0.95rem;
+}
+
+.markdown-preview p,
+.markdown-preview ul,
+.markdown-preview ol,
+.markdown-preview blockquote,
+.markdown-preview pre {
+	margin: 0 0 1rem;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+	padding-left: 1.5rem;
+}
+
+.markdown-preview li + li {
+	margin-top: 0.25rem;
+}
+
+.markdown-preview blockquote {
+	padding: 0.85rem 1rem;
+	border-left: 3px solid var(--mantine-primary-color-filled);
+	border-radius: 0 8px 8px 0;
+	background: var(--additional-file-bg);
+	color: var(--app-panel-muted-strong);
+}
+
+.markdown-preview pre {
+	overflow: auto;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--app-panel-border);
+	border-radius: 10px;
+	background: rgba(0, 0, 0, 0.12);
+}
+
+.markdown-preview code {
+	font-family: "SFMono-Regular", "Cascadia Code", "Fira Code", monospace;
+	font-size: 0.95em;
+}
+
+.markdown-preview p code,
+.markdown-preview li code,
+.markdown-preview blockquote code {
+	padding: 0.1rem 0.35rem;
+	border-radius: 6px;
+	background: var(--additional-file-bg);
+}
+
+.markdown-preview hr {
+	border: 0;
+	border-top: 1px solid var(--app-panel-border);
+	margin: 1.25rem 0;
+}
+
+.markdown-preview a {
+	color: var(--mantine-primary-color-filled);
+	text-decoration: none;
+}
+
+.markdown-preview a:hover {
+	text-decoration: underline;
+}
+
+.tool-status-summary {
+	min-width: 0;
+	flex-wrap: wrap;
+}
+
+.tool-install-control {
+	max-width: 100%;
+}
+
+.tool-install-button {
+	white-space: nowrap;
+}
+
+.tool-install-button.mantine-Button-root[data-variant="filled"] {
+	background: var(--btn-filled-bg);
+	border-color: var(--btn-filled-border);
+	color: var(--btn-filled-fg);
+}
+
+.tool-install-button.mantine-Button-root[data-variant="filled"]:hover:not(:disabled):not([data-disabled]) {
+	background: var(--btn-filled-bg-hover);
+}
+
+.tool-install-menu {
+	min-width: 0;
+}
+
+.tool-install-menu-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-width: 0;
+	padding: 2px 0;
+}
+
+.tool-status-copy {
+	min-width: 0;
+	flex: 1;
+}
+
+.tool-status-badge {
+	flex-shrink: 0;
+}
+
+.tool-status-details {
+	overflow-wrap: anywhere;
+}
+
+.tool-install-action-label {
+	flex-shrink: 0;
+	text-transform: uppercase;
+}
+
+.editor-path {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	text-decoration: none;
+	cursor: pointer;
+	opacity: 0.72;
+}
+
+.editor-path:hover,
+.editor-path:focus-visible {
+	text-decoration: underline;
+}
+
+.detail-pane-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	min-height: 2rem;
+	padding: 6px 0 12px;
+	border-top: 1px solid var(--app-panel-border);
+	flex-shrink: 0;
+}
+
+.item-footer-status {
+	justify-content: flex-end;
+	width: 100%;
+	min-width: 0;
+}
+
+.editor-panel-body {
+	display: flex;
+	flex: 1;
+	min-height: 200px;
+}
+
+.additional-files-panel {
+	overflow: auto;
+}
+
+.additional-files-list {
+	display: grid;
+	gap: 8px;
+	padding: 4px 0;
+}
+
+.additional-file-row {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid var(--additional-file-border);
+	border-radius: 10px;
+	background: var(--additional-file-bg);
+	transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.additional-file-row:hover,
+.additional-file-row:focus-within {
+	background: var(--app-panel-bg);
+	border-color: var(--focus-ring-row);
+	box-shadow: inset 0 0 0 1px var(--focus-ring-row);
+}
+
+.additional-file-header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.additional-file-path {
+	word-break: break-all;
+}
+
+.shortcut-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--additional-file-border);
+	border-radius: 10px;
+	background: var(--additional-file-bg);
+}
+
+.shortcut-keys {
+	display: inline-flex;
+	flex-shrink: 0;
+	gap: 4px;
+}
+
+.shortcuts-modal {
+	width: min(900px, calc(100vw - 32px));
+}
+
+.app-notification {
+	max-width: min(520px, calc(100vw - 48px));
+	box-shadow: var(--mantine-shadow-lg);
+}
+
+.dirty-dot {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--mantine-primary-color-filled);
+}
+
+.editor-field {
+	flex: 1;
+	min-height: 200px;
+}
+
+.editor-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px dashed var(--app-panel-border);
+	border-radius: 8px;
+	color: var(--app-sidebar-muted);
+}
+
+.editor-field .cm-editor {
+	height: 100%;
+	min-height: 200px;
+	border: 1px solid var(--app-panel-border);
+	border-radius: 10px;
+	font-family: "Geist Variable", "SFMono-Regular", "Consolas", monospace;
+}
+
+.editor-field .cm-scroller {
+	overflow: auto;
+	overscroll-behavior: contain;
+	touch-action: pan-y;
+}
+
+.editor-field .cm-content,
+.editor-field .cm-line {
+	font-family: inherit;
+	line-height: 1.6;
+}
+
+.editor-field .cm-gutters {
+	border-right: 1px solid var(--app-panel-border);
+	background: transparent;
+}
+
+.editor-field .cm-lineNumbers .cm-gutterElement {
+	min-width: 2.75rem;
+	padding-right: 14px;
+}
+
+.editor-field .cm-focused {
+	outline: none;
+}
+
+.editor-field .cm-editor.cm-focused {
+	border-color: var(--editor-focus-border);
+	box-shadow: 0 0 0 1px var(--editor-focus-shadow);
+}
+
+.editor-actions .mantine-Button-root[data-variant="filled"] {
+	background: var(--btn-filled-bg);
+	border-color: var(--btn-filled-border);
+	color: var(--btn-filled-fg);
+}
+
+.editor-actions .mantine-Button-root[data-variant="filled"]:hover:not(:disabled):not([data-disabled]) {
+	background: var(--btn-filled-bg-hover);
+}
+
+.editor-actions .mantine-Button-root[data-variant="light"] {
+	background: var(--btn-light-bg);
+	border: 1px solid var(--btn-light-border);
+	color: var(--btn-light-fg);
+}
+
+.editor-actions .mantine-Button-root:disabled,
+.editor-actions .mantine-Button-root[data-disabled] {
+	background: var(--btn-disabled-bg) !important;
+	border-color: var(--btn-disabled-border) !important;
+	color: var(--btn-disabled-fg) !important;
+	box-shadow: none;
+	cursor: not-allowed;
+}

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open In Skillful</title>
+  <meta name="description"
+    content="Open a public skill or agent repository in Skillful and prefill the import dialog." />
+  <meta name="robots" content="noindex,follow" />
+  <meta name="theme-color" content="#6c3cb4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#e0883f" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/svg+xml" href="../icons/icon-light.svg" />
+  <link rel="alternate icon" href="../icons/icon-light.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet" />
+  <script>
+    (() => {
+      const storedTheme = localStorage.getItem("skillful-theme");
+      const theme =
+        storedTheme ||
+        (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <div class="site-shell install-shell">
+    <header class="site-header install-header">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="../icons/icon-light.svg" alt="" class="brand-mark-icon brand-mark-icon-light" />
+          <img src="../icons/icon-dark.svg" alt="" class="brand-mark-icon brand-mark-icon-dark" />
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">Skillful</span>
+          <span class="brand-tagline">Open repository imports in the desktop app.</span>
+        </span>
+      </a>
+      <div class="site-actions">
+        <button class="theme-toggle" type="button" aria-label="Toggle color theme">
+          <span class="theme-toggle-icon" aria-hidden="true">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" />
+              <path
+                d="M12 2.75V5.25M12 18.75V21.25M21.25 12H18.75M5.25 12H2.75M18.54 5.46L16.77 7.23M7.23 16.77L5.46 18.54M18.54 18.54L16.77 16.77M7.23 7.23L5.46 5.46"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none">
+              <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" stroke="currentColor" stroke-width="1.8"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <main class="install-main">
+      <section class="install-card" aria-labelledby="install-title">
+        <p class="eyebrow">Repository Import</p>
+        <h1 id="install-title">Open this repository in Skillful.</h1>
+        <p class="install-copy">
+          Skillful will open the import dialog with the repository details filled in.
+          You stay in control of the actual import.
+        </p>
+
+        <dl class="install-details" id="install-details"></dl>
+        <p class="install-error" id="install-error" hidden></p>
+
+        <div class="hero-actions install-actions">
+          <a class="button primary" id="open-skillful" href="#">Open in Skillful</a>
+          <a class="button secondary" id="download-skillful"
+            href="https://github.com/Mastermindzh/skillful/releases/latest" target="_blank" rel="noreferrer">Download
+            Skillful</a>
+          <a class="button secondary" id="view-repository" href="https://github.com/Mastermindzh/skillful"
+            target="_blank" rel="noreferrer">View repository</a>
+        </div>
+
+        <p class="install-note">
+          If Skillful is already installed, your browser may ask for confirmation before opening it.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.querySelector(".theme-toggle");
+      const media = window.matchMedia("(prefers-color-scheme: light)");
+
+      const setTheme = (theme, persist = true) => {
+        root.dataset.theme = theme;
+        if (persist) {
+          localStorage.setItem("skillful-theme", theme);
+        }
+      };
+
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+          setTheme(nextTheme);
+        });
+      }
+
+      if (!localStorage.getItem("skillful-theme")) {
+        const syncSystemTheme = (event) => setTheme(event.matches ? "light" : "dark", false);
+        media.addEventListener("change", syncSystemTheme);
+      }
+
+      setTheme(root.dataset.theme || "dark", false);
+    })();
+  </script>
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const repo = (params.get("repo") || "").trim();
+      const ref = (params.get("ref") || "").trim();
+      const path = (params.get("path") || "").trim();
+      const collection = (params.get("collection") || "").trim();
+      const details = document.getElementById("install-details");
+      const error = document.getElementById("install-error");
+      const openLink = document.getElementById("open-skillful");
+      const repoLink = document.getElementById("view-repository");
+      const repoPattern = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
+
+      if (!repoPattern.test(repo)) {
+        if (error) {
+          error.hidden = false;
+          error.textContent = "This import link is malformed. Expected a GitHub repository in owner/repo format.";
+        }
+        if (openLink) {
+          openLink.classList.add("disabled");
+          openLink.setAttribute("aria-disabled", "true");
+          openLink.removeAttribute("href");
+        }
+        if (details) {
+          details.replaceChildren();
+        }
+        return;
+      }
+
+      const deepLink = new URL("skillful://import");
+      deepLink.searchParams.set("repo", repo);
+      if (ref) deepLink.searchParams.set("ref", ref);
+      if (path) deepLink.searchParams.set("path", path);
+      if (collection) deepLink.searchParams.set("collection", collection);
+
+      const rows = [
+        ["Repository", repo],
+        ref ? ["Ref", ref] : null,
+        path ? ["Path", path] : null,
+        collection ? ["Collection", collection] : null,
+      ].filter(Boolean);
+
+      if (details) {
+        details.replaceChildren(
+          ...rows.map(([label, value]) => {
+            const row = document.createElement("div");
+            row.className = "install-detail-row";
+
+            const term = document.createElement("dt");
+            term.textContent = label;
+            const description = document.createElement("dd");
+            description.textContent = value;
+
+            row.append(term, description);
+            return row;
+          })
+        );
+      }
+
+      if (repoLink) {
+        repoLink.setAttribute("href", `https://github.com/${repo}`);
+      }
+
+      if (openLink) {
+        openLink.setAttribute("href", deepLink.toString());
+      }
+
+      const autoOpen = () => {
+        window.location.href = deepLink.toString();
+      };
+
+      window.setTimeout(autoOpen, 140);
+    })();
+  </script>
+</body>
+
+</html>

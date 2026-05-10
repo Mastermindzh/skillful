@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>tech.mastermindzh.skillful</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>LicenseRef-FSL-1.1-MIT</project_license>
+  <name>Skillful</name>
+  <summary>Local AI skill and agent manager</summary>
+  <developer id="tech.mastermindzh">
+    <name>Mastermindzh</name>
+  </developer>
+  <icon type="stock">tech.mastermindzh.skillful</icon>
+  <description>
+    <p>
+      Skillful helps you build reusable AI skills and agents as real folders you own. Edit their
+      markdown and supporting files, then install them into multiple AI tools without duplicating
+      source files.
+    </p>
+    <p>
+      Use collections to keep related work together, preview markdown before editing, repair broken
+      installs, and import shared skill libraries from archives, folders, or GitHub source archives.
+    </p>
+  </description>
+  <launchable type="desktop-id">tech.mastermindzh.skillful.desktop</launchable>
+  <categories>
+    <category>Utility</category>
+    <category>Development</category>
+  </categories>
+  <keywords>
+    <keyword>AI</keyword>
+    <keyword>Skills</keyword>
+    <keyword>Agents</keyword>
+    <keyword>Claude</keyword>
+    <keyword>Codex</keyword>
+    <keyword>Copilot</keyword>
+  </keywords>
+  <url type="homepage">https://skillful.md</url>
+  <url type="bugtracker">https://github.com/Mastermindzh/skillful/issues</url>
+  <url type="vcs-browser">https://github.com/Mastermindzh/skillful</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://skillful.md/dark.png</image>
+      <caption>Skillful managing local AI skills and agents in dark mode</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://skillful.md/light.png</image>
+      <caption>Skillful managing local AI skills and agents in light mode</caption>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="1.0.0" date="2026-05-03">
+      <description>
+        <p>
+          First stable release with local skill and agent management, collection import/export,
+          GitHub source archive import, tool installs, markdown preview/editing, frontmatter
+          validation, and cross-platform packaging.
+        </p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

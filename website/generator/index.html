@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skillful Import Button Generator</title>
+  <meta name="description" content="Generate README-ready Skillful import buttons for public GitHub repositories." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#6c3cb4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#e0883f" media="(prefers-color-scheme: dark)" />
+  <link rel="canonical" href="https://skillful.md/generator/" />
+  <link rel="icon" type="image/svg+xml" href="../icons/icon-light.svg" />
+  <link rel="alternate icon" href="../icons/icon-light.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet" />
+  <script>
+    (() => {
+      const storedTheme = localStorage.getItem("skillful-theme");
+      const theme =
+        storedTheme ||
+        (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .generator-shell {
+      max-width: 1040px;
+    }
+
+    .generator-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .generator-page-back {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .generator-page-back:hover {
+      color: var(--text);
+    }
+
+    .generator-page {
+      display: grid;
+      gap: 24px;
+      padding: 36px 0 72px;
+    }
+
+    .generator-page-copy {
+      max-width: 52rem;
+    }
+
+    .generator-page-copy h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+    }
+
+    .generator-page-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .generator-page .generator {
+      margin-top: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="site-shell generator-shell">
+    <header class="site-header generator-page-header">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="../icons/icon-light.svg" alt="" class="brand-mark-icon brand-mark-icon-light" />
+          <img src="../icons/icon-dark.svg" alt="" class="brand-mark-icon brand-mark-icon-dark" />
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">Skillful</span>
+          <span class="brand-tagline">Import button generator</span>
+        </span>
+      </a>
+
+      <div class="site-actions">
+        <a class="generator-page-back" href="../index.html">Back to skillful.md</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle color theme">
+          <span class="theme-toggle-icon" aria-hidden="true">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" />
+              <path
+                d="M12 2.75V5.25M12 18.75V21.25M21.25 12H18.75M5.25 12H2.75M18.54 5.46L16.77 7.23M7.23 16.77L5.46 18.54M18.54 18.54L16.77 16.77M7.23 7.23L5.46 5.46"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none">
+              <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" stroke="currentColor" stroke-width="1.8"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <main class="generator-page">
+      <section class="generator-page-copy">
+        <p class="eyebrow">README Utility</p>
+        <h1>Generate an import button that opens Skillful with the repo prefilled.</h1>
+        <p>
+          Paste a public GitHub repository, optionally target a branch or subdirectory, and copy
+          the finished Markdown snippet into your README. The link uses Skillful’s GitHub-safe
+          import redirect and opens the desktop app with the import dialog prefilled.
+        </p>
+      </section>
+
+      <section class="generator" aria-labelledby="generator-title">
+        <div class="generator-copy">
+          <p class="eyebrow">Inputs</p>
+          <h2 id="generator-title">Build the import button</h2>
+          <p>Use the repository owner/name, then add optional path and ref values only if the
+            library lives below the repo root or you want a non-default branch or tag.</p>
+        </div>
+
+        <div class="generator-card">
+          <div class="generator-grid">
+            <label class="generator-field">
+              <span>Repository</span>
+              <input id="generator-repo" type="text" placeholder="openai/skills" />
+            </label>
+
+            <label class="generator-field">
+              <span>Collection name</span>
+              <input id="generator-collection" type="text" placeholder="OpenAI Skills" />
+            </label>
+
+            <label class="generator-field">
+              <span>Badge title</span>
+              <input id="generator-title-input" type="text" placeholder="OpenAI skills" />
+            </label>
+
+            <label class="generator-field">
+              <span>Ref</span>
+              <input id="generator-ref" type="text" placeholder="main" />
+            </label>
+
+            <label class="generator-field" style="grid-column: 1 / -1;">
+              <span>Path</span>
+              <input id="generator-path" type="text" placeholder="skills/review-pr" />
+            </label>
+          </div>
+
+          <div class="generator-preview">
+            <span class="generator-label">Preview</span>
+            <a id="generator-preview" class="generator-badge generator-badge-disabled" href="#" target="_blank"
+              rel="noreferrer" aria-disabled="true">
+              <img id="generator-preview-image" alt="Import to Skillful badge preview" />
+            </a>
+          </div>
+
+          <label class="generator-output">
+            <span>Import URL</span>
+            <textarea id="generator-url" readonly></textarea>
+          </label>
+
+          <label class="generator-output">
+            <span>README Markdown</span>
+            <textarea id="generator-markdown" readonly></textarea>
+          </label>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.querySelector(".theme-toggle");
+      const media = window.matchMedia("(prefers-color-scheme: light)");
+
+      const setTheme = (theme, persist = true) => {
+        root.dataset.theme = theme;
+        if (persist) {
+          localStorage.setItem("skillful-theme", theme);
+        }
+      };
+
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+          setTheme(nextTheme);
+        });
+      }
+
+      if (!localStorage.getItem("skillful-theme")) {
+        const syncSystemTheme = (event) => setTheme(event.matches ? "light" : "dark", false);
+        media.addEventListener("change", syncSystemTheme);
+      }
+
+      setTheme(root.dataset.theme || "dark", false);
+    })();
+  </script>
+  <script>
+    (() => {
+      const repoInput = document.getElementById("generator-repo");
+      const collectionInput = document.getElementById("generator-collection");
+      const titleInput = document.getElementById("generator-title-input");
+      const refInput = document.getElementById("generator-ref");
+      const pathInput = document.getElementById("generator-path");
+      const preview = document.getElementById("generator-preview");
+      const previewImage = document.getElementById("generator-preview-image");
+      const urlOutput = document.getElementById("generator-url");
+      const markdownOutput = document.getElementById("generator-markdown");
+
+      const repoPattern = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
+
+      const toBadgeLabel = (value) => encodeURIComponent(value.trim()).replace(/-/g, "--");
+
+      const update = () => {
+        const repo = (repoInput?.value || "").trim();
+        const collection = (collectionInput?.value || "").trim();
+        const title = (titleInput?.value || "").trim();
+        const ref = (refInput?.value || "").trim();
+        const importPath = (pathInput?.value || "").trim();
+
+        if (!repoPattern.test(repo) || !collection || !title) {
+          if (preview) {
+            preview.classList.add("generator-badge-disabled");
+            preview.removeAttribute("href");
+            preview.setAttribute("aria-disabled", "true");
+          }
+          if (previewImage) {
+            previewImage.removeAttribute("src");
+            previewImage.alt = "Import to Skillful badge preview";
+          }
+          if (urlOutput) urlOutput.value = "";
+          if (markdownOutput) markdownOutput.value = "";
+          return;
+        }
+
+        const importUrl = new URL("https://skillful.md/import/");
+        importUrl.searchParams.set("repo", repo);
+        importUrl.searchParams.set("collection", collection);
+        if (ref) importUrl.searchParams.set("ref", ref);
+        if (importPath) importUrl.searchParams.set("path", importPath);
+
+        const badgeImage = `https://img.shields.io/badge/${toBadgeLabel(title)}-Import%20to%20Skillful-6c3cb4?style=for-the-badge`;
+        const markdown = `[![${title}](${badgeImage})](${importUrl.toString()})`;
+
+        if (preview) {
+          preview.href = importUrl.toString();
+          preview.classList.remove("generator-badge-disabled");
+          preview.setAttribute("aria-disabled", "false");
+        }
+        if (previewImage) {
+          previewImage.src = badgeImage;
+          previewImage.alt = title;
+        }
+        if (urlOutput) urlOutput.value = importUrl.toString();
+        if (markdownOutput) markdownOutput.value = markdown;
+      };
+
+      [repoInput, collectionInput, titleInput, refInput, pathInput].forEach((input) => {
+        input?.addEventListener("input", update);
+      });
+
+      if (repoInput) repoInput.value = "openai/skills";
+      if (collectionInput) collectionInput.value = "OpenAI Skills";
+      if (titleInput) titleInput.value = "OpenAI skills";
+      update();
+    })();
+  </script>
+</body>
+
+</html>

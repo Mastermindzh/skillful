@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skillful | Reusable AI workflows, managed on disk.</title>
+  <meta name="description"
+    content="Skillful is a local-first desktop app for building reusable AI skills and agents as real folders, then installing them into Claude Code, Codex, Cursor, Copilot, Gemini, Junie, and opencode." />
+  <meta name="application-name" content="Skillful" />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#6c3cb4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#e0883f" media="(prefers-color-scheme: dark)" />
+  <link rel="canonical" href="https://skillful.md/" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon-light.svg" />
+  <link rel="alternate icon" href="./icons/icon-light.svg" />
+  <link rel="preload" as="image" href="./dark.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Skillful" />
+  <meta property="og:title" content="Skillful | Reusable AI workflows, managed on disk." />
+  <meta property="og:description"
+    content="Build AI skills and agents as real folders on disk. Edit once, install where needed, and keep your workflow portable." />
+  <meta property="og:url" content="https://skillful.md/" />
+  <meta property="og:image" content="https://skillful.md/light.png" />
+  <meta property="og:image:alt"
+    content="Skillful desktop app screenshot showing reusable AI skills and agents on disk." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Skillful | Reusable AI workflows, managed on disk." />
+  <meta name="twitter:description"
+    content="Build AI skills and agents as real folders on disk. Edit once, install where needed, and keep your workflow portable." />
+  <meta name="twitter:image" content="https://skillful.md/light.png" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Skillful",
+      "description": "Desktop app for building, editing, importing, exporting, and installing reusable AI skills and agents across tools like Claude Code, Codex, Cursor, Copilot, Gemini, Junie, and opencode.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS, Windows, Linux",
+      "url": "https://skillful.md/",
+      "downloadUrl": "https://github.com/Mastermindzh/skillful/releases/latest",
+      "license": "https://github.com/Mastermindzh/skillful/blob/master/LICENSE",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Rick van Lieshout",
+        "url": "https://github.com/Mastermindzh"
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet" />
+  <script>
+    (() => {
+      const storedTheme = localStorage.getItem("skillful-theme");
+      const theme =
+        storedTheme ||
+        (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="./icons/icon-light.svg" alt="" class="brand-mark-icon brand-mark-icon-light" />
+          <img src="./icons/icon-dark.svg" alt="" class="brand-mark-icon brand-mark-icon-dark" />
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">Skillful</span>
+          <span class="brand-tagline">Reusable workflows, plain files.</span>
+        </span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#faq">FAQ</a>
+        <a href="#downloads">Download</a>
+      </nav>
+
+      <div class="site-actions">
+        <a class="header-icon-link" href="https://github.com/Mastermindzh/skillful" target="_blank" rel="noreferrer"
+          aria-label="View source on GitHub" title="View source on GitHub">
+          <span class="header-icon-link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.13-3.2.7-3.88-1.36-3.88-1.36-.53-1.34-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.67 1.25 3.33.96.1-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.48.11-3.08 0 0 .97-.31 3.19 1.18a10.95 10.95 0 0 1 5.81 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.24 2.79.12 3.08.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.26 5.67.41.36.78 1.08.78 2.19 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+                fill="currentColor" />
+            </svg>
+          </span>
+        </a>
+        <button class="theme-toggle" type="button" aria-label="Toggle color theme">
+          <span class="theme-toggle-icon" aria-hidden="true">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" />
+              <path
+                d="M12 2.75V5.25M12 18.75V21.25M21.25 12H18.75M5.25 12H2.75M18.54 5.46L16.77 7.23M7.23 16.77L5.46 18.54M18.54 18.54L16.77 16.77M7.23 7.23L5.46 5.46"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none">
+              <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" stroke="currentColor" stroke-width="1.8"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <h1>Build reusable AI workflows from files you own.</h1>
+          <p class="hero-text">
+            Skillful turns prompts, agents, screenshots, scripts, and notes into a
+            filesystem library you can inspect and maintain. Edit folders directly, preview markdown,
+            import public skill repos, and install the same item into every AI tool that needs it.
+          </p>
+          <div class="hero-actions" id="downloads">
+            <a class="button primary" id="primary-download"
+              href="https://github.com/Mastermindzh/skillful/releases/latest" target="_blank" rel="noreferrer">
+              <span class="button-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span id="primary-download-label">Download Skillful</span>
+            </a>
+            <div class="download-chooser" role="group" aria-label="Other platforms">
+              <a class="download-chip" data-os="mac" href="https://github.com/Mastermindzh/skillful/releases/latest"
+                target="_blank" rel="noreferrer">macOS</a>
+              <a class="download-chip" data-os="win" href="https://github.com/Mastermindzh/skillful/releases/latest"
+                target="_blank" rel="noreferrer">Windows</a>
+              <a class="download-chip" data-os="linux" href="https://github.com/Mastermindzh/skillful/releases/latest"
+                target="_blank" rel="noreferrer">Linux</a>
+              <a class="download-chip" href="https://github.com/Mastermindzh/skillful" target="_blank" rel="noreferrer">
+                <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+                  <path
+                    d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.13-3.2.7-3.88-1.36-3.88-1.36-.53-1.34-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.67 1.25 3.33.96.1-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.48.11-3.08 0 0 .97-.31 3.19 1.18a10.95 10.95 0 0 1 5.81 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.6.24 2.79.12 3.08.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.26 5.67.41.36.78 1.08.78 2.19 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+                    fill="currentColor" />
+                </svg>
+                Source
+              </a>
+            </div>
+          </div>
+
+          <ul class="trust-strip" aria-label="What you get">
+            <li>Free</li>
+            <li>Works offline</li>
+            <li>Filesystem-first</li>
+            <li>Source-available FSL license</li>
+          </ul>
+        </div>
+
+        <div class="hero-preview">
+          <div class="hero-shot">
+            <img src="./light.png" alt="Skillful desktop app preview (light theme)"
+              class="hero-shot-image hero-shot-image-light"
+              onerror="const s=this.closest('.hero-shot'); if(s){s.dataset.missing='true';} this.remove();" />
+            <img src="./dark.png" alt="Skillful desktop app preview (dark theme)"
+              class="hero-shot-image hero-shot-image-dark"
+              onerror="const s=this.closest('.hero-shot'); if(s){s.dataset.missing='true';} this.remove();" />
+            <div class="hero-shot-placeholder" aria-hidden="true">
+              <strong>Screenshot placeholder</strong>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid" id="features">
+        <article class="feature-card">
+          <h2>One source, every tool.</h2>
+          <p>
+            Install the same skill or agent into Claude Code, Codex, Cursor, Copilot, Gemini,
+            Junie, opencode, or any folder-based destination. No copies, no drift.
+          </p>
+        </article>
+        <article class="feature-card">
+          <h2>Everything in one place.</h2>
+          <p>
+            Prompts, screenshots, scripts, and supporting notes live next to the skill that
+            uses them.
+          </p>
+        </article>
+        <article class="feature-card">
+          <h2>Skills and agents together.</h2>
+          <p>
+            Keep `SKILL.md` and `AGENT.md` workflows in one library, with filters and badges
+            that make the difference clear without splitting your workspace.
+          </p>
+        </article>
+        <article class="feature-card">
+          <h2>Break-proof installs.</h2>
+          <p>
+            Spot broken symlinks, repair them in a click, and remove cleanly when a skill has
+            outlived its use.
+          </p>
+        </article>
+      </section>
+
+      <section class="comparison" id="workflow">
+        <p class="eyebrow">Before &amp; after</p>
+        <h2>Built for workflows that change as you work.</h2>
+        <div class="comparison-grid">
+          <article class="comparison-card comparison-before">
+            <h3>Before Skillful</h3>
+            <ul>
+              <li>Your agents live inside one tool. Your prompts are scattered across
+                <code>~/notes/</code>, <code>~/dotfiles/</code>, and four Obsidian vaults.
+              </li>
+              <li>Codex has its own copy of half of them.</li>
+              <li>Two of those copies are out of date. You don't remember which.</li>
+              <li>Screenshots and helper scripts are three folders away from the prompt that
+                uses them.</li>
+            </ul>
+          </article>
+          <article class="comparison-card comparison-after">
+            <h3>After Skillful</h3>
+            <ul>
+              <li>One library. Every skill or agent is a readable folder plus whatever it needs.</li>
+              <li>You link each item into the tools that should see it.</li>
+              <li>Tweak the source in Skillful, and linked installs automatically update.</li>
+              <li>Broken links surface in the sidebar and repair in a click.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="reassurance">
+        <h2>Your library, your disk.</h2>
+        <p>
+          Skillful is source-available and free. Your skills, agents, and notes stay on
+          your machine: no account, no telemetry, no servers. You own the folder, and if
+          Skillful ever disappears your library still works, because it's all local.
+        </p>
+      </section>
+
+      <section class="faq" id="faq">
+        <p class="eyebrow">FAQ</p>
+        <h2>Questions people ask before downloading.</h2>
+        <div class="faq-list">
+          <details>
+            <summary>Is it really free?</summary>
+            <p>
+              Yes. The source is available under the Functional Source License 1.1 with an MIT
+              future license. Personal, internal, education, research, and professional-services
+              use are allowed; competing commercial products or services are not.
+            </p>
+          </details>
+          <details>
+            <summary>Do my skills ever leave my machine?</summary>
+            <p>No. Everything stays on your local filesystem. Skillful has no backend and no
+              analytics. The only outbound traffic is to GitHub: update checks against the
+              release feed, and the source archives you explicitly choose to import. See the
+              <a href="#privacy">Privacy</a> section for the full list.
+            </p>
+          </details>
+          <details>
+            <summary>Which tools does it install into?</summary>
+            <p>
+              Skillful ships one-click installers for Claude Code, Codex, Cursor, GitHub
+              Copilot, Gemini CLI, Junie, and opencode. You can also add your own custom install
+              targets: point Skillful at any folder on disk and it'll treat it like the
+              built-in ones. As many as you like, per skill or per collection.
+            </p>
+          </details>
+          <details>
+            <summary>Which downloads are available?</summary>
+            <p>
+              Skillful publishes Windows, macOS, and Linux builds on GitHub Releases. Linux
+              releases include AppImage, deb, rpm, pacman, Snap, and Flatpak artifacts so you
+              can pick the install style that matches your system.
+            </p>
+          </details>
+          <details>
+            <summary>Can Github repositories link straight into Skillful imports?</summary>
+            <p>
+              Yes. Skillful supports direct import links, so a repository README can open the app
+              with a GitHub repository already filled into the import dialog. That makes public
+              skill libraries much easier to try without copying URLs around by hand.
+            </p>
+            <p>
+              Check out the <strong><a href="/generator"
+                  aria-label="Open the Skillful import button generator">generator</a></strong>
+              to create your own.
+            </p>
+          </details>
+          <details>
+            <summary>How do I back up my library?</summary>
+            <p>
+              However you already back up files. Your library is just a folder, so
+              <code>git init</code> and push it to a private repo, sync it with your usual
+              backup tool, or drag a copy onto a USB drive. There's nothing proprietary to
+              export and nothing to migrate when you switch machines.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="privacy" id="privacy" aria-labelledby="privacy-heading">
+        <p class="eyebrow">Privacy</p>
+        <h2 id="privacy-heading">What leaves your machine.</h2>
+        <p>
+          Skillful is local-first. There is no Skillful account, no Skillful server, and no
+          analytics or telemetry of any kind. The app makes a small, predictable set of
+          outbound network requests, all of them to GitHub, all of them only when you ask
+          for them or to keep the app up to date:
+        </p>
+        <ul class="privacy-list">
+          <li>
+            <strong>Update checks.</strong> The desktop app checks
+            <code>github.com/Mastermindzh/skillful/releases</code> for new versions when you
+            open the Updates tab or on launch. No identifying information is sent beyond
+            what GitHub already logs for any HTTPS request.
+          </li>
+          <li>
+            <strong>GitHub imports.</strong> When you import a public repository, Skillful
+            downloads the repository's source archive directly from
+            <code>codeload.github.com</code>. Nothing is uploaded.
+          </li>
+          <li>
+            <strong>Deep links.</strong> Opening a <code>skillful://import?...</code> link
+            only prefills the import dialog locally. No request is made until you click
+            <em>Import</em>.
+          </li>
+        </ul>
+        <p>
+          That's the entire list. Your skill folders, drafts, settings, and library paths
+          never leave your disk. You can verify this by reading
+          <a href="https://github.com/Mastermindzh/skillful" target="_blank" rel="noreferrer">the
+            source</a> or by watching network traffic with your tool of choice.
+        </p>
+      </section>
+
+      <section class="closing-cta">
+        <h2>Ready to make your AI workflows reusable?</h2>
+        <p>Download Skillful, point it at your library, and stop maintaining the same workflow in five places.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/Mastermindzh/skillful/releases/latest" target="_blank"
+            rel="noreferrer">Download Skillful</a>
+          <a class="button secondary" href="https://github.com/Mastermindzh/skillful" target="_blank"
+            rel="noreferrer">Browse the source</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-row">
+        <span class="footer-brand">Skillful &middot; FSL-1.1-MIT licensed</span>
+        <nav aria-label="Footer">
+          <a href="https://github.com/Mastermindzh/skillful" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/Mastermindzh/skillful/releases" target="_blank" rel="noreferrer">Releases</a>
+          <a href="./generator/" rel="noreferrer">Import button generator</a>
+          <a href="https://github.com/Mastermindzh/skillful/issues" target="_blank" rel="noreferrer">Issues</a>
+          <a href="https://github.com/Mastermindzh/skillful/blob/master/LICENSE" target="_blank"
+            rel="noreferrer">License</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.querySelector(".theme-toggle");
+      const media = window.matchMedia("(prefers-color-scheme: light)");
+
+      const setTheme = (theme, persist = true) => {
+        root.dataset.theme = theme;
+        if (persist) {
+          localStorage.setItem("skillful-theme", theme);
+        }
+      };
+
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+          setTheme(nextTheme);
+        });
+      }
+
+      if (!localStorage.getItem("skillful-theme")) {
+        const syncSystemTheme = (event) => setTheme(event.matches ? "light" : "dark", false);
+        media.addEventListener("change", syncSystemTheme);
+      }
+
+      setTheme(root.dataset.theme || "dark", false);
+    })();
+  </script>
+  <script>
+    // OS-aware download CTA: reshuffle the primary button label and the chip ordering so the
+    // most likely installer surfaces first. Every chip still points at the releases page,
+    // we're just picking what to highlight, not hard-coding installer URLs that would go
+    // stale across releases.
+    (() => {
+      const ua = (navigator.userAgent || "").toLowerCase();
+      const platform = (navigator.userAgentData?.platform || navigator.platform || "").toLowerCase();
+      let os = "linux";
+      if (/mac|darwin/.test(platform) || /mac os x|macintosh/.test(ua)) os = "mac";
+      else if (/win/.test(platform) || /windows/.test(ua)) os = "win";
+
+      const labels = { mac: "Download for macOS", win: "Download for Windows", linux: "Download for Linux" };
+      const label = document.getElementById("primary-download-label");
+      if (label) label.textContent = labels[os];
+
+      // Hide the chip matching the primary button so the chooser shows the _other_ options.
+      const chosen = document.querySelector(`.download-chip[data-os="${os}"]`);
+      chosen?.setAttribute("hidden", "");
+    })();
+  </script>
+</body>
+
+</html>

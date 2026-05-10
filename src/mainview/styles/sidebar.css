@@ -1,0 +1,183 @@
+.skillful-shell {
+	height: 100%;
+	padding: 10px;
+	overflow: hidden;
+}
+
+.app-layout {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr);
+	gap: 10px;
+	height: 100%;
+	width: 100%;
+}
+
+.sidebar-column,
+.main-column {
+	min-width: 0;
+	min-height: 0;
+}
+
+.sidebar-panel {
+	height: 100%;
+	background: var(--app-sidebar-bg);
+	color: var(--app-sidebar-fg);
+	border: 0;
+	backdrop-filter: none;
+	padding: 8px 4px;
+	border-radius: 0;
+}
+
+.sidebar-section {
+	min-height: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.sidebar-section-title {
+	color: var(--app-sidebar-muted);
+}
+
+.sidebar-nav-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.sidebar-nav-scroll > .mantine-Stack-root {
+	height: 100%;
+	min-height: 0;
+}
+
+.sidebar-scope-section {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	min-height: 9rem;
+	overflow: hidden;
+}
+
+.sidebar-scope-section:first-child {
+	flex: 2 1 0;
+	min-height: 11rem;
+}
+
+.sidebar-section-action {
+	color: var(--app-sidebar-fg);
+}
+
+.sidebar-section-action:focus,
+.sidebar-section-action:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.sidebar-panel .mantine-ActionIcon-root,
+.sidebar-panel .mantine-ActionIcon-root:focus,
+.sidebar-panel .mantine-ActionIcon-root:focus-visible,
+.sidebar-panel .mantine-ActionIcon-root:focus-within,
+.sidebar-panel .mantine-UnstyledButton-root:focus,
+.sidebar-panel .mantine-UnstyledButton-root:focus-visible,
+.sidebar-panel .mantine-UnstyledButton-root:focus-within,
+.import-collection-mode button,
+.import-collection-mode button:focus,
+.import-collection-mode button:focus-visible,
+.import-collection-mode button:focus-within,
+.import-collection-mode [role="radio"],
+.import-collection-mode [role="radio"]:focus,
+.import-collection-mode [role="radio"]:focus-visible,
+.import-collection-mode [role="radio"]:focus-within,
+.import-collection-mode .mantine-SegmentedControl-root,
+.import-collection-mode .mantine-SegmentedControl-root:focus,
+.import-collection-mode .mantine-SegmentedControl-root:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-root:focus-within,
+.import-collection-mode .mantine-SegmentedControl-control,
+.import-collection-mode .mantine-SegmentedControl-control:focus,
+.import-collection-mode .mantine-SegmentedControl-control:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-control:focus-within,
+.import-collection-mode .mantine-SegmentedControl-label,
+.import-collection-mode .mantine-SegmentedControl-label:focus,
+.import-collection-mode .mantine-SegmentedControl-label:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-label:focus-within {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.sidebar-scope-list {
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	padding-right: 8px;
+	scrollbar-gutter: stable;
+}
+
+.sidebar-scope-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 24px;
+	align-items: center;
+	border-radius: 10px;
+	color: var(--app-sidebar-fg);
+}
+
+.sidebar-scope-row:hover {
+	background: var(--sidebar-hover-bg);
+}
+
+.sidebar-scope-row.active {
+	background: var(--sidebar-active-bg);
+}
+
+.sidebar-scope-button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 8px 10px;
+	border-radius: 10px;
+	color: inherit;
+}
+
+.sidebar-scope-button:not(:focus-visible) {
+	outline: none;
+}
+
+.sidebar-scope-button:focus-visible {
+	outline: none;
+	box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+
+.sidebar-scope-main {
+	min-width: 0;
+}
+
+.sidebar-scope-label {
+	color: inherit;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sidebar-tool-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.82;
+}
+
+.sidebar-scope-count {
+	color: var(--app-sidebar-muted);
+}
+
+.sidebar-scope-delete {
+	justify-self: center;
+	color: var(--app-sidebar-muted);
+	opacity: 0;
+}
+
+.sidebar-scope-row:hover .sidebar-scope-delete,
+.sidebar-scope-delete:focus-visible {
+	opacity: 1;
+}
+

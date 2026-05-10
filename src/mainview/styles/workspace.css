@@ -1,0 +1,202 @@
+.workspace-frame {
+	display: grid;
+	grid-template-columns: minmax(320px, 640px) 8px minmax(0, 1fr);
+	height: 100%;
+	min-height: 0;
+	width: 100%;
+	background: var(--app-panel-bg);
+	backdrop-filter: blur(10px);
+	border: 1px solid var(--app-panel-border);
+	border-radius: 14px;
+	overflow: hidden;
+}
+
+.split-pane {
+	min-width: 0;
+	min-height: 0;
+	padding: 16px;
+	overflow: hidden;
+}
+
+.column-stack,
+.editor-panel {
+	height: 100%;
+	min-height: 0;
+}
+
+.editor-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.editor-panel > .column-stack {
+	flex: 1;
+	min-height: 0;
+}
+
+.list-pane,
+.detail-pane {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+}
+
+.list-pane {
+	border-right: 0;
+}
+
+.list-pane-header {
+	min-width: 0;
+}
+
+.list-pane-heading-copy {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.list-pane-heading-copy .mantine-Title-root {
+	overflow-wrap: anywhere;
+	line-height: 1.15;
+}
+
+.list-pane-header-actions {
+	flex: 0 0 auto;
+	position: relative;
+	z-index: 1;
+}
+
+.list-pane-count-badge {
+	min-width: 24px;
+	justify-content: center;
+}
+
+.detail-pane {
+	padding-bottom: 0;
+}
+
+.workspace-frame.resizing {
+	cursor: col-resize;
+}
+
+.pane-separator {
+	display: flex;
+	align-items: stretch;
+	justify-content: center;
+	width: 8px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: col-resize;
+}
+
+.pane-separator:focus-visible {
+	outline: none;
+}
+
+.pane-separator-handle {
+	width: 1px;
+	height: 100%;
+	background: var(--app-panel-border);
+	transition: background-color 140ms ease;
+}
+
+.pane-separator:hover .pane-separator-handle,
+.pane-separator:focus-visible .pane-separator-handle,
+.workspace-frame.resizing .pane-separator-handle {
+	background: var(--mantine-primary-color-filled);
+}
+
+.split-resizing,
+.split-resizing * {
+	cursor: col-resize !important;
+	user-select: none !important;
+}
+
+
+.list-pane .mantine-SegmentedControl-root,
+.list-pane .mantine-SegmentedControl-control,
+.list-pane .mantine-SegmentedControl-label,
+.editor-tabs .mantine-Tabs-tab,
+.editor-tabs .mantine-ActionIcon-root,
+.list-pane .mantine-ActionIcon-root,
+.list-pane .mantine-Button-root,
+.editor-toolbar .mantine-ActionIcon-root,
+.editor-toolbar .mantine-Button-root {
+	outline: none;
+}
+
+.list-pane .mantine-SegmentedControl-root:focus,
+.list-pane .mantine-SegmentedControl-control:focus,
+.list-pane .mantine-SegmentedControl-label:focus,
+.editor-tabs .mantine-Tabs-tab:focus,
+.editor-tabs .mantine-ActionIcon-root:focus,
+.list-pane .mantine-ActionIcon-root:focus,
+.list-pane .mantine-Button-root:focus,
+.editor-toolbar .mantine-ActionIcon-root:focus,
+.editor-toolbar .mantine-Button-root:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+.list-pane .mantine-SegmentedControl-root:focus-visible,
+.list-pane .mantine-SegmentedControl-control:focus-visible,
+.list-pane .mantine-SegmentedControl-label:focus-visible,
+.list-pane .mantine-SegmentedControl-root:focus-within,
+.list-pane .mantine-SegmentedControl-control:focus-within,
+.list-pane .mantine-SegmentedControl-label:focus-within,
+.import-collection-mode .mantine-SegmentedControl-root:focus,
+.import-collection-mode .mantine-SegmentedControl-control:focus,
+.import-collection-mode .mantine-SegmentedControl-label:focus,
+.settings-modal .mantine-Tabs-tab:focus-visible,
+.settings-modal .mantine-Button-root:focus-visible,
+.settings-modal .mantine-ActionIcon-root:focus-visible,
+.settings-modal .mantine-Tabs-tab:focus-within,
+.settings-modal .mantine-Button-root:focus-within,
+.settings-modal .mantine-ActionIcon-root:focus-within,
+.import-collection-mode .mantine-SegmentedControl-root:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-control:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-label:focus-visible,
+.import-collection-mode .mantine-SegmentedControl-root:focus-within,
+.import-collection-mode .mantine-SegmentedControl-control:focus-within,
+.import-collection-mode .mantine-SegmentedControl-label:focus-within,
+.editor-tabs .mantine-Tabs-tab:focus-visible,
+.editor-tabs .mantine-ActionIcon-root:focus-visible,
+.list-pane .mantine-ActionIcon-root:focus-visible,
+.list-pane .mantine-Button-root:focus-visible,
+.editor-toolbar .mantine-ActionIcon-root:focus-visible,
+.editor-toolbar .mantine-Button-root:focus-visible,
+.editor-tabs .mantine-Tabs-tab:focus-within,
+.editor-tabs .mantine-ActionIcon-root:focus-within,
+.list-pane .mantine-ActionIcon-root:focus-within,
+.list-pane .mantine-Button-root:focus-within,
+.editor-toolbar .mantine-ActionIcon-root:focus-within,
+.editor-toolbar .mantine-Button-root:focus-within {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.import-advanced-fields {
+	display: grid;
+	gap: 0.75rem;
+	padding-top: 0.25rem;
+}
+
+.settings-modal .mantine-Tabs-tab:focus,
+.settings-modal .mantine-Button-root:focus,
+.settings-modal .mantine-ActionIcon-root:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+/*
+ * Pending-removal styling for editable rows in the Settings modal. The row
+ * renders disabled inputs and a "marked for removal" badge; the strikethrough
+ * makes the at-a-glance state obvious even when the badge scrolls offscreen.
+ */
+.settings-row-pending-removal .mantine-TextInput-input,
+.settings-row-pending-removal .mantine-Input-input {
+	text-decoration: line-through;
+}

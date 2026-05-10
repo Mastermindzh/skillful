@@ -1,0 +1,254 @@
+name: Build release artifacts
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify code quality
+        run: bun run check
+
+      - name: Run unit tests
+        run: bun run test:unit
+
+      - name: Build app
+        run: bun run build
+
+  build-linux:
+    name: Linux (${{ matrix.target }})
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # AppImage + deb + rpm + pacman all go through fpm.
+          # pacman needs libarchive-tools (bsdtar); rpm needs the rpm package.
+          - target: fpm
+            script: dist:linux
+            artifact_name: linux
+          - target: snap
+            script: dist:snap
+            artifact_name: linux-snap
+          - target: flatpak
+            script: dist:flatpak
+            artifact_name: linux-flatpak
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install fpm-based packaging tools
+        if: matrix.target == 'fpm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
+
+      - name: Install snapcraft
+        if: matrix.target == 'snap'
+        run: |
+          sudo snap install snapcraft --classic
+          sudo snap install lxd
+          sudo lxd init --auto
+          sudo usermod -a -G lxd "$USER"
+
+      - name: Install flatpak tooling
+        if: matrix.target == 'flatpak'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder elfutils
+
+      - name: Cache flatpak runtimes
+        if: matrix.target == 'flatpak'
+        uses: actions/cache@v4
+        with:
+          # /var/lib/flatpak is the system-wide install location used by `sudo flatpak install`.
+          # Cache is keyed on the exact runtime/SDK/baseapp versions so a bump invalidates it.
+          path: /var/lib/flatpak
+          key: flatpak-runtimes-v1-platform23.08-sdk23.08-electron2-23.08
+          restore-keys: |
+            flatpak-runtimes-v1-
+
+      - name: Install flatpak runtimes
+        if: matrix.target == 'flatpak'
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive flathub \
+            org.freedesktop.Platform//23.08 \
+            org.freedesktop.Sdk//23.08 \
+            org.electronjs.Electron2.BaseApp//23.08
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build ${{ matrix.target }} artifacts
+        env:
+          DEBUG: ${{ matrix.target == 'flatpak' && '@malept/flatpak-bundler' || '' }}
+          DEBUG_COLORS: "0"
+        run: bun run ${{ matrix.script }}
+
+      - name: Create AUR binary tarball
+        if: matrix.target == 'fpm'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [ "$version" = "$GITHUB_REF_NAME" ]; then
+            version="$(bun -e "console.log(require('./package.json').version)")"
+          fi
+          tar -C release -czf "release/skillful-${version}-linux-x64.tar.gz" linux-unpacked
+
+      - name: Publish snap to Snapcraft
+        if: matrix.target == 'snap' && startsWith(github.ref, 'refs/tags/')
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "SNAPCRAFT_STORE_CREDENTIALS is not configured; keeping snap as a GitHub release artifact only."
+            exit 0
+          fi
+          snapcraft upload --release=stable release/*.snap
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillful-${{ matrix.artifact_name }}
+          path: release/*
+          if-no-files-found: error
+
+  build-windows:
+    needs: quality
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Windows artifacts
+        run: bun run dist:win
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillful-windows
+          path: release/*
+          if-no-files-found: error
+
+  build-macos:
+    needs: quality
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build macOS artifacts
+        run: bun run dist:mac
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillful-macos
+          path: release/*
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Publish GitHub release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/*
+
+  publish-aur:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - publish
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    env:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+    steps:
+      - name: Skip AUR publish when no key is configured
+        if: env.AUR_SSH_PRIVATE_KEY == ''
+        run: echo "AUR_SSH_PRIVATE_KEY is not configured; skipping AUR publish."
+
+      - name: Install AUR publishing tools
+        run: pacman -Syu --noconfirm git openssh pacman-contrib
+
+      - name: Publish skillful-bin to AUR
+        if: env.AUR_SSH_PRIVATE_KEY != ''
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o IdentitiesOnly=yes"
+          git clone ssh://aur@aur.archlinux.org/skillful-bin.git aur
+
+          cd aur
+          ./update-aur-package.sh "$version"
+
+          git config user.name "skillful release bot"
+          git config user.email "info@rickvanlieshout.com"
+
+          if git diff --quiet -- PKGBUILD .SRCINFO; then
+            echo "AUR package is already up to date."
+            exit 0
+          fi
+
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to ${version}"
+          git push
