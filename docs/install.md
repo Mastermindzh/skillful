@@ -101,6 +101,8 @@ Skillful is intended to be available through the official Snap Store.
 sudo snap install skillful
 ```
 
+[![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/skillful)
+
 GitHub Releases also attach a `.snap` artifact for manual local installs and testing.
 
 ```bash

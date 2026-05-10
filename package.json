@@ -166,7 +166,6 @@
       "title": "Skillful",
       "plugs": [
         "default",
-        "home",
         "removable-media"
       ]
     },
