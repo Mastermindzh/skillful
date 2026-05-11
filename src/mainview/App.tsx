@@ -19,6 +19,7 @@ import { DeleteCollectionDialog } from "./features/navigation/DeleteCollectionDi
 import { ImportCollectionModal } from "./features/navigation/ImportCollectionModal";
 import { RenameCollectionModal } from "./features/navigation/RenameCollectionModal";
 import { useCollectionDialogs } from "./features/navigation/useCollectionDialogs";
+import { OnboardingTour } from "./features/onboarding/OnboardingTour";
 import { SettingsModal } from "./features/settings/SettingsModal";
 import { useSettingsState } from "./features/settings/useSettingsState";
 import { useUpdaterState } from "./features/settings/useUpdaterState";
@@ -346,6 +347,11 @@ function App() {
     shortcutsModalOpen ||
     settings.modal.opened ||
     library.unsavedDialogOpen;
+  const onboardingBlocked =
+    shortcutsDisabled ||
+    skillTools.missingParentDialog.request !== null ||
+    updater.applying ||
+    updater.downloading;
   const openImportCollectionModal = collectionDialogs.import.open;
 
   useEffect(() => {
@@ -614,6 +620,12 @@ function App() {
         onSave={() => void library.confirmSaveAndNavigate()}
         onDiscard={library.discardAndNavigate}
         onCancel={library.cancelNavigation}
+      />
+
+      <OnboardingTour
+        appSettings={settings.appSettings}
+        blocked={onboardingBlocked}
+        setAppSettings={settings.setAppSettings}
       />
     </div>
   );

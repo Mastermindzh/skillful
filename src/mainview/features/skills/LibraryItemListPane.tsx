@@ -169,7 +169,7 @@ export function LibraryItemListPane({
   );
 
   return (
-    <section className="split-pane list-pane">
+    <section className="split-pane list-pane" data-tour="library-list">
       <Stack gap="sm" className="column-stack">
         <Group
           justify="space-between"
@@ -258,6 +258,7 @@ export function LibraryItemListPane({
           </Group>
         </Group>
         <SegmentedControl
+          data-tour="library-filters"
           fullWidth
           size="xs"
           value={kindFilter}

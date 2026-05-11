@@ -156,6 +156,7 @@ function serializedSettings(config: AppConfig): SettingsStoreData {
     suppressSuccessNotifications: config.suppressSuccessNotifications,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
+    onboardingTourCompleted: config.onboardingTourCompleted,
   };
 }
 
@@ -238,6 +239,7 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     suppressSuccessNotifications: validated.data.suppressSuccessNotifications,
     language: validated.data.language,
     defaultEditorMode: validated.data.defaultEditorMode,
+    onboardingTourCompleted: validated.data.onboardingTourCompleted,
   };
 }
 
@@ -258,5 +260,6 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     suppressSuccessNotifications: config.suppressSuccessNotifications,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
+    onboardingTourCompleted: config.onboardingTourCompleted,
   };
 }

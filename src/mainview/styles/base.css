@@ -138,3 +138,9 @@ body {
 	overflow: hidden;
 }
 
+[data-testid="button-primary"]:focus-visible,
+[data-testid="button-skip"]:focus-visible,
+[data-testid="button-back"]:focus-visible {
+	outline: none !important;
+	box-shadow: none !important;
+}

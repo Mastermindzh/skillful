@@ -27,6 +27,7 @@ export const AppConfigSchema = z.object({
   suppressSuccessNotifications: z.boolean().default(false),
   language: APP_LANGUAGE.default("system"),
   defaultEditorMode: EDITOR_VIEW_MODE.default("preview"),
+  onboardingTourCompleted: z.boolean().default(false),
 });
 
 export const CollectionArchiveManifestSchema = z.object({

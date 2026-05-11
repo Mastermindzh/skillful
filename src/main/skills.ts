@@ -101,6 +101,7 @@ export class LibraryItemStore {
       suppressSuccessNotifications: false,
       language: "system",
       defaultEditorMode: "preview",
+      onboardingTourCompleted: false,
     };
     this.configLoaded = Boolean(scanRoots && scanRoots.length > 0);
   }
@@ -118,6 +119,7 @@ export class LibraryItemStore {
     this.config.suppressSuccessNotifications = savedConfig?.suppressSuccessNotifications ?? false;
     this.config.language = savedConfig?.language ?? "system";
     this.config.defaultEditorMode = savedConfig?.defaultEditorMode ?? "preview";
+    this.config.onboardingTourCompleted = savedConfig?.onboardingTourCompleted ?? false;
     this.configLoaded = true;
     if (!savedConfig && this.config.tools.length > 0) {
       await this.persistConfig();
@@ -174,6 +176,7 @@ export class LibraryItemStore {
       this.config.suppressSuccessNotifications = nextConfig.suppressSuccessNotifications;
       this.config.language = nextConfig.language;
       this.config.defaultEditorMode = nextConfig.defaultEditorMode;
+      this.config.onboardingTourCompleted = nextConfig.onboardingTourCompleted;
       this.configLoaded = true;
       await this.persistConfig();
 
@@ -196,6 +199,15 @@ export class LibraryItemStore {
         }
       }
 
+      return settingsFromConfig(this.config);
+    });
+  }
+
+  async setOnboardingTourCompleted(completed: boolean) {
+    return this.withConfigLock(async () => {
+      await this.ensureConfigLoaded();
+      this.config.onboardingTourCompleted = completed;
+      await this.persistConfig();
       return settingsFromConfig(this.config);
     });
   }

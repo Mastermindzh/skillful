@@ -49,6 +49,8 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
 
   const handlers: DesktopRequestHandlers = {
     getConfig: async () => service.getConfig(),
+    setOnboardingTourCompleted: async ({ completed }) =>
+      service.setOnboardingTourCompleted(completed),
     saveConfig: async (nextConfig) => {
       const previousConfig = await service.getConfig();
       const config = await measureAsync("desktop.saveConfig.persistAndReconcile", () =>

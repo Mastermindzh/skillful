@@ -96,7 +96,7 @@ export const AppSidebar = memo(function AppSidebar({
   );
 
   return (
-    <aside className="sidebar-column">
+    <aside className="sidebar-column" data-tour="sidebar">
       <div className="sidebar-panel">
         <Stack gap="md" h="100%">
           <Group justify="space-between" align="center" wrap="nowrap">
@@ -120,6 +120,7 @@ export const AppSidebar = memo(function AppSidebar({
               <Stack gap="lg" mt="sm">
                 <SidebarSectionShell
                   title={t("sidebar.collections")}
+                  tourTarget="collections"
                   action={
                     <Menu position="bottom-end" withinPortal>
                       <Menu.Target>
@@ -163,6 +164,7 @@ export const AppSidebar = memo(function AppSidebar({
 
                 <SidebarSectionShell
                   title={t("sidebar.tools")}
+                  tourTarget="tools"
                   action={
                     <SidebarSectionActionButton
                       ariaLabel={t("sidebar.addTool")}
@@ -193,7 +195,7 @@ export const AppSidebar = memo(function AppSidebar({
             </div>
           </div>
 
-          <Group gap="xs" mt="auto">
+          <Group gap="xs" mt="auto" data-tour="sidebar-footer">
             {showUpdateAction ? (
               <Tooltip label={updateLabel} withArrow position="top">
                 <ActionIcon

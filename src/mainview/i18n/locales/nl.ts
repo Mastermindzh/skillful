@@ -324,4 +324,30 @@ export const nlMessages = {
   "footer.installed": "{count} geinstalleerd",
   "footer.installNeedsRepair": "Installatie moet gerepareerd worden",
   "footer.installBlocked": "Installatie geblokkeerd",
+  "onboarding.collections.title": "Begin met een collectie",
+  "onboarding.collections.body":
+    "Collecties zijn de mappen waarin je skills en agents bewaart. Maak er een met de plusknop, of importeer een bestaande collectie.",
+  "onboarding.create.title": "Voeg je eerste skill of agent toe",
+  "onboarding.create.body":
+    "Selecteer eerst een collectie en gebruik daarna de plusknop in de bibliotheek om daar een skill of agent in te maken.",
+  "onboarding.tools.title": "Koppel je AI-tools",
+  "onboarding.tools.body":
+    "Tools zijn installatiebestemmingen zoals Codex, Claude Code, Copilot en Cursor. Voeg er een toe wanneer Skillful items voor die tool moet installeren.",
+  "onboarding.library.title": "Blader door je lokale bibliotheek",
+  "onboarding.library.body":
+    "Selecteer hier een item om het te bekijken, te bewerken, naar een andere collectie te verplaatsen, te hernoemen of te verwijderen.",
+  "onboarding.filters.title": "Filter op itemtype",
+  "onboarding.filters.body":
+    "Wissel tussen alle items, skills en agents, en gebruik daarna zoeken om de huidige selectie te verfijnen.",
+  "onboarding.details.title": "Bewerk het geselecteerde item",
+  "onboarding.details.body":
+    "Het detailpaneel toont metadata, installatiestatus, markdownvoorbeeld, bewerken en bestandsacties voor de geselecteerde map.",
+  "onboarding.files.title": "Beheer bewerkbare en extra bestanden",
+  "onboarding.files.body":
+    "Gebruik de tabs om te wisselen tussen het entrybestand, ondersteunende markdownbestanden en extra assets.",
+  "onboarding.back": "Terug",
+  "onboarding.close": "Sluiten",
+  "onboarding.done": "Klaar",
+  "onboarding.next": "Volgende",
+  "onboarding.skip": "Tour overslaan",
 } satisfies Record<keyof typeof enMessages, string>;

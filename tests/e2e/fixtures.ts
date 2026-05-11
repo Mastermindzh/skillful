@@ -83,6 +83,7 @@ export const baseFixture: MockFixture = {
       },
     ],
     toolMappings: [{ itemId: "skill-review-pr", toolIds: ["codex"] }],
+    onboardingTourCompleted: true,
   },
   updateState: {
     localInfo: {

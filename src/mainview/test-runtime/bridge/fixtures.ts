@@ -43,6 +43,7 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
     suppressSuccessNotifications: settings?.suppressSuccessNotifications ?? false,
     language: settings?.language ?? "system",
     defaultEditorMode: settings?.defaultEditorMode ?? "preview",
+    onboardingTourCompleted: settings?.onboardingTourCompleted ?? true,
   };
 }
 
@@ -145,6 +146,7 @@ export function defaultFixture(): MockFixture {
         },
       ],
       toolMappings: [{ itemId: "skill-review-pr", toolIds: ["codex"] }],
+      onboardingTourCompleted: true,
     },
     updateState: {
       localInfo: {

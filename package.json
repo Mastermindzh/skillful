@@ -1,6 +1,6 @@
 {
   "name": "skillful",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
   "author": "Mastermindzh",
   "license": "FSL-1.1-MIT",
@@ -62,6 +62,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-i18next": "^17.0.6",
+    "react-joyride": "^3.1.0",
     "react-markdown": "^10.1.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",

@@ -144,6 +144,7 @@ export function useSettingsState() {
           suppressSuccessNotifications: suppressSuccess,
           language,
           defaultEditorMode,
+          onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
@@ -165,6 +166,7 @@ export function useSettingsState() {
       }
     },
     [
+      appSettings?.onboardingTourCompleted,
       appSettings?.scanRoots,
       defaultEditorMode,
       language,

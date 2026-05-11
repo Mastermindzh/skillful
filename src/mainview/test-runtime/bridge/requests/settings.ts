@@ -14,6 +14,14 @@ export const settingsRequests = {
       suppressSuccessNotifications: nextConfig.suppressSuccessNotifications,
       language: nextConfig.language,
       defaultEditorMode: nextConfig.defaultEditorMode,
+      onboardingTourCompleted: nextConfig.onboardingTourCompleted,
+    };
+    return clone(state.settings);
+  },
+  async setOnboardingTourCompleted({ completed }) {
+    state.settings = {
+      ...state.settings,
+      onboardingTourCompleted: completed,
     };
     return clone(state.settings);
   },
@@ -21,4 +29,7 @@ export const settingsRequests = {
     createdDirectories.add(path);
     return undefined;
   },
-} satisfies Pick<RequestClient, "getConfig" | "saveConfig" | "createDirectory">;
+} satisfies Pick<
+  RequestClient,
+  "getConfig" | "saveConfig" | "setOnboardingTourCompleted" | "createDirectory"
+>;

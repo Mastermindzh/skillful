@@ -88,7 +88,7 @@ export function LibraryItemDetails({
   }, [viewModeIntent]);
 
   return (
-    <section className="split-pane detail-pane">
+    <section className="split-pane detail-pane" data-tour="details-pane">
       {document ? (
         <>
           <div className="detail-pane-layout">
@@ -126,6 +126,7 @@ export function LibraryItemDetails({
                   value={activeRelativePath}
                   onChange={onActiveRelativePathChange}
                   className="editor-tabs"
+                  data-tour="file-tabs"
                 >
                   <LibraryItemTabsBar
                     files={document.files}

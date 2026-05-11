@@ -5,11 +5,17 @@ type SidebarSectionShellProps = {
   title: string;
   children: ReactNode;
   action?: ReactNode;
+  tourTarget?: string;
 };
 
-export function SidebarSectionShell({ title, children, action }: SidebarSectionShellProps) {
+export function SidebarSectionShell({
+  title,
+  children,
+  action,
+  tourTarget,
+}: SidebarSectionShellProps) {
   return (
-    <div className="sidebar-scope-section">
+    <div className="sidebar-scope-section" data-tour={tourTarget}>
       <Group justify="space-between" align="center" wrap="nowrap">
         <Text size="xs" tt="uppercase" fw={700} className="sidebar-section-title">
           {title}

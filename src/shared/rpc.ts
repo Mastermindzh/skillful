@@ -29,6 +29,10 @@ export type AppRPC = {
         params: AppConfig;
         response: AppSettings;
       };
+      setOnboardingTourCompleted: {
+        params: { completed: boolean };
+        response: AppSettings;
+      };
       listLibraryItems: {
         params: undefined;
         response: LibraryItemSummary[];

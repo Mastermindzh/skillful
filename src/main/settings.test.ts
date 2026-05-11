@@ -92,6 +92,7 @@ describe("loadSavedSettings", () => {
       suppressSuccessNotifications: false,
       language: "system",
       defaultEditorMode: "preview",
+      onboardingTourCompleted: false,
     });
   });
 
@@ -115,6 +116,7 @@ describe("loadSavedSettings", () => {
       suppressSuccessNotifications: true,
       language: "nl",
       defaultEditorMode: "edit",
+      onboardingTourCompleted: true,
     });
 
     await expect(loadSavedSettings()).resolves.toEqual({
@@ -133,6 +135,7 @@ describe("loadSavedSettings", () => {
       suppressSuccessNotifications: true,
       language: "nl",
       defaultEditorMode: "edit",
+      onboardingTourCompleted: true,
     });
   });
 

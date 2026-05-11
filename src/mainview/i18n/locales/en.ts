@@ -319,4 +319,30 @@ export const enMessages = {
   "footer.installed": "{count} installed",
   "footer.installNeedsRepair": "Install needs repair",
   "footer.installBlocked": "Install blocked",
+  "onboarding.collections.title": "Start with a collection",
+  "onboarding.collections.body":
+    "Collections are the folders that hold your skills and agents. Create one with the plus button, or import an existing collection.",
+  "onboarding.create.title": "Add your first skill or agent",
+  "onboarding.create.body":
+    "After selecting a collection, use the plus button in the library pane to create a skill or agent inside it.",
+  "onboarding.tools.title": "Connect your AI tools",
+  "onboarding.tools.body":
+    "Tools are install destinations such as Codex, Claude Code, Copilot, and Cursor. Add one when you want Skillful to install items for that tool.",
+  "onboarding.library.title": "Browse your local library",
+  "onboarding.library.body":
+    "Select an item here to preview it, edit it, move it to another collection, rename it, or delete it.",
+  "onboarding.filters.title": "Filter by item type",
+  "onboarding.filters.body":
+    "Switch between all items, skills, and agents, then use search to narrow the current scope.",
+  "onboarding.details.title": "Edit the selected item",
+  "onboarding.details.body":
+    "The details pane shows metadata, install status, markdown preview, editing, and file actions for the selected folder.",
+  "onboarding.files.title": "Manage editable and extra files",
+  "onboarding.files.body":
+    "Use the tabs to switch between the entry file, supporting markdown files, and additional assets.",
+  "onboarding.back": "Back",
+  "onboarding.close": "Close",
+  "onboarding.done": "Done",
+  "onboarding.next": "Next",
+  "onboarding.skip": "Skip tour",
 } as const;

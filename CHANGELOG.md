@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0.0 - 2026-05-03
+## 1.1.0 - 2026-05-11
+
+- Added a joyride to teach the user how to use the app
+
+## 1.0.0 - 2026-05-10
 
 First stable release.
 

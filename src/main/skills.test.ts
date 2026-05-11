@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { loadSavedSettings } from "./settings";
 import { LibraryItemStore } from "./skills";
 
 let configRoot: string;
@@ -87,5 +88,20 @@ describe("LibraryItemStore save warnings", () => {
     ]);
 
     expect(saved.warnings).toEqual(["notes.md: Missing frontmatter description."]);
+  });
+});
+
+describe("LibraryItemStore settings", () => {
+  it("persists onboarding completion without rebuilding the full config", async () => {
+    const store = new LibraryItemStore([libraryRoot]);
+
+    await store.setOnboardingTourCompleted(true);
+
+    await expect(loadSavedSettings()).resolves.toMatchObject({
+      onboardingTourCompleted: true,
+    });
+    await expect(store.getConfig()).resolves.toMatchObject({
+      onboardingTourCompleted: true,
+    });
   });
 });

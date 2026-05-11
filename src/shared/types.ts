@@ -135,6 +135,7 @@ export interface AppConfig {
   suppressSuccessNotifications: boolean;
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
+  onboardingTourCompleted: boolean;
 }
 
 export interface AppSettings {
@@ -148,4 +149,5 @@ export interface AppSettings {
   suppressSuccessNotifications: boolean;
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
+  onboardingTourCompleted: boolean;
 }
