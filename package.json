@@ -1,6 +1,6 @@
 {
   "name": "skillful",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
   "author": "Mastermindzh",
   "license": "FSL-1.1-MIT",
@@ -119,6 +119,9 @@
         "nsis",
         "zip"
       ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "linux": {
       "icon": "linux",

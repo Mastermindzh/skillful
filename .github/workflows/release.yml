@@ -204,6 +204,28 @@ jobs:
           path: release-artifacts
           merge-multiple: true
 
+      - name: Verify updater metadata
+        run: |
+          find release-artifacts -maxdepth 1 -type f -printf '%f\n' | sort
+          test -f release-artifacts/latest.yml
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const latest = fs.readFileSync("release-artifacts/latest.yml", "utf8");
+          const urls = Array.from(latest.matchAll(/^\s*-\s+url:\s*(.+)$/gm), (match) => match[1].trim());
+          const fallbackPath = latest.match(/^path:\s*(.+)$/m)?.[1]?.trim();
+          const assets = urls.length > 0 ? urls : fallbackPath ? [fallbackPath] : [];
+          if (assets.length === 0) {
+            throw new Error("latest.yml does not reference any updater assets.");
+          }
+          for (const asset of assets) {
+            const assetPath = path.join("release-artifacts", asset);
+            if (!fs.existsSync(assetPath)) {
+              throw new Error(`latest.yml references missing release asset: ${asset}`);
+            }
+          }
+          NODE
+
       - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
         with:
@@ -230,12 +252,24 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
 
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
-          chmod 600 ~/.ssh/aur
-          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$HOME/.ssh/aur"
+          chmod 600 "$HOME/.ssh/aur"
+          ssh-keyscan -t rsa,ecdsa,ed25519 aur.archlinux.org > "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+          cat > "$HOME/.ssh/config" <<'EOF'
+          Host aur.archlinux.org
+            HostName aur.archlinux.org
+            User aur
+            IdentityFile ~/.ssh/aur
+            IdentitiesOnly yes
+            UserKnownHostsFile ~/.ssh/known_hosts
+            StrictHostKeyChecking yes
+          EOF
+          chmod 600 "$HOME/.ssh/config"
 
-          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o IdentitiesOnly=yes"
+          ssh aur.archlinux.org || true
+
           git clone ssh://aur@aur.archlinux.org/skillful-bin.git aur
 
           cd aur

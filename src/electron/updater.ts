@@ -60,6 +60,9 @@ function friendlyUpdaterError(error: unknown, fallback: string): string {
   const raw = error instanceof Error ? error.message : String(error ?? "");
   const firstLine = raw.split(/\r?\n/, 1)[0]?.trim() ?? "";
 
+  if (/Cannot find .+\.ya?ml in the latest release artifacts|CHANNEL_FILE_NOT_FOUND/i.test(raw)) {
+    return "Update metadata is missing from the latest release. Download the new release manually instead.";
+  }
   if (/\b404\b/.test(raw) || /HttpError:\s*404/i.test(raw)) {
     return "No published release was found yet. Try again after the first release is tagged.";
   }
@@ -200,6 +203,13 @@ function configureUpdater() {
 }
 
 configureUpdater();
+
+export function checkForUpdatesAfterStartup() {
+  if (!app.isPackaged) return;
+  setTimeout(() => {
+    void electronUpdater.checkForUpdates();
+  }, 2_500);
+}
 
 export const electronUpdater: DesktopUpdateAdapter = {
   async getUpdateState() {

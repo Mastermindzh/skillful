@@ -20,6 +20,7 @@
   <a href="https://github.com/Mastermindzh/skillful/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Mastermindzh/skillful/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://github.com/Mastermindzh/skillful/actions/workflows/pages.yml"><img alt="Pages" src="https://github.com/Mastermindzh/skillful/actions/workflows/pages.yml/badge.svg" /></a>
   <a href="https://github.com/Mastermindzh/skillful/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Mastermindzh/skillful?display_name=tag" /></a>
+  <a href ="https://discord.gg/5xHMFGckX"><img alt="discord logo" src="./docs/images/discord.png" /></a>
 </p>
 
 ---

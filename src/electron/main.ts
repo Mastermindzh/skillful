@@ -11,7 +11,7 @@ import type { AppRPC } from "../shared/rpc";
 import { wrapRequestHandlersWithAppErrorEncoding } from "../shared/rpcAdapter";
 import type { LibraryItemSummary } from "../shared/types";
 import type { UpdateStatusEntry } from "../shared/updates";
-import { electronUpdater } from "./updater";
+import { checkForUpdatesAfterStartup, electronUpdater } from "./updater";
 import {
   createWindowStateSaver,
   loadWindowState,
@@ -26,6 +26,14 @@ let pendingGitHubImport: GitHubImportDraft | null = null;
 let rendererReady = false;
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+function applyLinuxPackageCompatibilitySwitches() {
+  if (process.env.APPIMAGE) {
+    // AppImage mounts cannot guarantee a root-owned 4755 chrome-sandbox helper.
+    // Without this, Electron aborts on systems without user namespace sandbox support.
+    app.commandLine.appendSwitch("no-sandbox");
+  }
+}
 
 function iconPath() {
   return app.isPackaged
@@ -231,6 +239,7 @@ async function start() {
     return;
   }
 
+  applyLinuxPackageCompatibilitySwitches();
   app.setPath("userData", path.join(settingsDirectory(), "electron"));
   registerDeepLinkProtocol();
   registerAppLifecycleHandlers();
@@ -260,6 +269,7 @@ async function start() {
 
   registerIpcHandlers(runtime.handlers);
   await createWindow();
+  checkForUpdatesAfterStartup();
   await runtime.startWatching();
 
   const initialDeepLink = findSkillfulDeepLink(process.argv);

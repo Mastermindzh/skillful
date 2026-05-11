@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 - 2026-05-11
+
+- Disabled AppImage sandbox
+- Added discord icon to README
+- Fixed Windows updater
+- Fixed AUR deployment (hopefully... 'works on my machine')
+
 ## 1.1.0 - 2026-05-11
 
 - Added a joyride to teach the user how to use the app
