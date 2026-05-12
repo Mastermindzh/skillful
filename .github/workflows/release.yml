@@ -264,7 +264,7 @@ jobs:
             IdentityFile ~/.ssh/aur
             IdentitiesOnly yes
             UserKnownHostsFile ~/.ssh/known_hosts
-            StrictHostKeyChecking yes
+            StrictHostKeyChecking accept-new
           EOF
           chmod 600 "$HOME/.ssh/config"
 
