@@ -105,3 +105,22 @@ describe("LibraryItemStore settings", () => {
     });
   });
 });
+
+describe("LibraryItemStore collections", () => {
+  it("moves an existing item into a newly-created empty collection", async () => {
+    const store = new LibraryItemStore([libraryRoot]);
+    await store.scanAll();
+    const item = store.listLibraryItems()[0];
+
+    const collection = await store.createCollection("Launch");
+
+    await expect(store.listCollections()).resolves.toContainEqual(collection);
+    const moved = await store.moveLibraryItem({
+      id: item.id,
+      collectionId: collection.id,
+    });
+
+    expect(moved.item.collectionId).toBe(collection.id);
+    expect(moved.item.rootPath).toContain(path.join("skills", collection.id, "review-pr"));
+  });
+});

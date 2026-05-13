@@ -8,6 +8,7 @@ import type {
   ExportCollectionArchiveResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
+  LibraryItemCollectionSummary,
   LibraryItemDocument,
   LibraryItemSummary,
 } from "../../../shared/types";
@@ -46,6 +47,18 @@ function replaceLibraryItemSummary(
   return [...nextItems, nextItem].sort(
     (a, b) => a.title.localeCompare(b.title) || a.entryPath.localeCompare(b.entryPath)
   );
+}
+
+function upsertCollectionSummary(
+  collections: LibraryItemCollectionSummary[],
+  nextCollection: LibraryItemCollectionSummary
+) {
+  const nextCollections = collections.some((collection) => collection.id === nextCollection.id)
+    ? collections.map((collection) =>
+        collection.id === nextCollection.id ? nextCollection : collection
+      )
+    : [...collections, nextCollection];
+  return nextCollections.sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id));
 }
 
 /**
@@ -225,7 +238,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     async (name: string) =>
       runReportingMutation({ fallbackMessage: t("collection.error.create") }, async () => {
         const collection = await appRpc.request.createCollection({ name });
-        setCollectionList(await appRpc.request.listCollections());
+        setCollectionList((collections) => upsertCollectionSummary(collections, collection));
         return collection;
       }),
     [runReportingMutation, setCollectionList, t]

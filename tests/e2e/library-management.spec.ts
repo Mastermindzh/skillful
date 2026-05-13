@@ -73,6 +73,12 @@ test("moves the selected skill to another collection", async ({ page }) => {
 
   await page.getByLabel("Collection actions").click();
   await page.getByRole("menuitem", { name: "New collection" }).click();
+  await page.getByLabel("Collection name").fill("Alpha");
+  await page.getByRole("button", { name: "Create collection" }).click();
+  await expect(page.getByRole("button", { name: "Alpha 0" })).toBeVisible();
+
+  await page.getByLabel("Collection actions").click();
+  await page.getByRole("menuitem", { name: "New collection" }).click();
   await page.getByLabel("Collection name").fill("Launch");
   await page.getByRole("button", { name: "Create collection" }).click();
   await expect(page.getByRole("button", { name: "Launch 0" })).toBeVisible();
@@ -86,6 +92,7 @@ test("moves the selected skill to another collection", async ({ page }) => {
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("Destination collection").click();
   await page.getByRole("option", { name: "Launch", exact: true }).click();
+  await expect(dialog.getByLabel("Destination collection")).toHaveValue("Launch");
   await dialog.getByRole("button", { name: "Move skill" }).click();
 
   await expect(page.getByRole("heading", { name: "Launch" })).toBeVisible();
