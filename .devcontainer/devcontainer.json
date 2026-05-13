@@ -1,0 +1,33 @@
+{
+  "name": "Skillful",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "bun",
+  "workspaceFolder": "/workspaces/skillful",
+  "runArgs": [
+    "--init",
+    "--device=/dev/dri",
+    "-e",
+    "DISPLAY=${localEnv:DISPLAY}",
+    "-v",
+    "/tmp/.X11-unix:/tmp/.X11-unix"
+  ],
+  "containerEnv": {
+    "SKILLFUL_CONFIG_NAME": "skillful-dev-container",
+    "ELECTRON_DISABLE_SANDBOX": "1"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "postCreateCommand": "bun install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome",
+        "oven.bun-vscode",
+        "ms-playwright.playwright"
+      ]
+    }
+  }
+}

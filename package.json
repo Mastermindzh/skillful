@@ -17,7 +17,7 @@
     "url": "https://github.com/Mastermindzh/skillful.git"
   },
   "scripts": {
-    "dev": "SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 bun run build && SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 electron .",
+    "dev": "SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 bun run build && SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 electron . --no-sandbox",
     "dev:devtools": "SKILLFUL_ELECTRON_DEVTOOLS=1 bun run dev",
     "dev:hmr": "SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.main.config.mts && SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.preload.config.mts && concurrently \"vite --port 5173\" \"wait-on http://127.0.0.1:5173 && SKILLFUL_CONFIG_NAME=skillful-dev electron .\"",
     "build": "vite build && vite build --config vite.electron.main.config.mts && vite build --config vite.electron.preload.config.mts",
