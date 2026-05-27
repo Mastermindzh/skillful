@@ -9,6 +9,7 @@ test-results/
 playwright-report/
 dist-electron/
 release/
+.aur/
 
 .idea
 
