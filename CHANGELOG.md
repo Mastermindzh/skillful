@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-xx-xx
+
+- Added git backup
+
+- fixed filesystem watcher also watching chromium files
+- fixed filesystem watcher looping on the cache files
+
 ## 1.1.1 - 2026-05-11
 
 - Disabled AppImage sandbox

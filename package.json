@@ -1,6 +1,6 @@
 {
   "name": "skillful",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
   "author": "Mastermindzh",
   "license": "FSL-1.1-MIT",
@@ -17,7 +17,7 @@
     "url": "https://github.com/Mastermindzh/skillful.git"
   },
   "scripts": {
-    "dev": "SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 bun run build && SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 electron . --no-sandbox",
+    "dev": "SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 bun run build && SKILLFUL_CONFIG_NAME=skillful-dev SKILLFUL_ELECTRON_LOAD_FILE=1 SKILLFUL_LOG_LEVEL=debug SKILLFUL_DEBUG=* electron . --no-sandbox",
     "dev:devtools": "SKILLFUL_ELECTRON_DEVTOOLS=1 bun run dev",
     "dev:hmr": "SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.main.config.mts && SKILLFUL_CONFIG_NAME=skillful-dev vite build --config vite.electron.preload.config.mts && concurrently \"vite --port 5173\" \"wait-on http://127.0.0.1:5173 && SKILLFUL_CONFIG_NAME=skillful-dev electron .\"",
     "build": "vite build && vite build --config vite.electron.main.config.mts && vite build --config vite.electron.preload.config.mts",
