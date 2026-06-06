@@ -1,4 +1,4 @@
-import { appRpc, onLibraryItemsUpdated } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImportCollectionFromGitHubInput } from "../../../shared/githubImport";
 import type {
@@ -749,7 +749,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
   }, [activeLibraryItemId, loadSkill]);
 
   useEffect(() => {
-    return onLibraryItemsUpdated(async ({ libraryItems }) => {
+    return onAppMessage("libraryItemsUpdated", async ({ libraryItems }) => {
       setSkillList(libraryItems);
       setCollectionList(await appRpc.request.listCollections());
       // Drop drafts whose owning libraryItem was removed on disk to avoid unbounded draft growth.

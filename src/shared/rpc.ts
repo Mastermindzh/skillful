@@ -6,6 +6,8 @@ import type {
   DeleteCollectionResult,
   ExportCollectionArchiveInput,
   ExportCollectionArchiveResult,
+  GitBackupConfig,
+  GitBackupResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemCollectionSummary,
@@ -60,6 +62,18 @@ export type AppRPC = {
       pickToolInstallFolder: {
         params: undefined;
         response: string | null;
+      };
+      pickGitBackupRepositoryFolder: {
+        params: undefined;
+        response: string | null;
+      };
+      initializeGitBackup: {
+        params: { gitBackup: GitBackupConfig };
+        response: GitBackupResult;
+      };
+      runGitBackup: {
+        params: undefined;
+        response: GitBackupResult;
       };
       importCollection: {
         params: ImportCollectionFromPathInput;
@@ -199,6 +213,7 @@ export type AppRPC = {
       };
       githubImportRequested: GitHubImportDraft;
       updateStatusChanged: UpdateStatusEntry;
+      autoGitBackupCompleted: GitBackupResult;
     };
   };
   webview: {

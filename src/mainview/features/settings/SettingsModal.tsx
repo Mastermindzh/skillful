@@ -1,7 +1,9 @@
 import { Button, Group, Modal, Stack, Tabs, Text } from "@mantine/core";
+import { Check, GitBranch, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { UnsavedChangesDialog } from "../../components/UnsavedChangesDialog";
 import { useAppTranslation } from "../../i18n/i18n";
+import { BackupSettingsPanel, type BackupSettingsPanelProps } from "./BackupSettingsPanel";
 import { DirtyTabLabel } from "./DirtyTabLabel";
 import { GeneralSettingsPanel, type GeneralSettingsPanelProps } from "./GeneralSettingsPanel";
 import { LibrarySettingsPanel, type LibrarySettingsPanelProps } from "./LibrarySettingsPanel";
@@ -15,19 +17,25 @@ type SettingsModalProps = {
   general: GeneralSettingsPanelProps;
   library: LibrarySettingsPanelProps;
   tools: ToolSettingsPanelProps;
+  backup: BackupSettingsPanelProps;
   updates: UpdatesPanelProps;
   footer: {
     hasChanges: boolean;
-    hasValidationErrors: boolean;
     saving: boolean;
     errorMessage: string | null;
+    syncAfterSave: boolean;
+    canTestBackup: boolean;
+    testingBackup: boolean;
+    backupTestSucceeded: boolean;
     onClose: () => void;
     onSave: () => void;
+    onTestBackup: () => void;
   };
   dirtyTabs: {
     general: boolean;
     library: boolean;
     tools: boolean;
+    backup: boolean;
   };
   onTabChange: (tab: SettingsTab) => void;
 };
@@ -38,6 +46,7 @@ export function SettingsModal({
   general,
   library,
   tools,
+  backup,
   updates,
   footer,
   dirtyTabs,
@@ -68,6 +77,7 @@ export function SettingsModal({
   const handleConfirmCancel = () => {
     setConfirmDiscardOpen(false);
   };
+  const saveLabel = footer.syncAfterSave ? t("settings.saveAndSync") : t("settings.save");
 
   return (
     <>
@@ -103,6 +113,13 @@ export function SettingsModal({
                   hint={dirtyHint}
                 />
               </Tabs.Tab>
+              <Tabs.Tab value="backup">
+                <DirtyTabLabel
+                  label={t("settings.tab.backup")}
+                  dirty={dirtyTabs.backup}
+                  hint={dirtyHint}
+                />
+              </Tabs.Tab>
               <Tabs.Tab value="updates">{t("settings.tab.updates")}</Tabs.Tab>
             </Tabs.List>
 
@@ -118,6 +135,10 @@ export function SettingsModal({
               <ToolSettingsPanel {...tools} />
             </Tabs.Panel>
 
+            <Tabs.Panel value="backup" pt="md">
+              <BackupSettingsPanel {...backup} />
+            </Tabs.Panel>
+
             <Tabs.Panel value="updates">
               <UpdatesPanel {...updates} />
             </Tabs.Panel>
@@ -129,8 +150,23 @@ export function SettingsModal({
             </Text>
           ) : null}
 
-          <Group justify="space-between" align="center">
-            <div />
+          <Group justify="space-between" align="center" gap="sm">
+            {activeTab === "backup" ? (
+              <Button
+                variant="default"
+                color="gray"
+                onClick={footer.onTestBackup}
+                loading={footer.testingBackup}
+                disabled={!footer.canTestBackup || footer.saving}
+                leftSection={
+                  footer.backupTestSucceeded ? <Check size={16} /> : <GitBranch size={16} />
+                }
+              >
+                {t("settings.backup.testSetup")}
+              </Button>
+            ) : (
+              <div />
+            )}
             {activeTab === "updates" ? (
               <Button variant="default" color="gray" onClick={requestClose}>
                 {t("settings.close")}
@@ -140,8 +176,12 @@ export function SettingsModal({
                 <Button variant="default" color="gray" onClick={requestClose}>
                   {t("settings.cancel")}
                 </Button>
-                <Button onClick={footer.onSave} loading={footer.saving}>
-                  {t("settings.save")}
+                <Button
+                  onClick={footer.onSave}
+                  loading={footer.saving}
+                  leftSection={footer.syncAfterSave ? <UploadCloud size={16} /> : undefined}
+                >
+                  {saveLabel}
                 </Button>
               </Group>
             )}

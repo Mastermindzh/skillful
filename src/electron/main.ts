@@ -9,7 +9,7 @@ import { AppError } from "../shared/errors";
 import type { GitHubImportDraft } from "../shared/githubImport";
 import type { AppRPC } from "../shared/rpc";
 import { wrapRequestHandlersWithAppErrorEncoding } from "../shared/rpcAdapter";
-import type { LibraryItemSummary } from "../shared/types";
+import type { GitBackupResult, LibraryItemSummary } from "../shared/types";
 import type { UpdateStatusEntry } from "../shared/updates";
 import { checkForUpdatesAfterStartup, electronUpdater } from "./updater";
 import {
@@ -62,6 +62,10 @@ function sendLibraryItemsUpdated(libraryItems: LibraryItemSummary[], reason: str
 
 function sendUpdateStatusChanged(entry: UpdateStatusEntry) {
   sendRendererMessage("updateStatusChanged", entry);
+}
+
+function sendAutoGitBackupCompleted(result: GitBackupResult) {
+  sendRendererMessage("autoGitBackupCompleted", result);
 }
 
 function sendGitHubImportRequested(payload: GitHubImportDraft) {
@@ -251,6 +255,7 @@ async function start() {
     pickFile,
     sendLibraryItemsUpdated,
     sendUpdateStatusChanged,
+    sendAutoGitBackupCompleted,
     shell: {
       openPath: async (target) => {
         // `shell.openPath` resolves with an empty string on success and an error string on
@@ -268,6 +273,7 @@ async function start() {
   });
 
   registerIpcHandlers(runtime.handlers);
+  app.once("before-quit", () => runtime.dispose());
   await createWindow();
   checkForUpdatesAfterStartup();
   await runtime.startWatching();

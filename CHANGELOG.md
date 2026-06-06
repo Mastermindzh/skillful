@@ -1,10 +1,13 @@
 # Changelog
 
+## 1.2.0 - 2026-xx-xx
+
+- Added git backup sync
+
 ## 1.1.2 - 2026-05-13
 
 - Fixed not being able to select a new collection while moving items, fixes [#1](https://github.com/Mastermindzh/skillful/issues/1)
 - *DEV:* added devcontainer
-
 
 ## 1.1.1 - 2026-05-11
 

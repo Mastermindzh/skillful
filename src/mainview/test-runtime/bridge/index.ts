@@ -1,4 +1,8 @@
-import { emitGitHubImportRequested, emitLibraryItemsUpdated } from "./events";
+import {
+  emitAutoGitBackupCompleted,
+  emitGitHubImportRequested,
+  emitLibraryItemsUpdated,
+} from "./events";
 import { collectionRequests } from "./requests/collections";
 import { fileRequests } from "./requests/files";
 import { itemRequests } from "./requests/items";
@@ -26,6 +30,7 @@ declare global {
   interface Window {
     __SKILLFUL_E2E_BRIDGE__?: typeof appRpc;
     __SKILLFUL_E2E_EVENTS__?: {
+      emitAutoGitBackupCompleted: typeof emitAutoGitBackupCompleted;
       emitGitHubImportRequested: typeof emitGitHubImportRequested;
       emitLibraryItemsUpdated: typeof emitLibraryItemsUpdated;
     };
@@ -34,7 +39,11 @@ declare global {
 
 if (typeof window !== "undefined") {
   window.__SKILLFUL_E2E_BRIDGE__ = appRpc;
-  window.__SKILLFUL_E2E_EVENTS__ = { emitGitHubImportRequested, emitLibraryItemsUpdated };
+  window.__SKILLFUL_E2E_EVENTS__ = {
+    emitAutoGitBackupCompleted,
+    emitGitHubImportRequested,
+    emitLibraryItemsUpdated,
+  };
 }
 
 export * from "./events";

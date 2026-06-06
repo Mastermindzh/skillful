@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "../shared/errors";
 import {
+  defaultGitBackupConfig,
   loadSavedSettings,
   normalizeToolConfigs,
   persistSettings,
@@ -93,6 +94,7 @@ describe("loadSavedSettings", () => {
       language: "system",
       defaultEditorMode: "preview",
       onboardingTourCompleted: false,
+      gitBackup: defaultGitBackupConfig(),
     });
   });
 
@@ -117,6 +119,12 @@ describe("loadSavedSettings", () => {
       language: "nl",
       defaultEditorMode: "edit",
       onboardingTourCompleted: true,
+      gitBackup: {
+        ...defaultGitBackupConfig(),
+        enabled: true,
+        repositoryPath: path.join(tmpRoot, "backup"),
+        remoteUrl: "git@example.com:me/skillful-backup.git",
+      },
     });
 
     await expect(loadSavedSettings()).resolves.toEqual({
@@ -136,6 +144,12 @@ describe("loadSavedSettings", () => {
       language: "nl",
       defaultEditorMode: "edit",
       onboardingTourCompleted: true,
+      gitBackup: {
+        ...defaultGitBackupConfig(),
+        enabled: true,
+        repositoryPath: path.join(tmpRoot, "backup"),
+        remoteUrl: "git@example.com:me/skillful-backup.git",
+      },
     });
   });
 

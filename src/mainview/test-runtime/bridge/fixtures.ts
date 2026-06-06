@@ -44,6 +44,16 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
     language: settings?.language ?? "system",
     defaultEditorMode: settings?.defaultEditorMode ?? "preview",
     onboardingTourCompleted: settings?.onboardingTourCompleted ?? true,
+    gitBackup: settings?.gitBackup ?? {
+      enabled: false,
+      repositoryPath: "",
+      remoteUrl: "",
+      branch: "main",
+      includeSettings: true,
+      includeDefaultLibrary: true,
+      autoBackup: false,
+      autoBackupIntervalMinutes: 10,
+    },
   };
 }
 

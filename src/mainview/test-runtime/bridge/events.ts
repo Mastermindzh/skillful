@@ -1,46 +1,46 @@
-import type { UpdateStatusEntry } from "../../../shared/updates";
+import type { AppRPC } from "../../../shared/rpc";
 import { clone } from "./helpers";
-import type { GitHubImportRequestedPayload, LibraryItemsUpdatedPayload } from "./types";
 
-const libraryItemsUpdatedListeners = new Set<(payload: LibraryItemsUpdatedPayload) => void>();
-const githubImportListeners = new Set<(payload: GitHubImportRequestedPayload) => void>();
-const updateStatusListeners = new Set<(entry: UpdateStatusEntry) => void>();
+type MessageSpec = AppRPC["bun"]["messages"];
+type MessageName = keyof MessageSpec;
+type MessageListener<K extends MessageName> = (payload: MessageSpec[K]) => void;
 
-export function emitLibraryItemsUpdated(payload: LibraryItemsUpdatedPayload) {
-  for (const listener of libraryItemsUpdatedListeners) {
+const eventListeners = new Map<MessageName, Set<(payload: unknown) => void>>();
+
+function listenersFor<K extends MessageName>(name: K) {
+  let listeners = eventListeners.get(name);
+  if (!listeners) {
+    listeners = new Set();
+    eventListeners.set(name, listeners);
+  }
+  return listeners as Set<MessageListener<K>>;
+}
+
+function emitEvent<K extends MessageName>(name: K, payload: MessageSpec[K]) {
+  for (const listener of listenersFor(name)) {
     listener(clone(payload));
   }
 }
 
-export function emitUpdateStatus(entry: UpdateStatusEntry) {
-  for (const listener of updateStatusListeners) {
-    listener(clone(entry));
-  }
-}
-
-export function emitGitHubImportRequested(payload: GitHubImportRequestedPayload) {
-  for (const listener of githubImportListeners) {
-    listener(clone(payload));
-  }
-}
-
-export function onLibraryItemsUpdated(listener: (payload: LibraryItemsUpdatedPayload) => void) {
-  libraryItemsUpdatedListeners.add(listener);
+export function onAppMessage<K extends MessageName>(name: K, listener: MessageListener<K>) {
+  listenersFor(name).add(listener);
   return () => {
-    libraryItemsUpdatedListeners.delete(listener);
+    listenersFor(name).delete(listener);
   };
 }
 
-export function onGitHubImportRequested(listener: (payload: GitHubImportRequestedPayload) => void) {
-  githubImportListeners.add(listener);
-  return () => {
-    githubImportListeners.delete(listener);
-  };
+export function emitLibraryItemsUpdated(payload: MessageSpec["libraryItemsUpdated"]) {
+  emitEvent("libraryItemsUpdated", payload);
 }
 
-export function onUpdateStatusChanged(listener: (payload: UpdateStatusEntry) => void) {
-  updateStatusListeners.add(listener);
-  return () => {
-    updateStatusListeners.delete(listener);
-  };
+export function emitUpdateStatus(payload: MessageSpec["updateStatusChanged"]) {
+  emitEvent("updateStatusChanged", payload);
+}
+
+export function emitGitHubImportRequested(payload: MessageSpec["githubImportRequested"]) {
+  emitEvent("githubImportRequested", payload);
+}
+
+export function emitAutoGitBackupCompleted(payload: MessageSpec["autoGitBackupCompleted"]) {
+  emitEvent("autoGitBackupCompleted", payload);
 }

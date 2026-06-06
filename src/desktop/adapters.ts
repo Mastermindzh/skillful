@@ -1,5 +1,5 @@
 import type { AppRPC } from "../shared/rpc";
-import type { LibraryItemSummary } from "../shared/types";
+import type { GitBackupResult, LibraryItemSummary } from "../shared/types";
 import type { AppUpdateState, UpdateStatusEntry } from "../shared/updates";
 
 type RequestSpec = AppRPC["bun"]["requests"];
@@ -39,6 +39,7 @@ export type DesktopRuntimeAdapters = {
   pickFile: (allowedFileTypes?: string) => Promise<string | null>;
   sendLibraryItemsUpdated: (libraryItems: LibraryItemSummary[], reason: string) => void;
   sendUpdateStatusChanged: (entry: UpdateStatusEntry) => void;
+  sendAutoGitBackupCompleted: (result: GitBackupResult) => void;
   shell: DesktopShellAdapter;
   updater: DesktopUpdateAdapter;
 };

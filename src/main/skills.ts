@@ -8,6 +8,7 @@ import type {
   AppConfig,
   CreateLibraryItemInput,
   ExportCollectionArchiveInput,
+  GitBackupConfig,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemDocument,
@@ -37,6 +38,7 @@ import {
   renameLibraryItem,
 } from "./creation";
 import { atomicWriteFile, ensureDirectory } from "./fs";
+import { initializeGitBackup, runGitBackup } from "./git/backup";
 import { importLibraryCollectionFromGitHub } from "./githubImports";
 import {
   getLibraryItemToolStatuses,
@@ -58,6 +60,7 @@ import {
   SKIP_DIRECTORIES,
 } from "./scanner";
 import {
+  defaultGitBackupConfig,
   defaultSkillRoot,
   detectPresetTools,
   effectiveScanRoots,
@@ -102,6 +105,7 @@ export class LibraryItemStore {
       language: "system",
       defaultEditorMode: "preview",
       onboardingTourCompleted: false,
+      gitBackup: defaultGitBackupConfig(),
     };
     this.configLoaded = Boolean(scanRoots && scanRoots.length > 0);
   }
@@ -120,6 +124,7 @@ export class LibraryItemStore {
     this.config.language = savedConfig?.language ?? "system";
     this.config.defaultEditorMode = savedConfig?.defaultEditorMode ?? "preview";
     this.config.onboardingTourCompleted = savedConfig?.onboardingTourCompleted ?? false;
+    this.config.gitBackup = savedConfig?.gitBackup ?? defaultGitBackupConfig();
     this.configLoaded = true;
     if (!savedConfig && this.config.tools.length > 0) {
       await this.persistConfig();
@@ -157,6 +162,16 @@ export class LibraryItemStore {
     return settingsFromConfig(this.config);
   }
 
+  async initializeGitBackup(gitBackupConfig?: GitBackupConfig) {
+    await this.ensureConfigLoaded();
+    return initializeGitBackup(gitBackupConfig ?? this.config.gitBackup);
+  }
+
+  async runGitBackup() {
+    await this.ensureConfigLoaded();
+    return runGitBackup(this.config);
+  }
+
   async saveConfig(nextConfig: AppConfig) {
     return this.withConfigLock(async () => {
       await this.ensureConfigLoaded();
@@ -177,6 +192,7 @@ export class LibraryItemStore {
       this.config.language = nextConfig.language;
       this.config.defaultEditorMode = nextConfig.defaultEditorMode;
       this.config.onboardingTourCompleted = nextConfig.onboardingTourCompleted;
+      this.config.gitBackup = nextConfig.gitBackup;
       this.configLoaded = true;
       await this.persistConfig();
 

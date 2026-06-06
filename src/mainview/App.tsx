@@ -1,4 +1,4 @@
-import { appRpc, onGitHubImportRequested } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useMediaQuery } from "@mantine/hooks";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { toolPresetById } from "../shared/toolPresets";
@@ -19,6 +19,7 @@ import { DeleteCollectionDialog } from "./features/navigation/DeleteCollectionDi
 import { ImportCollectionModal } from "./features/navigation/ImportCollectionModal";
 import { RenameCollectionModal } from "./features/navigation/RenameCollectionModal";
 import { useCollectionDialogs } from "./features/navigation/useCollectionDialogs";
+import { notify } from "./features/notifications/notify";
 import { OnboardingTour } from "./features/onboarding/OnboardingTour";
 import { SettingsModal } from "./features/settings/SettingsModal";
 import { useSettingsState } from "./features/settings/useSettingsState";
@@ -63,6 +64,21 @@ function App() {
   useEffect(() => {
     void settings.loadSettings();
   }, [settings.loadSettings]);
+
+  useEffect(() => {
+    return onAppMessage("autoGitBackupCompleted", (result) => {
+      if (result.changed && result.pushed) {
+        notify.info(t("settings.backup.notification.synced.message", { branch: result.branch }), {
+          title: t("settings.backup.notification.synced.title"),
+        });
+        return;
+      }
+
+      notify.error(result.message || t("settings.backup.error.run"), {
+        title: t("settings.backup.notification.failed.title"),
+      });
+    });
+  }, [t]);
 
   useEffect(() => {
     void applyAppLanguage(
@@ -140,6 +156,7 @@ function App() {
    * tells the user which one they're in, so labels would be redundant noise.
    */
   const showItemCollections = activeScope === "all" || activeScope.startsWith("tool:");
+  const syncSettingsAfterSave = settings.backup.hasUnsavedChanges && settings.backup.config.enabled;
   const activeDocumentCollectionTitle = library.activeLibraryItem
     ? (collectionTitleById.get(library.activeLibraryItem.item.collectionId) ?? null)
     : null;
@@ -355,7 +372,7 @@ function App() {
   const openImportCollectionModal = collectionDialogs.import.open;
 
   useEffect(() => {
-    return onGitHubImportRequested((draft) => {
+    return onAppMessage("githubImportRequested", (draft) => {
       openImportCollectionModal(draft);
     });
   }, [openImportCollectionModal]);
@@ -492,6 +509,13 @@ function App() {
           activeRowId: settings.tools.activeRowId,
           onActiveRowChange: settings.tools.setActiveRowId,
         }}
+        backup={{
+          config: settings.backup.config,
+          issue: settings.backup.issue,
+          errorMessage: settings.backup.errorMessage,
+          onConfigChange: settings.backup.updateConfig,
+          onPickRepository: () => void settings.backup.pickRepository(),
+        }}
         updates={{
           updateState: updater.updateState,
           loading: updater.loading,
@@ -505,17 +529,25 @@ function App() {
         }}
         footer={{
           hasChanges: settings.modal.hasChanges,
-          hasValidationErrors: settings.modal.hasValidationErrors,
           saving: settings.modal.saving,
           errorMessage: settings.modal.errorMessage,
+          syncAfterSave: syncSettingsAfterSave,
+          canTestBackup:
+            settings.backup.config.enabled &&
+            !settings.backup.hasUnsavedChanges &&
+            !settings.modal.hasValidationErrors,
+          testingBackup: settings.backup.initializing,
+          backupTestSucceeded: settings.backup.initializeSucceeded,
           onClose: settings.modal.close,
           onSave: () =>
             void settings.modal.save({
               activeLibraryItemId: library.activeLibraryItemId,
+              backupAfterSave: syncSettingsAfterSave,
               toolMappings: settings.appSettings?.toolMappings ?? [],
               reloadSkills: library.loadSkillList,
               reloadToolStatuses: skillTools.loadToolStatuses,
             }),
+          onTestBackup: () => void settings.backup.initialize(),
         }}
         onTabChange={settings.modal.setActiveTab}
         dirtyTabs={settings.modal.dirtyTabs}
