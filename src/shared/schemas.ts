@@ -25,6 +25,7 @@ export const AppConfigSchema = z.object({
   tools: z.array(ToolConfigSchema).default([]),
   toolMappings: z.array(LibraryItemToolMappingSchema).default([]),
   suppressSuccessNotifications: z.boolean().default(false),
+  minimizeToTrayOnClose: z.boolean().default(false),
   language: APP_LANGUAGE.default("system"),
   defaultEditorMode: EDITOR_VIEW_MODE.default("preview"),
   onboardingTourCompleted: z.boolean().default(false),

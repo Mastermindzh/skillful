@@ -27,6 +27,7 @@ export type DesktopUpdateAdapter = {
 export type DesktopShellAdapter = {
   openPath: (target: string) => Promise<void>;
   revealPath: (target: string) => Promise<void>;
+  setMinimizeToTrayOnClose: (enabled: boolean) => void;
 };
 
 /**

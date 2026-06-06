@@ -12,6 +12,7 @@ export const settingsRequests = {
       tools: clone(nextConfig.tools),
       toolMappings: clone(nextConfig.toolMappings),
       suppressSuccessNotifications: nextConfig.suppressSuccessNotifications,
+      minimizeToTrayOnClose: nextConfig.minimizeToTrayOnClose,
       language: nextConfig.language,
       defaultEditorMode: nextConfig.defaultEditorMode,
       onboardingTourCompleted: nextConfig.onboardingTourCompleted,

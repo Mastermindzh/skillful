@@ -56,6 +56,7 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       const config = await measureAsync("desktop.saveConfig.persistAndReconcile", () =>
         service.saveConfig(nextConfig)
       );
+      adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
       if (!samePathSet(previousConfig.effectiveScanRoots, config.effectiveScanRoots)) {
         const libraryItems = await measureAsync(
           "desktop.saveConfig.rescan",
@@ -130,6 +131,7 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
   adapters.updater.onUpdateStatusChange((entry) => {
     adapters.sendUpdateStatusChanged(entry);
   });
+  adapters.shell.setMinimizeToTrayOnClose((await service.getConfig()).minimizeToTrayOnClose);
 
   return {
     handlers,

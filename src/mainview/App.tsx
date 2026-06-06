@@ -469,6 +469,8 @@ function App() {
           onLanguageChange: handleSettingsLanguageChange,
           suppressSuccessNotifications: settings.general.suppressSuccessNotifications,
           onSuppressSuccessNotificationsChange: settings.general.setSuppressSuccessNotifications,
+          minimizeToTrayOnClose: settings.general.minimizeToTrayOnClose,
+          onMinimizeToTrayOnCloseChange: settings.general.setMinimizeToTrayOnClose,
         }}
         library={{
           scanRoots: settings.library.rows,

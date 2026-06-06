@@ -45,6 +45,7 @@ export function useSettingsState() {
   const [scanRootRows, setScanRootRows] = useState(buildScanRootRows([]));
   const [toolRows, setToolRows] = useState(buildToolRows([]));
   const [suppressSuccess, setSuppressSuccess] = useState(false);
+  const [minimizeToTrayOnClose, setMinimizeToTrayOnClose] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>("system");
   const [defaultEditorMode, setDefaultEditorMode] = useState<EditorViewMode>("preview");
   const [activeToolRowId, setActiveToolRowId] = useState<string | null>(null);
@@ -65,14 +66,17 @@ export function useSettingsState() {
   const generalDirty = useMemo(
     () =>
       suppressSuccess !== (appSettings?.suppressSuccessNotifications ?? false) ||
+      minimizeToTrayOnClose !== (appSettings?.minimizeToTrayOnClose ?? false) ||
       language !== (appSettings?.language ?? "system") ||
       defaultEditorMode !== (appSettings?.defaultEditorMode ?? "preview"),
     [
       appSettings?.defaultEditorMode,
       appSettings?.language,
+      appSettings?.minimizeToTrayOnClose,
       appSettings?.suppressSuccessNotifications,
       defaultEditorMode,
       language,
+      minimizeToTrayOnClose,
       suppressSuccess,
     ]
   );
@@ -86,6 +90,7 @@ export function useSettingsState() {
     setScanRootRows(buildScanRootRows(settings?.scanRoots ?? []));
     setToolRows(buildToolRows(settings?.tools ?? []));
     setSuppressSuccess(settings?.suppressSuccessNotifications ?? false);
+    setMinimizeToTrayOnClose(settings?.minimizeToTrayOnClose ?? false);
     setLanguage(settings?.language ?? "system");
     setDefaultEditorMode(settings?.defaultEditorMode ?? "preview");
     setActiveToolRowId(null);
@@ -142,6 +147,7 @@ export function useSettingsState() {
           tools: toolValidation.tools,
           toolMappings,
           suppressSuccessNotifications: suppressSuccess,
+          minimizeToTrayOnClose,
           language,
           defaultEditorMode,
           onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
@@ -170,6 +176,7 @@ export function useSettingsState() {
       appSettings?.scanRoots,
       defaultEditorMode,
       language,
+      minimizeToTrayOnClose,
       resetRows,
       scanRootValidation.cleanedRoots,
       scanRootValidation.hasErrors,
@@ -311,6 +318,8 @@ export function useSettingsState() {
     general: {
       defaultEditorMode,
       language,
+      minimizeToTrayOnClose,
+      setMinimizeToTrayOnClose,
       setDefaultEditorMode,
       setLanguage,
       suppressSuccessNotifications: suppressSuccess,

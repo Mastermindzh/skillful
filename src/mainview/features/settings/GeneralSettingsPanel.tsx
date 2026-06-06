@@ -9,6 +9,8 @@ export type GeneralSettingsPanelProps = {
   onDefaultEditorModeChange: (next: EditorViewMode) => void;
   suppressSuccessNotifications: boolean;
   onSuppressSuccessNotificationsChange: (next: boolean) => void;
+  minimizeToTrayOnClose: boolean;
+  onMinimizeToTrayOnCloseChange: (next: boolean) => void;
 };
 
 export function GeneralSettingsPanel({
@@ -18,6 +20,8 @@ export function GeneralSettingsPanel({
   onDefaultEditorModeChange,
   suppressSuccessNotifications,
   onSuppressSuccessNotificationsChange,
+  minimizeToTrayOnClose,
+  onMinimizeToTrayOnCloseChange,
 }: GeneralSettingsPanelProps) {
   const { t } = useAppTranslation();
   const languageOptions = [
@@ -61,6 +65,15 @@ export function GeneralSettingsPanel({
           onChange={(event) => onSuppressSuccessNotificationsChange(event.currentTarget.checked)}
           label={t("settings.general.notifications.hideSuccess")}
           description={t("settings.general.notifications.hideSuccessDescription")}
+        />
+      </Stack>
+      <Stack gap={6}>
+        <Title order={4}>{t("settings.general.tray.title")}</Title>
+        <Switch
+          checked={minimizeToTrayOnClose}
+          onChange={(event) => onMinimizeToTrayOnCloseChange(event.currentTarget.checked)}
+          label={t("settings.general.tray.minimizeOnClose")}
+          description={t("settings.general.tray.minimizeOnCloseDescription")}
         />
       </Stack>
     </Stack>

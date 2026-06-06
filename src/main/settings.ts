@@ -55,6 +55,19 @@ export function effectiveScanRoots(customRoots: string[]) {
   return Array.from(new Set([defaultSkillRoot(), ...customRoots]));
 }
 
+export function defaultAppConfig(scanRoots: string[] = []): AppConfig {
+  return {
+    scanRoots: scanRoots.length > 0 ? normalizeConfiguredScanRoots(scanRoots) : [],
+    tools: [],
+    toolMappings: [],
+    suppressSuccessNotifications: false,
+    minimizeToTrayOnClose: false,
+    language: "system",
+    defaultEditorMode: "preview",
+    onboardingTourCompleted: false,
+  };
+}
+
 function resolveSavedScanRoots(scanRoots: string[]) {
   return resolvePathList(scanRoots);
 }
@@ -144,6 +157,17 @@ export function normalizeToolMappings(mappings: LibraryItemToolMapping[], tools:
     .filter((mapping) => mapping.itemId && mapping.toolIds.length > 0);
 }
 
+export function normalizeAppConfig(config: AppConfig): AppConfig {
+  const scanRoots = normalizeConfiguredScanRoots(config.scanRoots);
+  const tools = normalizeToolConfigs(config.tools);
+  return {
+    ...config,
+    scanRoots,
+    tools,
+    toolMappings: normalizeToolMappings(config.toolMappings, tools),
+  };
+}
+
 function configFilePath() {
   return path.join(settingsDirectory(), SETTINGS_FILE_NAME);
 }
@@ -154,6 +178,7 @@ function serializedSettings(config: AppConfig): SettingsStoreData {
     tools: config.tools,
     toolMappings: config.toolMappings,
     suppressSuccessNotifications: config.suppressSuccessNotifications,
+    minimizeToTrayOnClose: config.minimizeToTrayOnClose,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
@@ -237,10 +262,23 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     tools,
     toolMappings,
     suppressSuccessNotifications: validated.data.suppressSuccessNotifications,
+    minimizeToTrayOnClose: validated.data.minimizeToTrayOnClose,
     language: validated.data.language,
     defaultEditorMode: validated.data.defaultEditorMode,
     onboardingTourCompleted: validated.data.onboardingTourCompleted,
   };
+}
+
+export async function loadSettingsOrDefaults(): Promise<AppConfig> {
+  const savedConfig = await loadSavedSettings();
+  if (savedConfig) return savedConfig;
+
+  const config = defaultAppConfig();
+  config.tools = await detectPresetTools();
+  if (config.tools.length > 0) {
+    await persistSettings(config);
+  }
+  return config;
 }
 
 export async function persistSettings(config: AppConfig) {
@@ -258,6 +296,7 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     tools: [...config.tools],
     toolMappings: [...config.toolMappings],
     suppressSuccessNotifications: config.suppressSuccessNotifications,
+    minimizeToTrayOnClose: config.minimizeToTrayOnClose,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,

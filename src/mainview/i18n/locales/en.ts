@@ -77,6 +77,10 @@ export const enMessages = {
   "settings.general.notifications.title": "Notifications",
   "settings.general.notifications.hideSuccess": "Hide success and info notifications",
   "settings.general.notifications.hideSuccessDescription": "Errors and warnings will still appear.",
+  "settings.general.tray.title": "App tray",
+  "settings.general.tray.minimizeOnClose": "Minimize to app tray on close",
+  "settings.general.tray.minimizeOnCloseDescription":
+    "Keep Skillful running in the tray when the window is closed.",
   "settings.language.system": "System default",
   "settings.language.en": "English",
   "settings.language.nl": "Nederlands",

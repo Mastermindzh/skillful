@@ -133,6 +133,7 @@ export interface AppConfig {
   tools: ToolConfig[];
   toolMappings: LibraryItemToolMapping[];
   suppressSuccessNotifications: boolean;
+  minimizeToTrayOnClose: boolean;
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;
@@ -147,6 +148,7 @@ export interface AppSettings {
   tools: ToolConfig[];
   toolMappings: LibraryItemToolMapping[];
   suppressSuccessNotifications: boolean;
+  minimizeToTrayOnClose: boolean;
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;

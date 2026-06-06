@@ -60,13 +60,11 @@ import {
   SKIP_DIRECTORIES,
 } from "./scanner";
 import {
+  defaultAppConfig,
   defaultSkillRoot,
-  detectPresetTools,
   effectiveScanRoots,
-  loadSavedSettings,
-  normalizeConfiguredScanRoots,
-  normalizeToolConfigs,
-  normalizeToolMappings,
+  loadSettingsOrDefaults,
+  normalizeAppConfig,
   persistSettings,
   settingsFromConfig,
 } from "./settings";
@@ -94,18 +92,10 @@ export class LibraryItemStore {
   private lastLocalMutationAt = 0;
   private configLoaded = false;
   private configMutex: Promise<void> = Promise.resolve();
-  readonly config: AppConfig;
+  private config: AppConfig;
 
   constructor(scanRoots?: string[]) {
-    this.config = {
-      scanRoots: scanRoots && scanRoots.length > 0 ? normalizeConfiguredScanRoots(scanRoots) : [],
-      tools: [],
-      toolMappings: [],
-      suppressSuccessNotifications: false,
-      language: "system",
-      defaultEditorMode: "preview",
-      onboardingTourCompleted: false,
-    };
+    this.config = defaultAppConfig(scanRoots);
     this.configLoaded = Boolean(scanRoots && scanRoots.length > 0);
   }
 
@@ -115,18 +105,8 @@ export class LibraryItemStore {
 
   private async ensureConfigLoaded() {
     if (this.configLoaded) return;
-    const savedConfig = await loadSavedSettings();
-    this.config.scanRoots = savedConfig?.scanRoots ?? [];
-    this.config.tools = savedConfig?.tools ?? (await detectPresetTools());
-    this.config.toolMappings = savedConfig?.toolMappings ?? [];
-    this.config.suppressSuccessNotifications = savedConfig?.suppressSuccessNotifications ?? false;
-    this.config.language = savedConfig?.language ?? "system";
-    this.config.defaultEditorMode = savedConfig?.defaultEditorMode ?? "preview";
-    this.config.onboardingTourCompleted = savedConfig?.onboardingTourCompleted ?? false;
+    this.config = await loadSettingsOrDefaults();
     this.configLoaded = true;
-    if (!savedConfig && this.config.tools.length > 0) {
-      await this.persistConfig();
-    }
   }
 
   /** Serialises config-mutating operations to prevent interleaved symlink work. */
@@ -166,25 +146,17 @@ export class LibraryItemStore {
 
       const previousTools = [...this.config.tools];
       const previousMappings = [...this.config.toolMappings];
-      const scanRoots = normalizeConfiguredScanRoots(nextConfig.scanRoots);
-      const tools = normalizeToolConfigs(nextConfig.tools);
-      const toolMappings = normalizeToolMappings(nextConfig.toolMappings, tools);
+      const config = normalizeAppConfig(nextConfig);
 
       // Persist the new config before reconciling tool installs so a crash mid-reconcile
       // leaves the saved config consistent with the user's intent rather than the old
       // state. Per-skill install failures are logged and do not roll back the config.
-      this.config.scanRoots = scanRoots;
-      this.config.tools = tools;
-      this.config.toolMappings = toolMappings;
-      this.config.suppressSuccessNotifications = nextConfig.suppressSuccessNotifications;
-      this.config.language = nextConfig.language;
-      this.config.defaultEditorMode = nextConfig.defaultEditorMode;
-      this.config.onboardingTourCompleted = nextConfig.onboardingTourCompleted;
+      this.config = config;
       this.configLoaded = true;
       await this.persistConfig();
 
       const libraryItemIds = new Set(
-        [...previousMappings, ...toolMappings].map((mapping) => mapping.itemId)
+        [...previousMappings, ...config.toolMappings].map((mapping) => mapping.itemId)
       );
       for (const itemId of libraryItemIds) {
         const libraryItem = this.libraryItems.get(itemId);
@@ -194,8 +166,8 @@ export class LibraryItemStore {
             libraryItem,
             previousTools,
             previousMappings,
-            tools,
-            toolMappings
+            config.tools,
+            config.toolMappings
           );
         } catch (error) {
           logger.error(`Failed to reconcile tool installs for ${libraryItem.title}.`, error);

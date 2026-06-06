@@ -1,5 +1,14 @@
 import path from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  type OpenDialogOptions,
+  shell,
+  Tray,
+} from "electron";
 import { createDesktopRuntime, type DesktopRequestHandlers } from "../desktop/runtime";
 import { logger } from "../main/logger";
 import { measureAsync, perfEnabled } from "../main/performance";
@@ -22,8 +31,11 @@ import {
 type RequestName = keyof AppRPC["bun"]["requests"];
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let pendingGitHubImport: GitHubImportDraft | null = null;
 let rendererReady = false;
+let isQuitting = false;
+let minimizeToTrayOnClose = false;
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
@@ -70,10 +82,55 @@ function sendGitHubImportRequested(payload: GitHubImportDraft) {
 
 function focusMainWindow() {
   if (!mainWindow) return;
+  if (!mainWindow.isVisible()) {
+    mainWindow.show();
+  }
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
   mainWindow.focus();
+}
+
+function setMinimizeToTrayOnClose(enabled: boolean) {
+  minimizeToTrayOnClose = enabled;
+}
+
+function hideMainWindowToTray() {
+  mainWindow?.hide();
+}
+
+function toggleMainWindowVisibility() {
+  if (!mainWindow) {
+    void createWindow();
+    return;
+  }
+  if (mainWindow.isVisible()) {
+    hideMainWindowToTray();
+    return;
+  }
+  focusMainWindow();
+}
+
+function quitApp() {
+  isQuitting = true;
+  app.quit();
+}
+
+function createTray() {
+  if (tray) return tray;
+  const nextTray = new Tray(iconPath());
+  nextTray.setToolTip("Skillful");
+  nextTray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "Show Skillful", click: focusMainWindow },
+      { label: "Hide to tray", click: hideMainWindowToTray },
+      { type: "separator" },
+      { label: "Quit Skillful", click: quitApp },
+    ])
+  );
+  nextTray.on("click", toggleMainWindowVisibility);
+  tray = nextTray;
+  return tray;
 }
 
 function flushPendingGitHubImport() {
@@ -155,8 +212,12 @@ async function createWindow() {
     }
   });
 
-  window.on("close", () => {
+  window.on("close", (event) => {
     windowStateSaver.flush();
+    if (!isQuitting && minimizeToTrayOnClose) {
+      event.preventDefault();
+      hideMainWindowToTray();
+    }
   });
 
   window.on("resize", () => {
@@ -231,6 +292,10 @@ function registerAppLifecycleHandlers() {
       logger.error("Failed to handle Skillful deep link", error);
     }
   });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
 }
 
 async function start() {
@@ -245,6 +310,7 @@ async function start() {
   registerAppLifecycleHandlers();
   logger.watch(ipcMain);
   await app.whenReady();
+  createTray();
 
   const runtime = await createDesktopRuntime({
     pickDirectory,
@@ -263,6 +329,7 @@ async function start() {
       revealPath: async (target) => {
         shell.showItemInFolder(path.resolve(target));
       },
+      setMinimizeToTrayOnClose,
     },
     updater: electronUpdater,
   });

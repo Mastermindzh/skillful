@@ -41,6 +41,7 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
     tools: settings?.tools ?? [],
     toolMappings: settings?.toolMappings ?? [],
     suppressSuccessNotifications: settings?.suppressSuccessNotifications ?? false,
+    minimizeToTrayOnClose: settings?.minimizeToTrayOnClose ?? false,
     language: settings?.language ?? "system",
     defaultEditorMode: settings?.defaultEditorMode ?? "preview",
     onboardingTourCompleted: settings?.onboardingTourCompleted ?? true,

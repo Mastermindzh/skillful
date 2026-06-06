@@ -80,6 +80,10 @@ export const nlMessages = {
   "settings.general.notifications.hideSuccess": "Succes- en infomeldingen verbergen",
   "settings.general.notifications.hideSuccessDescription":
     "Fouten en waarschuwingen blijven zichtbaar.",
+  "settings.general.tray.title": "Apptray",
+  "settings.general.tray.minimizeOnClose": "Minimaliseren naar apptray bij sluiten",
+  "settings.general.tray.minimizeOnCloseDescription":
+    "Laat Skillful actief in de tray wanneer het venster wordt gesloten.",
   "settings.language.system": "Systeemstandaard",
   "settings.language.en": "English",
   "settings.language.nl": "Nederlands",

@@ -66,6 +66,15 @@ test("allows choosing the default editor mode", async ({ page }) => {
   await expect(dialog.getByRole("button", { name: "Save settings" })).toBeEnabled();
 });
 
+test("allows changing close-to-tray behavior", async ({ page }) => {
+  await gotoApp(page, baseFixture);
+
+  const dialog = await openSettings(page, "general");
+  await dialog.getByLabel("Minimize to app tray on close").check();
+
+  await expect(dialog.getByRole("button", { name: "Save settings" })).toBeEnabled();
+});
+
 test("shows install controls for agents when a tool has agent install roots", async ({ page }) => {
   await gotoApp(page, agentInstallRootsFixture);
 
