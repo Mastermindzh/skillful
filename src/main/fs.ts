@@ -237,7 +237,7 @@ export async function writeFileExclusive(
 
 /**
  * Copies all files below one root into another root while preserving relative paths.
- * Uses atomic `copyFile(..., COPYFILE_EXCL)` so a duplicate target fails the operation.
+ * Uses exclusive copy by default so a duplicate target fails the operation.
  */
 export async function copyRelativeFiles(
   sourceRoot: string,
@@ -245,6 +245,7 @@ export async function copyRelativeFiles(
   options: {
     skip?: Set<string>;
     conflictMessage?: (relativePath: string) => string;
+    overwrite?: boolean;
   } = {}
 ) {
   if (!(await pathExists(sourceRoot))) return 0;
@@ -255,7 +256,11 @@ export async function copyRelativeFiles(
     const targetPath = path.join(targetRoot, relativePath);
     await ensureDirectory(path.dirname(targetPath));
     try {
-      await copyFile(sourcePath, targetPath, fsConstants.COPYFILE_EXCL);
+      if (options.overwrite) {
+        await copyFile(sourcePath, targetPath);
+      } else {
+        await copyFile(sourcePath, targetPath, fsConstants.COPYFILE_EXCL);
+      }
     } catch (error: unknown) {
       const code = (error as NodeJS.ErrnoException | undefined)?.code;
       if (code === "EEXIST") {

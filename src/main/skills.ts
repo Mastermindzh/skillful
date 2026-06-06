@@ -9,6 +9,7 @@ import type {
   AppConfig,
   CreateLibraryItemInput,
   ExportCollectionArchiveInput,
+  GitBackupConfig,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemDocument,
@@ -38,6 +39,7 @@ import {
   renameLibraryItem,
 } from "./creation";
 import { atomicWriteFile, ensureDirectory, pathExists } from "./fs";
+import { initializeGitBackup, runGitBackup } from "./git/backup";
 import { importLibraryCollectionFromGitHub } from "./githubImports";
 import {
   getLibraryItemToolStatuses,
@@ -138,6 +140,16 @@ export class LibraryItemStore {
   async getConfig() {
     await this.ensureConfigLoaded();
     return settingsFromConfig(this.config);
+  }
+
+  async initializeGitBackup(gitBackupConfig?: GitBackupConfig) {
+    await this.ensureConfigLoaded();
+    return initializeGitBackup(gitBackupConfig ?? this.config.gitBackup);
+  }
+
+  async runGitBackup() {
+    await this.ensureConfigLoaded();
+    return runGitBackup(this.config);
   }
 
   async saveConfig(nextConfig: AppConfig) {

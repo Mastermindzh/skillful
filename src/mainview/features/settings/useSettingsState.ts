@@ -1,9 +1,17 @@
 import { appRpc } from "@mainview-bridge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { presetInstallRoots, toolPresetById } from "../../../shared/toolPresets";
-import type { AppConfig, AppLanguage, AppSettings, EditorViewMode } from "../../../shared/types";
+import type {
+  AppConfig,
+  AppLanguage,
+  AppSettings,
+  EditorViewMode,
+  GitBackupConfig,
+  GitBackupResult,
+} from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
 import { setSuppressSuccessNotifications } from "../notifications/notify";
+import { defaultGitBackupConfig, sameGitBackupConfig, validateGitBackupConfig } from "./gitBackup";
 import { cleanPath } from "./paths";
 import { isPendingRemoval, markRowRemoval, restoreRow } from "./pendingRemoval";
 import {
@@ -23,14 +31,19 @@ import {
   validateToolRows,
 } from "./tools";
 
-export type SettingsTab = "general" | "library" | "tools" | "updates";
+export type SettingsTab = "general" | "library" | "tools" | "backup" | "updates";
 
 type SaveSettingsOptions = {
   activeLibraryItemId: string | null;
+  backupAfterSave?: boolean;
   toolMappings: AppConfig["toolMappings"];
   reloadSkills: (preferredId?: string) => Promise<string | null>;
   reloadToolStatuses: (itemId: string) => Promise<void>;
 };
+
+function backupResultSucceeded(result: GitBackupResult) {
+  return result.state === "ready" || result.state === "up-to-date";
+}
 
 /**
  * Keeps settings modal state separate from saved app settings so users can edit rows,
@@ -48,12 +61,17 @@ export function useSettingsState() {
   const [minimizeToTrayOnClose, setMinimizeToTrayOnClose] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>("system");
   const [defaultEditorMode, setDefaultEditorMode] = useState<EditorViewMode>("preview");
+  const [gitBackup, setGitBackup] = useState<GitBackupConfig>(defaultGitBackupConfig());
+  const [gitBackupInitializing, setGitBackupInitializing] = useState(false);
+  const [gitBackupInitializeSucceeded, setGitBackupInitializeSucceeded] = useState(false);
+  const [gitBackupError, setGitBackupError] = useState<string | null>(null);
   const [activeToolRowId, setActiveToolRowId] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
 
   const scanRootValidation = useMemo(() => validateScanRootRows(scanRootRows), [scanRootRows]);
   const toolValidation = useMemo(() => validateToolRows(toolRows), [toolRows]);
+  const gitBackupValidation = useMemo(() => validateGitBackupConfig(gitBackup), [gitBackup]);
   const presetTools = useMemo(() => availableToolPresets(toolRows), [toolRows]);
   const libraryDirty = useMemo(
     () => !sameScanRoots(scanRootValidation.cleanedRoots, appSettings?.scanRoots ?? []),
@@ -80,7 +98,15 @@ export function useSettingsState() {
       suppressSuccess,
     ]
   );
-  const settingsChanged = libraryDirty || toolsDirty || generalDirty;
+  const backupDirty = useMemo(
+    () =>
+      !sameGitBackupConfig(
+        gitBackupValidation.config,
+        appSettings?.gitBackup ?? defaultGitBackupConfig()
+      ),
+    [appSettings?.gitBackup, gitBackupValidation.config]
+  );
+  const settingsChanged = libraryDirty || toolsDirty || generalDirty || backupDirty;
 
   useEffect(() => {
     tRef.current = t;
@@ -93,6 +119,7 @@ export function useSettingsState() {
     setMinimizeToTrayOnClose(settings?.minimizeToTrayOnClose ?? false);
     setLanguage(settings?.language ?? "system");
     setDefaultEditorMode(settings?.defaultEditorMode ?? "preview");
+    setGitBackup(settings?.gitBackup ?? defaultGitBackupConfig());
     setActiveToolRowId(null);
   }, []);
 
@@ -131,11 +158,13 @@ export function useSettingsState() {
   const saveSettings = useCallback(
     async ({
       activeLibraryItemId,
+      backupAfterSave = false,
       reloadSkills,
       reloadToolStatuses,
       toolMappings,
     }: SaveSettingsOptions) => {
-      if (scanRootValidation.hasErrors || toolValidation.hasErrors) return;
+      if (scanRootValidation.hasErrors || toolValidation.hasErrors || gitBackupValidation.hasErrors)
+        return;
       setSettingsSaving(true);
       try {
         const scanRootsChanged = !sameScanRoots(
@@ -151,18 +180,25 @@ export function useSettingsState() {
           language,
           defaultEditorMode,
           onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
+          gitBackup: gitBackupValidation.config,
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
         setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
         setSettingsError(null);
-        setSettingsOpen(false);
         if (scanRootsChanged) {
           await reloadSkills(activeLibraryItemId ?? undefined);
         }
         if (activeLibraryItemId) {
           await reloadToolStatuses(activeLibraryItemId);
         }
+        if (backupAfterSave) {
+          const result = await appRpc.request.runGitBackup();
+          if (!backupResultSucceeded(result)) {
+            throw new Error(result.message || t("settings.backup.error.run"));
+          }
+        }
+        setSettingsOpen(false);
       } catch (nextError) {
         setSettingsError(
           nextError instanceof Error ? nextError.message : t("common.error.saveSettings")
@@ -175,6 +211,8 @@ export function useSettingsState() {
       appSettings?.onboardingTourCompleted,
       appSettings?.scanRoots,
       defaultEditorMode,
+      gitBackupValidation.config,
+      gitBackupValidation.hasErrors,
       language,
       minimizeToTrayOnClose,
       resetRows,
@@ -286,6 +324,47 @@ export function useSettingsState() {
     setActiveToolRowId(id);
   }, []);
 
+  const updateGitBackup = useCallback(
+    <K extends keyof GitBackupConfig>(key: K, value: GitBackupConfig[K]) => {
+      setGitBackup((current) => ({ ...current, [key]: value }));
+      setGitBackupError(null);
+      setGitBackupInitializeSucceeded(false);
+    },
+    []
+  );
+
+  const pickGitBackupRepository = useCallback(async () => {
+    const selectedPath = await appRpc.request.pickGitBackupRepositoryFolder();
+    if (!selectedPath) return;
+    setGitBackup((current) => ({ ...current, repositoryPath: selectedPath }));
+    setGitBackupError(null);
+    setGitBackupInitializeSucceeded(false);
+  }, []);
+
+  const initializeGitBackup = useCallback(async () => {
+    setGitBackupInitializing(true);
+    setGitBackupInitializeSucceeded(false);
+    try {
+      const result = await appRpc.request.initializeGitBackup({
+        gitBackup: gitBackupValidation.config,
+      });
+      if (!backupResultSucceeded(result)) {
+        throw new Error(result.message || tRef.current("settings.backup.error.initialize"));
+      }
+      setGitBackupError(null);
+      setGitBackupInitializeSucceeded(true);
+      window.setTimeout(() => setGitBackupInitializeSucceeded(false), 1600);
+    } catch (nextError) {
+      setGitBackupError(
+        nextError instanceof Error
+          ? nextError.message
+          : tRef.current("settings.backup.error.initialize")
+      );
+    } finally {
+      setGitBackupInitializing(false);
+    }
+  }, [gitBackupValidation.config]);
+
   return {
     appSettings,
     loadSettings,
@@ -295,7 +374,8 @@ export function useSettingsState() {
       close: closeSettings,
       errorMessage: settingsError,
       hasChanges: settingsChanged,
-      hasValidationErrors: scanRootValidation.hasErrors || toolValidation.hasErrors,
+      hasValidationErrors:
+        scanRootValidation.hasErrors || toolValidation.hasErrors || gitBackupValidation.hasErrors,
       open: openSettings,
       opened: settingsOpen,
       save: saveSettings,
@@ -305,6 +385,7 @@ export function useSettingsState() {
         general: generalDirty,
         library: libraryDirty,
         tools: toolsDirty,
+        backup: backupDirty,
       },
     },
     library: {
@@ -337,6 +418,17 @@ export function useSettingsState() {
       setActiveRowId: setActiveToolRowId,
       updateRow: updateTool,
       validation: toolValidation,
+    },
+    backup: {
+      config: gitBackup,
+      errorMessage: gitBackupError,
+      hasUnsavedChanges: backupDirty,
+      initialize: initializeGitBackup,
+      initializing: gitBackupInitializing,
+      initializeSucceeded: gitBackupInitializeSucceeded,
+      issue: gitBackupValidation.issue,
+      pickRepository: pickGitBackupRepository,
+      updateConfig: updateGitBackup,
     },
   };
 }

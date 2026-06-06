@@ -1,4 +1,4 @@
-import { appRpc, onLibraryItemsUpdated } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImportCollectionFromGitHubInput } from "../../../shared/githubImport";
 import type {
@@ -8,6 +8,7 @@ import type {
   ExportCollectionArchiveResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
+  LibraryItemCollectionSummary,
   LibraryItemDocument,
   LibraryItemSummary,
 } from "../../../shared/types";
@@ -46,6 +47,18 @@ function replaceLibraryItemSummary(
   return [...nextItems, nextItem].sort(
     (a, b) => a.title.localeCompare(b.title) || a.entryPath.localeCompare(b.entryPath)
   );
+}
+
+function upsertCollectionSummary(
+  collections: LibraryItemCollectionSummary[],
+  nextCollection: LibraryItemCollectionSummary
+) {
+  const nextCollections = collections.some((collection) => collection.id === nextCollection.id)
+    ? collections.map((collection) =>
+        collection.id === nextCollection.id ? nextCollection : collection
+      )
+    : [...collections, nextCollection];
+  return nextCollections.sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id));
 }
 
 /**
@@ -225,7 +238,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     async (name: string) =>
       runReportingMutation({ fallbackMessage: t("collection.error.create") }, async () => {
         const collection = await appRpc.request.createCollection({ name });
-        setCollectionList(await appRpc.request.listCollections());
+        setCollectionList((collections) => upsertCollectionSummary(collections, collection));
         return collection;
       }),
     [runReportingMutation, setCollectionList, t]
@@ -736,7 +749,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
   }, [activeLibraryItemId, loadSkill]);
 
   useEffect(() => {
-    return onLibraryItemsUpdated(async ({ libraryItems }) => {
+    return onAppMessage("libraryItemsUpdated", async ({ libraryItems }) => {
       setSkillList(libraryItems);
       setCollectionList(await appRpc.request.listCollections());
       // Drop drafts whose owning libraryItem was removed on disk to avoid unbounded draft growth.

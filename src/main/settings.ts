@@ -8,6 +8,7 @@ import { presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
 import type {
   AppConfig,
   AppSettings,
+  GitBackupConfig,
   LibraryItemKind,
   LibraryItemToolMapping,
   ToolConfig,
@@ -26,6 +27,19 @@ type SettingsStoreOptions = ElectronStoreOptions<SettingsStoreData> & {
 
 function settingsDirectoryName() {
   return process.env.SKILLFUL_CONFIG_NAME?.trim() || DEFAULT_SETTINGS_DIRECTORY_NAME;
+}
+
+export function defaultGitBackupConfig(): GitBackupConfig {
+  return {
+    enabled: false,
+    repositoryPath: "",
+    remoteUrl: "",
+    branch: "main",
+    includeSettings: true,
+    includeDefaultLibrary: true,
+    autoBackup: false,
+    autoBackupIntervalMinutes: 10,
+  };
 }
 
 /** Returns the directory where Skillful keeps settings and the default skill library. */
@@ -65,6 +79,7 @@ export function defaultAppConfig(scanRoots: string[] = []): AppConfig {
     language: "system",
     defaultEditorMode: "preview",
     onboardingTourCompleted: false,
+    gitBackup: defaultGitBackupConfig(),
   };
 }
 
@@ -168,7 +183,7 @@ export function normalizeAppConfig(config: AppConfig): AppConfig {
   };
 }
 
-function configFilePath() {
+export function configFilePath() {
   return path.join(settingsDirectory(), SETTINGS_FILE_NAME);
 }
 
@@ -182,6 +197,7 @@ function serializedSettings(config: AppConfig): SettingsStoreData {
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
+    gitBackup: config.gitBackup,
   };
 }
 
@@ -266,6 +282,7 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     language: validated.data.language,
     defaultEditorMode: validated.data.defaultEditorMode,
     onboardingTourCompleted: validated.data.onboardingTourCompleted,
+    gitBackup: validated.data.gitBackup,
   };
 }
 
@@ -300,5 +317,6 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
+    gitBackup: { ...config.gitBackup },
   };
 }

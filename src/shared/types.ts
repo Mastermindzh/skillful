@@ -128,6 +128,43 @@ export interface LibraryItemToolMapping {
   toolIds: string[];
 }
 
+export interface GitBackupConfig {
+  enabled: boolean;
+  repositoryPath: string;
+  remoteUrl: string;
+  branch: string;
+  includeSettings: boolean;
+  includeDefaultLibrary: boolean;
+  autoBackup: boolean;
+  autoBackupIntervalMinutes: number;
+}
+
+export type GitBackupState =
+  | "disabled"
+  | "not-configured"
+  | "ready"
+  | "missing-git"
+  | "auth-failed"
+  | "remote-unreachable"
+  | "dirty"
+  | "up-to-date"
+  | "error";
+
+export interface GitBackupStatus {
+  state: GitBackupState;
+  repositoryPath: string;
+  remoteUrl: string;
+  branch: string;
+  lastCommit?: string;
+  lastBackupAt?: string;
+  message?: string;
+}
+
+export interface GitBackupResult extends GitBackupStatus {
+  changed: boolean;
+  pushed: boolean;
+}
+
 export interface AppConfig {
   scanRoots: string[];
   tools: ToolConfig[];
@@ -137,6 +174,7 @@ export interface AppConfig {
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;
+  gitBackup: GitBackupConfig;
 }
 
 export interface AppSettings {
@@ -152,4 +190,5 @@ export interface AppSettings {
   language: AppLanguage;
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;
+  gitBackup: GitBackupConfig;
 }

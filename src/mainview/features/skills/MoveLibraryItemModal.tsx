@@ -44,7 +44,12 @@ export function MoveLibraryItemModal({
 
   useEffect(() => {
     if (!opened) return;
-    setCollectionId(targetCollections[0]?.id ?? null);
+    setCollectionId((currentCollectionId) =>
+      currentCollectionId &&
+      targetCollections.some((collection) => collection.id === currentCollectionId)
+        ? currentCollectionId
+        : (targetCollections[0]?.id ?? null)
+    );
   }, [opened, targetCollections]);
 
   const collectionOptions = useMemo(

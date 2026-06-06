@@ -9,6 +9,7 @@ import type { AppUpdateState } from "../../../shared/updates";
 
 export type LibraryItemsUpdatedPayload = AppRPC["bun"]["messages"]["libraryItemsUpdated"];
 export type GitHubImportRequestedPayload = GitHubImportDraft;
+export type AutoGitBackupCompletedPayload = AppRPC["bun"]["messages"]["autoGitBackupCompleted"];
 export type RequestSchema = AppRPC["bun"]["requests"];
 export type RequestClient = {
   [K in keyof RequestSchema]: (
