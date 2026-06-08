@@ -22,7 +22,6 @@ export const LibraryItemToolMappingSchema = z.object({
 
 export const GitBackupConfigSchema = z.object({
   enabled: z.boolean().default(false),
-  repositoryPath: z.string().default(""),
   remoteUrl: z.string().default(""),
   branch: z.string().default("main"),
   includeSettings: z.boolean().default(true),
@@ -42,7 +41,6 @@ export const AppConfigSchema = z.object({
   onboardingTourCompleted: z.boolean().default(false),
   gitBackup: GitBackupConfigSchema.default({
     enabled: false,
-    repositoryPath: "",
     remoteUrl: "",
     branch: "main",
     includeSettings: true,

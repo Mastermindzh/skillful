@@ -1,7 +1,7 @@
-import { TOOL_PRESETS, type ToolPreset } from "../../../shared/toolPresets";
-import type { ToolConfig } from "../../../shared/types";
-import type { TranslationKey } from "../../i18n/messages";
-import { cleanPath, isAbsolutePath } from "./paths";
+import { TOOL_PRESETS, type ToolPreset } from "../../../../shared/toolPresets";
+import type { ToolConfig } from "../../../../shared/types";
+import type { TranslationKey } from "../../../i18n/messages";
+import { cleanPath, isAbsolutePath } from "../utils/paths";
 
 export type ToolRow = {
   id: string;

@@ -22,7 +22,6 @@ function intervalMs(config: GitBackupConfig) {
 function errorResult(config: GitBackupConfig, error: unknown): GitBackupResult {
   return {
     state: "error",
-    repositoryPath: config.repositoryPath,
     remoteUrl: config.remoteUrl,
     branch: config.branch,
     changed: false,

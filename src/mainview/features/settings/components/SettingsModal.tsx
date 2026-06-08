@@ -1,15 +1,15 @@
 import { Button, Group, Modal, Stack, Tabs, Text } from "@mantine/core";
-import { Check, GitBranch, UploadCloud } from "lucide-react";
+import { UploadCloud } from "lucide-react";
 import { useState } from "react";
-import { UnsavedChangesDialog } from "../../components/UnsavedChangesDialog";
-import { useAppTranslation } from "../../i18n/i18n";
+import { UnsavedChangesDialog } from "../../../components/UnsavedChangesDialog";
+import { useAppTranslation } from "../../../i18n/i18n";
+import type { SettingsTab } from "../state/useSettingsState";
 import { BackupSettingsPanel, type BackupSettingsPanelProps } from "./BackupSettingsPanel";
 import { DirtyTabLabel } from "./DirtyTabLabel";
 import { GeneralSettingsPanel, type GeneralSettingsPanelProps } from "./GeneralSettingsPanel";
 import { LibrarySettingsPanel, type LibrarySettingsPanelProps } from "./LibrarySettingsPanel";
 import { ToolSettingsPanel, type ToolSettingsPanelProps } from "./ToolSettingsPanel";
 import { UpdatesPanel, type UpdatesPanelProps } from "./UpdatesPanel";
-import type { SettingsTab } from "./useSettingsState";
 
 type SettingsModalProps = {
   opened: boolean;
@@ -24,12 +24,8 @@ type SettingsModalProps = {
     saving: boolean;
     errorMessage: string | null;
     syncAfterSave: boolean;
-    canTestBackup: boolean;
-    testingBackup: boolean;
-    backupTestSucceeded: boolean;
     onClose: () => void;
     onSave: () => void;
-    onTestBackup: () => void;
   };
   dirtyTabs: {
     general: boolean;
@@ -150,23 +146,7 @@ export function SettingsModal({
             </Text>
           ) : null}
 
-          <Group justify="space-between" align="center" gap="sm">
-            {activeTab === "backup" ? (
-              <Button
-                variant="default"
-                color="gray"
-                onClick={footer.onTestBackup}
-                loading={footer.testingBackup}
-                disabled={!footer.canTestBackup || footer.saving}
-                leftSection={
-                  footer.backupTestSucceeded ? <Check size={16} /> : <GitBranch size={16} />
-                }
-              >
-                {t("settings.backup.testSetup")}
-              </Button>
-            ) : (
-              <div />
-            )}
+          <Group justify="flex-end" align="center" gap="sm">
             {activeTab === "updates" ? (
               <Button variant="default" color="gray" onClick={requestClose}>
                 {t("settings.close")}

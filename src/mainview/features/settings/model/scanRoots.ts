@@ -1,5 +1,5 @@
-import type { TranslationKey, TranslationValues } from "../../i18n/messages";
-import { cleanPath, isAbsolutePath } from "./paths";
+import type { TranslationKey, TranslationValues } from "../../../i18n/messages";
+import { cleanPath, isAbsolutePath } from "../utils/paths";
 
 export type ScanRootRow = {
   id: string;

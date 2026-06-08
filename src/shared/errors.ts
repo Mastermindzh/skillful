@@ -18,6 +18,8 @@ export type AppErrorCode =
   | "archive-path-unsafe"
   | "archive-manifest-missing"
   | "settings-corrupt"
+  | "git-restore-local-content"
+  | "git-restore-invalid-remote"
   | "tool-install-conflict"
   | "tool-install-missing-root"
   | "rename-relink-failed"

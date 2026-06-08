@@ -124,7 +124,6 @@ describe("loadSavedSettings", () => {
       gitBackup: {
         ...defaultGitBackupConfig(),
         enabled: true,
-        repositoryPath: path.join(tmpRoot, "backup"),
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
     });
@@ -150,7 +149,6 @@ describe("loadSavedSettings", () => {
       gitBackup: {
         ...defaultGitBackupConfig(),
         enabled: true,
-        repositoryPath: path.join(tmpRoot, "backup"),
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
     });

@@ -31,14 +31,10 @@ export const settingsRequests = {
     createdDirectories.add(path);
     return undefined;
   },
-  async pickGitBackupRepositoryFolder() {
-    return "/mock/skillful-backup";
-  },
   async initializeGitBackup({ gitBackup }) {
     const config = gitBackup;
     return {
       state: config.enabled ? "ready" : "disabled",
-      repositoryPath: config.repositoryPath,
       remoteUrl: config.remoteUrl,
       branch: config.branch,
       changed: false,
@@ -50,7 +46,6 @@ export const settingsRequests = {
     const config = state.settings.gitBackup;
     return {
       state: config.enabled ? "ready" : "disabled",
-      repositoryPath: config.repositoryPath,
       remoteUrl: config.remoteUrl,
       branch: config.branch,
       lastBackupAt: config.enabled ? new Date().toISOString() : undefined,
@@ -59,13 +54,20 @@ export const settingsRequests = {
       message: config.enabled ? "Backup pushed." : "Git backup is disabled.",
     };
   },
+  async restoreGitBackup({ gitBackup }) {
+    state.settings = {
+      ...state.settings,
+      gitBackup: clone(gitBackup),
+    };
+    return clone(state.settings);
+  },
 } satisfies Pick<
   RequestClient,
   | "getConfig"
   | "saveConfig"
   | "setOnboardingTourCompleted"
   | "createDirectory"
-  | "pickGitBackupRepositoryFolder"
   | "initializeGitBackup"
   | "runGitBackup"
+  | "restoreGitBackup"
 >;

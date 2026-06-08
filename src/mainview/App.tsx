@@ -21,9 +21,9 @@ import { RenameCollectionModal } from "./features/navigation/RenameCollectionMod
 import { useCollectionDialogs } from "./features/navigation/useCollectionDialogs";
 import { notify } from "./features/notifications/notify";
 import { OnboardingTour } from "./features/onboarding/OnboardingTour";
-import { SettingsModal } from "./features/settings/SettingsModal";
-import { useSettingsState } from "./features/settings/useSettingsState";
-import { useUpdaterState } from "./features/settings/useUpdaterState";
+import { SettingsModal } from "./features/settings/components/SettingsModal";
+import { useSettingsState } from "./features/settings/state/useSettingsState";
+import { useUpdaterState } from "./features/settings/state/useUpdaterState";
 import { KeyboardShortcutsModal } from "./features/shortcuts/KeyboardShortcutsModal";
 import { useAppShortcuts } from "./features/shortcuts/useAppShortcuts";
 import { CreateLibraryItemModal } from "./features/skills/CreateLibraryItemModal";
@@ -513,10 +513,28 @@ function App() {
         }}
         backup={{
           config: settings.backup.config,
-          issue: settings.backup.issue,
+          configured: settings.backup.configured,
+          issue: settings.backup.configured ? settings.backup.issue : settings.backup.actionIssue,
           errorMessage: settings.backup.errorMessage,
+          restoreDisabled: settings.backup.restoreHasValidationErrors || settings.modal.saving,
+          restoreNeedsConfirmation: settings.backup.restoreNeedsConfirmation,
+          restoring: settings.backup.restoring,
           onConfigChange: settings.backup.updateConfig,
-          onPickRepository: () => void settings.backup.pickRepository(),
+          onReset: settings.backup.reset,
+          onRestore: (mode) =>
+            void settings.backup.restore({
+              activeLibraryItemId: library.activeLibraryItemId,
+              mode,
+              reloadSkills: library.reloadLibraryAfterRestore,
+              reloadToolStatuses: skillTools.loadToolStatuses,
+            }),
+          onSetup: () =>
+            void settings.backup.setup({
+              activeLibraryItemId: library.activeLibraryItemId,
+              toolMappings: settings.appSettings?.toolMappings ?? [],
+              reloadSkills: library.loadSkillList,
+              reloadToolStatuses: skillTools.loadToolStatuses,
+            }),
         }}
         updates={{
           updateState: updater.updateState,
@@ -534,12 +552,6 @@ function App() {
           saving: settings.modal.saving,
           errorMessage: settings.modal.errorMessage,
           syncAfterSave: syncSettingsAfterSave,
-          canTestBackup:
-            settings.backup.config.enabled &&
-            !settings.backup.hasUnsavedChanges &&
-            !settings.modal.hasValidationErrors,
-          testingBackup: settings.backup.initializing,
-          backupTestSucceeded: settings.backup.initializeSucceeded,
           onClose: settings.modal.close,
           onSave: () =>
             void settings.modal.save({
@@ -549,7 +561,6 @@ function App() {
               reloadSkills: library.loadSkillList,
               reloadToolStatuses: skillTools.loadToolStatuses,
             }),
-          onTestBackup: () => void settings.backup.initialize(),
         }}
         onTabChange={settings.modal.setActiveTab}
         dirtyTabs={settings.modal.dirtyTabs}

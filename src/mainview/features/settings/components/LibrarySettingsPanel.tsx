@@ -1,9 +1,9 @@
 import { ActionIcon, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { Minus, Plus, Undo2 } from "lucide-react";
-import { useAppTranslation } from "../../i18n/i18n";
-import { preventFileUriDrop } from "./dnd";
+import { useAppTranslation } from "../../../i18n/i18n";
+import type { ScanRootIssue, ScanRootRow } from "../model/scanRoots";
+import { preventFileUriDrop } from "../utils/dnd";
 import { PendingRemovalBadge } from "./PendingRemovalBadge";
-import type { ScanRootIssue, ScanRootRow } from "./scanRoots";
 
 export type LibrarySettingsPanelProps = {
   defaultScanRoot: string;

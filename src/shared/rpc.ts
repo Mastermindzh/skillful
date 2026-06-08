@@ -7,6 +7,7 @@ import type {
   ExportCollectionArchiveInput,
   ExportCollectionArchiveResult,
   GitBackupConfig,
+  GitBackupRestoreMode,
   GitBackupResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
@@ -63,10 +64,6 @@ export type AppRPC = {
         params: undefined;
         response: string | null;
       };
-      pickGitBackupRepositoryFolder: {
-        params: undefined;
-        response: string | null;
-      };
       initializeGitBackup: {
         params: { gitBackup: GitBackupConfig };
         response: GitBackupResult;
@@ -74,6 +71,10 @@ export type AppRPC = {
       runGitBackup: {
         params: undefined;
         response: GitBackupResult;
+      };
+      restoreGitBackup: {
+        params: { gitBackup: GitBackupConfig; mode: GitBackupRestoreMode };
+        response: AppSettings;
       };
       importCollection: {
         params: ImportCollectionFromPathInput;

@@ -1,6 +1,6 @@
 import { Badge } from "@mantine/core";
-import { useAppTranslation } from "../../i18n/i18n";
-import type { TranslationKey } from "../../i18n/messages";
+import { useAppTranslation } from "../../../i18n/i18n";
+import type { TranslationKey } from "../../../i18n/messages";
 
 type PendingRemovalBadgeProps = {
   /**

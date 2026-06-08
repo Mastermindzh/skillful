@@ -5,7 +5,6 @@ import { GitBackupScheduler } from "./scheduler";
 function config(overrides: Partial<GitBackupConfig> = {}): GitBackupConfig {
   return {
     enabled: true,
-    repositoryPath: "/backup",
     remoteUrl: "git@example.com:me/skillful.git",
     branch: "main",
     includeSettings: true,
@@ -19,7 +18,6 @@ function config(overrides: Partial<GitBackupConfig> = {}): GitBackupConfig {
 function result(overrides: Partial<GitBackupResult> = {}): GitBackupResult {
   return {
     state: "ready",
-    repositoryPath: "/backup",
     remoteUrl: "git@example.com:me/skillful.git",
     branch: "main",
     changed: true,

@@ -3,6 +3,7 @@
 ## 1.2.0 - 2026-xx-xx
 
 - Added git backup
+  - Added restore from git
 - Added tray icon with "minimize to tray" behaviour
 
 - fixed filesystem watcher also watching chromium files

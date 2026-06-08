@@ -1,7 +1,7 @@
 import { Button, Code, Group, Stack, Text, Title } from "@mantine/core";
-import type { AppUpdateState, UpdateStatusEntry } from "../../../shared/updates";
-import { DialogErrorMessage } from "../../components/dialogs/DialogErrorMessage";
-import { useAppTranslation } from "../../i18n/i18n";
+import type { AppUpdateState, UpdateStatusEntry } from "../../../../shared/updates";
+import { DialogErrorMessage } from "../../../components/dialogs/DialogErrorMessage";
+import { useAppTranslation } from "../../../i18n/i18n";
 
 export type UpdatesPanelProps = {
   updateState: AppUpdateState | null;

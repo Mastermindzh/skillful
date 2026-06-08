@@ -1,6 +1,6 @@
 import { NativeSelect, Stack, Switch, Title } from "@mantine/core";
-import type { AppLanguage, EditorViewMode } from "../../../shared/types";
-import { useAppTranslation } from "../../i18n/i18n";
+import type { AppLanguage, EditorViewMode } from "../../../../shared/types";
+import { useAppTranslation } from "../../../i18n/i18n";
 
 export type GeneralSettingsPanelProps = {
   language: AppLanguage;

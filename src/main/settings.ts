@@ -32,7 +32,6 @@ function settingsDirectoryName() {
 export function defaultGitBackupConfig(): GitBackupConfig {
   return {
     enabled: false,
-    repositoryPath: "",
     remoteUrl: "",
     branch: "main",
     includeSettings: true,

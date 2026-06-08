@@ -10,6 +10,7 @@ import type {
   CreateLibraryItemInput,
   ExportCollectionArchiveInput,
   GitBackupConfig,
+  GitBackupRestoreMode,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemDocument,
@@ -39,7 +40,11 @@ import {
   renameLibraryItem,
 } from "./creation";
 import { atomicWriteFile, ensureDirectory, pathExists } from "./fs";
-import { initializeGitBackup, runGitBackup } from "./git/backup";
+import {
+  initializeGitBackup,
+  restoreGitBackup as restoreGitBackupFromGit,
+  runGitBackup,
+} from "./git/backup";
 import { importLibraryCollectionFromGitHub } from "./githubImports";
 import {
   getLibraryItemToolStatuses,
@@ -150,6 +155,23 @@ export class LibraryItemStore {
   async runGitBackup() {
     await this.ensureConfigLoaded();
     return runGitBackup(this.config);
+  }
+
+  async restoreGitBackup(gitBackupConfig: GitBackupConfig, mode: GitBackupRestoreMode) {
+    await this.ensureConfigLoaded();
+    const config = normalizeAppConfig({ ...this.config, gitBackup: gitBackupConfig });
+    const result = await restoreGitBackupFromGit(config.gitBackup, mode);
+    if (!result.restored) {
+      throw new AppError("internal", result.message || "Backup restore failed.");
+    }
+    const restoredConfig = await loadSettingsOrDefaults();
+    this.config = normalizeAppConfig(
+      restoredConfig.gitBackup.remoteUrl.trim()
+        ? restoredConfig
+        : { ...restoredConfig, gitBackup: { ...config.gitBackup, branch: result.branch } }
+    );
+    await this.persistConfig();
+    return settingsFromConfig(this.config);
   }
 
   async saveConfig(nextConfig: AppConfig) {

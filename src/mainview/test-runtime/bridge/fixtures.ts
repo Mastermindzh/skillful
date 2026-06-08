@@ -47,7 +47,6 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
     onboardingTourCompleted: settings?.onboardingTourCompleted ?? true,
     gitBackup: settings?.gitBackup ?? {
       enabled: false,
-      repositoryPath: "",
       remoteUrl: "",
       branch: "main",
       includeSettings: true,

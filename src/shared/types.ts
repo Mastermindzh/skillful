@@ -130,7 +130,6 @@ export interface LibraryItemToolMapping {
 
 export interface GitBackupConfig {
   enabled: boolean;
-  repositoryPath: string;
   remoteUrl: string;
   branch: string;
   includeSettings: boolean;
@@ -152,7 +151,6 @@ export type GitBackupState =
 
 export interface GitBackupStatus {
   state: GitBackupState;
-  repositoryPath: string;
   remoteUrl: string;
   branch: string;
   lastCommit?: string;
@@ -163,6 +161,14 @@ export interface GitBackupStatus {
 export interface GitBackupResult extends GitBackupStatus {
   changed: boolean;
   pushed: boolean;
+}
+
+export type GitBackupRestoreMode = "safe" | "replace";
+
+export interface GitBackupRestoreResult extends GitBackupStatus {
+  restored: boolean;
+  localContentFound: boolean;
+  restoredPaths: string[];
 }
 
 export interface AppConfig {

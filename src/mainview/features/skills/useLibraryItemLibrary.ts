@@ -158,6 +158,38 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     [loadLibraryIndexes, t]
   );
 
+  const reloadLibraryAfterRestore = useCallback(
+    async (preferredId?: string) => {
+      setStatus("loading");
+      try {
+        const { nextSkills } = await loadLibraryIndexes("refresh");
+        const nextSkillId =
+          preferredId && nextSkills.some((libraryItem) => libraryItem.id === preferredId)
+            ? preferredId
+            : (nextSkills[0]?.id ?? null);
+        const knownLibraryItemIds = nextSkills.map((libraryItem) => libraryItem.id);
+        activeSkillIdRef.current = nextSkillId;
+        setActiveSkillId(nextSkillId);
+        setDraftsByFile((drafts) => pruneDraftsForKnownLibraryItems(drafts, knownLibraryItemIds));
+        if (!nextSkillId || loadedSkillIdRef.current !== nextSkillId) {
+          loadedSkillIdRef.current = null;
+          setActiveSkill(null);
+          setActiveFilePath(null);
+        }
+        setError(null);
+        setStatus("idle");
+        return nextSkillId;
+      } catch (nextError) {
+        setStatus("error");
+        const message = nextError instanceof Error ? nextError.message : t("item.error.load");
+        setError(message);
+        notify.error(message, { title: t("library.heading") });
+        return null;
+      }
+    },
+    [loadLibraryIndexes, t]
+  );
+
   const loadSkill = useCallback(
     async (id: string) => {
       const requestSequence = ++loadSkillRequestSequenceRef.current;
@@ -826,6 +858,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     error,
     hasUnsavedChanges: navigation.hasUnsavedChanges,
     loadSkillList,
+    reloadLibraryAfterRestore,
     refreshingSkills,
     refreshLibraryItems,
     renameCollection,
