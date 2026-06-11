@@ -19,6 +19,7 @@
 }
 
 .sidebar-panel {
+	position: relative;
 	height: 100%;
 	background: var(--app-sidebar-bg);
 	color: var(--app-sidebar-fg);
@@ -26,6 +27,20 @@
 	backdrop-filter: none;
 	padding: 8px 4px;
 	border-radius: 0;
+}
+
+.platform-mac .sidebar-panel {
+	padding-top: 38px;
+}
+
+.platform-mac .sidebar-panel::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 32px;
+	-webkit-app-region: drag;
 }
 
 .sidebar-section {
@@ -180,4 +195,3 @@
 .sidebar-scope-delete:focus-visible {
 	opacity: 1;
 }
-

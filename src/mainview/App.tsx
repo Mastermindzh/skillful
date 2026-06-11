@@ -370,6 +370,8 @@ function App() {
     updater.applying ||
     updater.downloading;
   const openImportCollectionModal = collectionDialogs.import.open;
+  const isMac =
+    settings.appSettings?.platform === "darwin" || navigator.platform.toLowerCase().includes("mac");
 
   useEffect(() => {
     return onAppMessage("githubImportRequested", (draft) => {
@@ -396,7 +398,7 @@ function App() {
   });
 
   return (
-    <div className="skillful-shell">
+    <div className={isMac ? "skillful-shell platform-mac" : "skillful-shell"}>
       <div className="app-layout">
         <AppSidebar
           collections={sidebarCollections}

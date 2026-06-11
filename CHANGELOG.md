@@ -8,6 +8,7 @@
 
 - fixed filesystem watcher also watching chromium files
 - fixed filesystem watcher looping on the cache files
+- improved look on Mac OS with inset header. [view](./docs/images/mac-os.png)
 
 ## 1.1.2 - 2026-05-13
 

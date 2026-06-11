@@ -47,10 +47,24 @@ function applyLinuxPackageCompatibilitySwitches() {
   }
 }
 
-function iconPath() {
+/**
+ * return the path of an icon in the assets/icon folder given a file
+ * @param fileName name of icon in assets/icon
+ * @returns path with ${path}/assets/icons/{fileName}
+ */
+function iconAssetPath(fileName: string) {
   return app.isPackaged
-    ? path.join(process.resourcesPath, "assets", "icons", "app-icon.png")
-    : path.join(process.cwd(), "assets", "icons", "app-icon.png");
+    ? path.join(process.resourcesPath, "assets", "icons", fileName)
+    : path.join(process.cwd(), "assets", "icons", fileName);
+}
+
+function iconPath() {
+  return iconAssetPath("app-icon.png");
+}
+
+function trayIcon() {
+  if (process.platform !== "darwin") return iconPath();
+  return iconAssetPath("icon-18.png");
 }
 
 function rendererIndexPath() {
@@ -122,16 +136,19 @@ function quitApp() {
 
 function createTray() {
   if (tray) return tray;
-  const nextTray = new Tray(iconPath());
+  const nextTray = new Tray(trayIcon());
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "Show Skillful", click: focusMainWindow },
+    { label: "Hide to tray", click: hideMainWindowToTray },
+    { type: "separator" },
+    { label: "Quit Skillful", click: quitApp },
+  ]);
   nextTray.setToolTip("Skillful");
-  nextTray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: "Show Skillful", click: focusMainWindow },
-      { label: "Hide to tray", click: hideMainWindowToTray },
-      { type: "separator" },
-      { label: "Quit Skillful", click: quitApp },
-    ])
-  );
+  if (process.platform === "darwin") {
+    nextTray.on("right-click", () => nextTray.popUpContextMenu(contextMenu));
+  } else {
+    nextTray.setContextMenu(contextMenu);
+  }
   nextTray.on("click", toggleMainWindowVisibility);
   tray = nextTray;
   return tray;
@@ -175,6 +192,7 @@ async function createWindow() {
     ...(typeof state.y === "number" ? { y: state.y } : {}),
     minWidth: MIN_WINDOW_WIDTH,
     minHeight: MIN_WINDOW_HEIGHT,
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const } : {}),
     icon: iconPath(),
     autoHideMenuBar: true,
     webPreferences: {

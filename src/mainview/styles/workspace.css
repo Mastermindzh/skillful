@@ -51,6 +51,10 @@
 	min-width: 0;
 }
 
+.platform-mac .list-pane-header {
+	-webkit-app-region: drag;
+}
+
 .list-pane-heading-copy {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -66,6 +70,7 @@
 	flex: 0 0 auto;
 	position: relative;
 	z-index: 1;
+	-webkit-app-region: no-drag;
 }
 
 .list-pane-count-badge {
