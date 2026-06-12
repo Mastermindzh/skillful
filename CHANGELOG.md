@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 - 2026-06-12
+
+- Fixed packaged app startup failure caused by missing runtime icon assets.
+
 ## 1.2.0 - 2026-06-11
 
 - Added git backup

@@ -1,6 +1,6 @@
 {
   "name": "skillful",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
   "author": "Mastermindzh",
   "license": "FSL-1.1-MIT",
@@ -95,6 +95,17 @@
       "dist-electron/**/*",
       "assets/icons/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/icons",
+        "to": "assets/icons",
+        "filter": [
+          "app-icon.png",
+          "icon-18.png",
+          "icon-18@2x.png"
+        ]
+      }
     ],
     "directories": {
       "buildResources": "assets/icons",

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import {
   app,
@@ -53,9 +54,14 @@ function applyLinuxPackageCompatibilitySwitches() {
  * @returns path with ${path}/assets/icons/{fileName}
  */
 function iconAssetPath(fileName: string) {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, "assets", "icons", fileName)
-    : path.join(process.cwd(), "assets", "icons", fileName);
+  const candidates = app.isPackaged
+    ? [
+        path.join(process.resourcesPath, "assets", "icons", fileName),
+        path.join(app.getAppPath(), "assets", "icons", fileName),
+      ]
+    : [path.join(process.cwd(), "assets", "icons", fileName)];
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
 }
 
 function iconPath() {
