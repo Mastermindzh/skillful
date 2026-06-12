@@ -50,6 +50,10 @@
 	min-width: 0;
 }
 
+.platform-mac .editor-tabs-header {
+	-webkit-app-region: drag;
+}
+
 .editor-tabs .mantine-Tabs-list {
 	overflow: hidden;
 	min-width: 0;
@@ -94,8 +98,18 @@
 	align-items: start;
 }
 
+.platform-mac .editor-toolbar {
+	-webkit-app-region: drag;
+}
+
 .editor-toolbar-copy {
 	min-width: 0;
+}
+
+.platform-mac .editor-toolbar-copy,
+.platform-mac .editor-toolbar-copy * {
+	-webkit-app-region: drag;
+	user-select: none;
 }
 
 .editor-toolbar-description {
@@ -114,6 +128,7 @@
 	padding-bottom: 2px;
 	max-width: 100%;
 	min-width: 0;
+	-webkit-app-region: no-drag;
 }
 
 .editor-action-button {

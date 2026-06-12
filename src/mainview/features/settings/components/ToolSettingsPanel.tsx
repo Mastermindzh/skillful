@@ -1,10 +1,10 @@
 import { Accordion, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { Plus } from "lucide-react";
-import type { ToolPreset } from "../../../shared/toolPresets";
-import { useAppTranslation } from "../../i18n/i18n";
-import { toolIcon } from "../tools/presentation";
+import type { ToolPreset } from "../../../../shared/toolPresets";
+import { useAppTranslation } from "../../../i18n/i18n";
+import { toolIcon } from "../../tools/presentation";
+import type { ToolRow, ToolRowIssue } from "../model/tools";
 import { ToolSettingsItem } from "./ToolSettingsItem";
-import type { ToolRow, ToolRowIssue } from "./tools";
 
 export type ToolSettingsPanelProps = {
   activeRowId: string | null;

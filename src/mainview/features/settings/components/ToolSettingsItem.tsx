@@ -1,10 +1,10 @@
 import { Accordion, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { Minus, Undo2 } from "lucide-react";
-import { useAppTranslation } from "../../i18n/i18n";
-import { preventFileUriDrop } from "./dnd";
+import { useAppTranslation } from "../../../i18n/i18n";
+import type { ToolRow, ToolRowIssue } from "../model/tools";
+import { preventFileUriDrop } from "../utils/dnd";
 import { InstallFolderInput } from "./InstallFolderInput";
 import { PendingRemovalBadge } from "./PendingRemovalBadge";
-import type { ToolRow, ToolRowIssue } from "./tools";
 
 type ToolSettingsItemProps = {
   issue?: ToolRowIssue | null;

@@ -4,10 +4,13 @@ import path from "node:path";
 import { AppError } from "../shared/errors";
 import { frontmatterMetadataWarningsForFiles } from "../shared/frontmatter";
 import type { ImportCollectionFromGitHubInput } from "../shared/githubImport";
+import { LIBRARY_ITEM_KINDS } from "../shared/library";
 import type {
   AppConfig,
   CreateLibraryItemInput,
   ExportCollectionArchiveInput,
+  GitBackupConfig,
+  GitBackupRestoreMode,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemDocument,
@@ -36,13 +39,19 @@ import {
   renameEditableSkillFile,
   renameLibraryItem,
 } from "./creation";
-import { atomicWriteFile, ensureDirectory } from "./fs";
+import { atomicWriteFile, ensureDirectory, pathExists } from "./fs";
+import {
+  initializeGitBackup,
+  restoreGitBackup as restoreGitBackupFromGit,
+  runGitBackup,
+} from "./git/backup";
 import { importLibraryCollectionFromGitHub } from "./githubImports";
 import {
   getLibraryItemToolStatuses,
   repairLibraryItemToolInstall,
   syncLibraryItemInstalls,
 } from "./installer";
+import { libraryRootPath } from "./libraryPaths";
 import { logger } from "./logger";
 import { measureAsync } from "./performance";
 import { loadScanIndex, saveScanIndex } from "./scanIndexCache";
@@ -58,13 +67,11 @@ import {
   SKIP_DIRECTORIES,
 } from "./scanner";
 import {
+  defaultAppConfig,
   defaultSkillRoot,
-  detectPresetTools,
   effectiveScanRoots,
-  loadSavedSettings,
-  normalizeConfiguredScanRoots,
-  normalizeToolConfigs,
-  normalizeToolMappings,
+  loadSettingsOrDefaults,
+  normalizeAppConfig,
   persistSettings,
   settingsFromConfig,
 } from "./settings";
@@ -78,6 +85,7 @@ import {
  * buffer; external edits land on the next tick.
  */
 const LOCAL_MUTATION_ECHO_WINDOW_MS = 500;
+const watchLogger = logger.scoped("watch");
 
 export class LibraryItemStore {
   private libraryItems = new Map<string, LibraryItemSummary>();
@@ -91,18 +99,10 @@ export class LibraryItemStore {
   private lastLocalMutationAt = 0;
   private configLoaded = false;
   private configMutex: Promise<void> = Promise.resolve();
-  readonly config: AppConfig;
+  private config: AppConfig;
 
   constructor(scanRoots?: string[]) {
-    this.config = {
-      scanRoots: scanRoots && scanRoots.length > 0 ? normalizeConfiguredScanRoots(scanRoots) : [],
-      tools: [],
-      toolMappings: [],
-      suppressSuccessNotifications: false,
-      language: "system",
-      defaultEditorMode: "preview",
-      onboardingTourCompleted: false,
-    };
+    this.config = defaultAppConfig(scanRoots);
     this.configLoaded = Boolean(scanRoots && scanRoots.length > 0);
   }
 
@@ -112,18 +112,8 @@ export class LibraryItemStore {
 
   private async ensureConfigLoaded() {
     if (this.configLoaded) return;
-    const savedConfig = await loadSavedSettings();
-    this.config.scanRoots = savedConfig?.scanRoots ?? [];
-    this.config.tools = savedConfig?.tools ?? (await detectPresetTools());
-    this.config.toolMappings = savedConfig?.toolMappings ?? [];
-    this.config.suppressSuccessNotifications = savedConfig?.suppressSuccessNotifications ?? false;
-    this.config.language = savedConfig?.language ?? "system";
-    this.config.defaultEditorMode = savedConfig?.defaultEditorMode ?? "preview";
-    this.config.onboardingTourCompleted = savedConfig?.onboardingTourCompleted ?? false;
+    this.config = await loadSettingsOrDefaults();
     this.configLoaded = true;
-    if (!savedConfig && this.config.tools.length > 0) {
-      await this.persistConfig();
-    }
   }
 
   /** Serialises config-mutating operations to prevent interleaved symlink work. */
@@ -157,31 +147,50 @@ export class LibraryItemStore {
     return settingsFromConfig(this.config);
   }
 
+  async initializeGitBackup(gitBackupConfig?: GitBackupConfig) {
+    await this.ensureConfigLoaded();
+    return initializeGitBackup(gitBackupConfig ?? this.config.gitBackup);
+  }
+
+  async runGitBackup() {
+    await this.ensureConfigLoaded();
+    return runGitBackup(this.config);
+  }
+
+  async restoreGitBackup(gitBackupConfig: GitBackupConfig, mode: GitBackupRestoreMode) {
+    await this.ensureConfigLoaded();
+    const config = normalizeAppConfig({ ...this.config, gitBackup: gitBackupConfig });
+    const result = await restoreGitBackupFromGit(config.gitBackup, mode);
+    if (!result.restored) {
+      throw new AppError("internal", result.message || "Backup restore failed.");
+    }
+    const restoredConfig = await loadSettingsOrDefaults();
+    this.config = normalizeAppConfig(
+      restoredConfig.gitBackup.remoteUrl.trim()
+        ? restoredConfig
+        : { ...restoredConfig, gitBackup: { ...config.gitBackup, branch: result.branch } }
+    );
+    await this.persistConfig();
+    return settingsFromConfig(this.config);
+  }
+
   async saveConfig(nextConfig: AppConfig) {
     return this.withConfigLock(async () => {
       await this.ensureConfigLoaded();
 
       const previousTools = [...this.config.tools];
       const previousMappings = [...this.config.toolMappings];
-      const scanRoots = normalizeConfiguredScanRoots(nextConfig.scanRoots);
-      const tools = normalizeToolConfigs(nextConfig.tools);
-      const toolMappings = normalizeToolMappings(nextConfig.toolMappings, tools);
+      const config = normalizeAppConfig(nextConfig);
 
       // Persist the new config before reconciling tool installs so a crash mid-reconcile
       // leaves the saved config consistent with the user's intent rather than the old
       // state. Per-skill install failures are logged and do not roll back the config.
-      this.config.scanRoots = scanRoots;
-      this.config.tools = tools;
-      this.config.toolMappings = toolMappings;
-      this.config.suppressSuccessNotifications = nextConfig.suppressSuccessNotifications;
-      this.config.language = nextConfig.language;
-      this.config.defaultEditorMode = nextConfig.defaultEditorMode;
-      this.config.onboardingTourCompleted = nextConfig.onboardingTourCompleted;
+      this.config = config;
       this.configLoaded = true;
       await this.persistConfig();
 
       const libraryItemIds = new Set(
-        [...previousMappings, ...toolMappings].map((mapping) => mapping.itemId)
+        [...previousMappings, ...config.toolMappings].map((mapping) => mapping.itemId)
       );
       for (const itemId of libraryItemIds) {
         const libraryItem = this.libraryItems.get(itemId);
@@ -191,8 +200,8 @@ export class LibraryItemStore {
             libraryItem,
             previousTools,
             previousMappings,
-            tools,
-            toolMappings
+            config.tools,
+            config.toolMappings
           );
         } catch (error) {
           logger.error(`Failed to reconcile tool installs for ${libraryItem.title}.`, error);
@@ -735,17 +744,36 @@ export class LibraryItemStore {
     this.stopWatching();
     await this.ensureScanRoots();
     for (const root of effectiveScanRoots(this.config.scanRoots)) {
-      this.watchers.push(await this.watchRoot(root, onSkillsChanged));
+      for (const watchedRoot of await this.watchedLibraryRoots(root)) {
+        this.watchers.push(await this.watchRoot(watchedRoot, onSkillsChanged));
+      }
     }
+    watchLogger.debug("watchers registered", { count: this.watchers.length });
+  }
+
+  private async watchedLibraryRoots(scanRoot: string) {
+    const roots: string[] = [];
+    for (const kind of LIBRARY_ITEM_KINDS) {
+      const candidate = libraryRootPath(scanRoot, kind);
+      if (await pathExists(candidate)) roots.push(candidate);
+    }
+    watchLogger.debug("scan root watch targets", { scanRoot, roots });
+    return roots;
   }
 
   private async watchRoot(
-    root: string,
+    watchedRoot: string,
     onSkillsChanged: (libraryItems: LibraryItemSummary[], reason: string) => void
   ) {
     try {
-      return watch(root, { recursive: true }, () => {
-        this.queueRescan(root, onSkillsChanged);
+      watchLogger.debug("register recursive watcher", { watchedRoot });
+      return watch(watchedRoot, { recursive: true }, (eventType, filename) => {
+        watchLogger.debug("filesystem event", {
+          watchedRoot,
+          eventType,
+          filename: String(filename ?? ""),
+        });
+        this.queueRescan(watchedRoot, onSkillsChanged);
       });
     } catch {
       // Recursive watch isn't supported on this platform (typically older Linux kernels).
@@ -754,8 +782,15 @@ export class LibraryItemStore {
       const nestedWatchers: Array<{ close: () => void }> = [];
       const register = async (dirPath: string) => {
         nestedWatchers.push(
-          watch(dirPath, () => {
-            this.queueRescan(root, onSkillsChanged, true);
+          watch(dirPath, (eventType, filename) => {
+            watchLogger.debug("filesystem event", {
+              watchedRoot,
+              dirPath,
+              eventType,
+              filename: String(filename ?? ""),
+              rebuildWatchers: true,
+            });
+            this.queueRescan(watchedRoot, onSkillsChanged, true);
           })
         );
         const dirents = await readdir(dirPath, { withFileTypes: true });
@@ -765,9 +800,10 @@ export class LibraryItemStore {
         }
       };
       try {
-        await register(root);
+        watchLogger.debug("register nested watchers", { watchedRoot });
+        await register(watchedRoot);
       } catch (error) {
-        logger.error(`Failed to register watchers for ${root}.`, error);
+        logger.error(`Failed to register watchers for ${watchedRoot}.`, error);
       }
       return {
         close() {
@@ -795,12 +831,15 @@ export class LibraryItemStore {
       // Targeted rescan paths already synced in-memory state; `scanAll()` would be
       // pure waste (~500ms on 2k items). Rebuild requests must still be honoured.
       if (!shouldRebuild && this.isInsideLocalMutationEcho()) {
+        watchLogger.debug("skip rescan for local mutation echo", { reasons });
         return;
       }
       try {
         if (shouldRebuild) {
+          watchLogger.debug("rebuild watchers after filesystem event", { reasons });
           await this.watch(onSkillsChanged);
         }
+        watchLogger.debug("run rescan after filesystem event", { reasons });
         const libraryItems = await this.scanAll();
         onSkillsChanged(libraryItems, `filesystem:${reasons.join(",")}`);
       } catch (error) {

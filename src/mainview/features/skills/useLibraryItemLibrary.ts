@@ -1,4 +1,4 @@
-import { appRpc, onLibraryItemsUpdated } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImportCollectionFromGitHubInput } from "../../../shared/githubImport";
 import type {
@@ -144,6 +144,38 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
             : (nextSkills[0]?.id ?? null);
         activeSkillIdRef.current = nextSkillId;
         setActiveSkillId(nextSkillId);
+        setError(null);
+        setStatus("idle");
+        return nextSkillId;
+      } catch (nextError) {
+        setStatus("error");
+        const message = nextError instanceof Error ? nextError.message : t("item.error.load");
+        setError(message);
+        notify.error(message, { title: t("library.heading") });
+        return null;
+      }
+    },
+    [loadLibraryIndexes, t]
+  );
+
+  const reloadLibraryAfterRestore = useCallback(
+    async (preferredId?: string) => {
+      setStatus("loading");
+      try {
+        const { nextSkills } = await loadLibraryIndexes("refresh");
+        const nextSkillId =
+          preferredId && nextSkills.some((libraryItem) => libraryItem.id === preferredId)
+            ? preferredId
+            : (nextSkills[0]?.id ?? null);
+        const knownLibraryItemIds = nextSkills.map((libraryItem) => libraryItem.id);
+        activeSkillIdRef.current = nextSkillId;
+        setActiveSkillId(nextSkillId);
+        setDraftsByFile((drafts) => pruneDraftsForKnownLibraryItems(drafts, knownLibraryItemIds));
+        if (!nextSkillId || loadedSkillIdRef.current !== nextSkillId) {
+          loadedSkillIdRef.current = null;
+          setActiveSkill(null);
+          setActiveFilePath(null);
+        }
         setError(null);
         setStatus("idle");
         return nextSkillId;
@@ -749,7 +781,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
   }, [activeLibraryItemId, loadSkill]);
 
   useEffect(() => {
-    return onLibraryItemsUpdated(async ({ libraryItems }) => {
+    return onAppMessage("libraryItemsUpdated", async ({ libraryItems }) => {
       setSkillList(libraryItems);
       setCollectionList(await appRpc.request.listCollections());
       // Drop drafts whose owning libraryItem was removed on disk to avoid unbounded draft growth.
@@ -826,6 +858,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     error,
     hasUnsavedChanges: navigation.hasUnsavedChanges,
     loadSkillList,
+    reloadLibraryAfterRestore,
     refreshingSkills,
     refreshLibraryItems,
     renameCollection,

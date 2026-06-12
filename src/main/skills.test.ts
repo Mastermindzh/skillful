@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadSavedSettings } from "./settings";
+import { defaultGitBackupConfig, loadSavedSettings } from "./settings";
 import { LibraryItemStore } from "./skills";
 
 let configRoot: string;
@@ -103,6 +103,22 @@ describe("LibraryItemStore settings", () => {
     await expect(store.getConfig()).resolves.toMatchObject({
       onboardingTourCompleted: true,
     });
+  });
+
+  it("throws when git restore fails instead of applying default settings", async () => {
+    const store = new LibraryItemStore([libraryRoot]);
+
+    await expect(
+      store.restoreGitBackup(
+        {
+          ...defaultGitBackupConfig(),
+          enabled: true,
+          remoteUrl: path.join(configRoot, "missing-remote.git"),
+          branch: "main",
+        },
+        "safe"
+      )
+    ).rejects.toMatchObject({ code: "internal" });
   });
 });
 

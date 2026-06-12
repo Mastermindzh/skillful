@@ -1,14 +1,12 @@
 import { rehydrateAppErrorFromRpc } from "../shared/errors";
-import type { GitHubImportDraft } from "../shared/githubImport";
 import type { LogLevel } from "../shared/logging";
 import type { AppRPC } from "../shared/rpc";
-import type { LibraryItemSummary } from "../shared/types";
-import type { UpdateStatusEntry } from "../shared/updates";
 
 type RequestSpec = AppRPC["bun"]["requests"];
 type MessageSpec = AppRPC["bun"]["messages"];
 type RequestName = keyof RequestSpec;
 type MessageName = keyof MessageSpec;
+type MessageListener<K extends MessageName> = (payload: MessageSpec[K]) => void;
 
 type ElectronRequestClient = {
   [K in RequestName]: RequestSpec[K]["params"] extends undefined
@@ -35,12 +33,15 @@ declare global {
   }
 }
 
-type LibraryItemsUpdatedPayload = { libraryItems: LibraryItemSummary[]; reason: string };
 export const perfEnabled = Boolean(window.skillful?.perfEnabled);
 
-const libraryItemsUpdatedListeners = new Set<(payload: LibraryItemsUpdatedPayload) => void>();
-const githubImportListeners = new Set<(payload: GitHubImportDraft) => void>();
-const updateStatusListeners = new Set<(payload: UpdateStatusEntry) => void>();
+const messageNames = [
+  "libraryItemsUpdated",
+  "githubImportRequested",
+  "updateStatusChanged",
+  "autoGitBackupCompleted",
+] as const satisfies readonly MessageName[];
+const messageListeners = new Map<MessageName, Set<(payload: unknown) => void>>();
 
 function electronApi() {
   if (!window.skillful) {
@@ -65,6 +66,26 @@ const request = new Proxy({} as ElectronRequestClient, {
 });
 
 export const appRpc = { request };
+
+function listenersFor<K extends MessageName>(name: K) {
+  let listeners = messageListeners.get(name);
+  if (!listeners) {
+    listeners = new Set();
+    messageListeners.set(name, listeners);
+  }
+  return listeners as Set<MessageListener<K>>;
+}
+
+function emitMessage<K extends MessageName>(name: K, payload: MessageSpec[K]) {
+  for (const listener of listenersFor(name)) listener(payload);
+}
+
+export function onAppMessage<K extends MessageName>(name: K, listener: MessageListener<K>) {
+  listenersFor(name).add(listener);
+  return () => {
+    listenersFor(name).delete(listener);
+  };
+}
 
 export function logRenderer(level: LogLevel, message: string, details?: unknown) {
   if (window.skillful) {
@@ -93,34 +114,7 @@ export function logRenderer(level: LogLevel, message: string, details?: unknown)
 // not throw before the bridge is installed. In the real Electron renderer the preload has
 // already exposed `window.skillful` by the time this runs.
 if (window.skillful) {
-  window.skillful.onMessage("libraryItemsUpdated", (payload) => {
-    for (const listener of libraryItemsUpdatedListeners) listener(payload);
-  });
-  window.skillful.onMessage("githubImportRequested", (payload) => {
-    for (const listener of githubImportListeners) listener(payload);
-  });
-  window.skillful.onMessage("updateStatusChanged", (payload) => {
-    for (const listener of updateStatusListeners) listener(payload);
-  });
-}
-
-export function onLibraryItemsUpdated(listener: (payload: LibraryItemsUpdatedPayload) => void) {
-  libraryItemsUpdatedListeners.add(listener);
-  return () => {
-    libraryItemsUpdatedListeners.delete(listener);
-  };
-}
-
-export function onGitHubImportRequested(listener: (payload: GitHubImportDraft) => void) {
-  githubImportListeners.add(listener);
-  return () => {
-    githubImportListeners.delete(listener);
-  };
-}
-
-export function onUpdateStatusChanged(listener: (payload: UpdateStatusEntry) => void) {
-  updateStatusListeners.add(listener);
-  return () => {
-    updateStatusListeners.delete(listener);
-  };
+  for (const name of messageNames) {
+    window.skillful.onMessage(name, (payload) => emitMessage(name, payload));
+  }
 }

@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "../shared/errors";
 import {
+  defaultGitBackupConfig,
   loadSavedSettings,
   normalizeToolConfigs,
   persistSettings,
@@ -90,9 +91,11 @@ describe("loadSavedSettings", () => {
       tools: [],
       toolMappings: [],
       suppressSuccessNotifications: false,
+      minimizeToTrayOnClose: false,
       language: "system",
       defaultEditorMode: "preview",
       onboardingTourCompleted: false,
+      gitBackup: defaultGitBackupConfig(),
     });
   });
 
@@ -114,9 +117,15 @@ describe("loadSavedSettings", () => {
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
       suppressSuccessNotifications: true,
+      minimizeToTrayOnClose: true,
       language: "nl",
       defaultEditorMode: "edit",
       onboardingTourCompleted: true,
+      gitBackup: {
+        ...defaultGitBackupConfig(),
+        enabled: true,
+        remoteUrl: "git@example.com:me/skillful-backup.git",
+      },
     });
 
     await expect(loadSavedSettings()).resolves.toEqual({
@@ -133,9 +142,15 @@ describe("loadSavedSettings", () => {
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
       suppressSuccessNotifications: true,
+      minimizeToTrayOnClose: true,
       language: "nl",
       defaultEditorMode: "edit",
       onboardingTourCompleted: true,
+      gitBackup: {
+        ...defaultGitBackupConfig(),
+        enabled: true,
+        remoteUrl: "git@example.com:me/skillful-backup.git",
+      },
     });
   });
 

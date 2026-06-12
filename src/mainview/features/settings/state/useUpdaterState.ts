@@ -1,8 +1,8 @@
-import { appRpc, onUpdateStatusChanged } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AppUpdateState, UpdateStatusEntry } from "../../../shared/updates";
-import { useAppTranslation } from "../../i18n/i18n";
-import { notify } from "../notifications/notify";
+import type { AppUpdateState, UpdateStatusEntry } from "../../../../shared/updates";
+import { useAppTranslation } from "../../../i18n/i18n";
+import { notify } from "../../notifications/notify";
 
 type UpdaterAction = "checking" | "downloading" | "applying" | null;
 
@@ -71,7 +71,7 @@ export function useUpdaterState() {
   }, [hasLoadedOnce, loadUpdateState]);
 
   useEffect(() => {
-    return onUpdateStatusChanged((entry) => {
+    return onAppMessage("updateStatusChanged", (entry) => {
       setUpdateState((current) => mergeStatusEntry(current, entry));
       if (TERMINAL_UPDATE_STATUSES.has(entry.status)) {
         void loadUpdateState();

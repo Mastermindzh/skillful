@@ -1,10 +1,19 @@
 # Changelog
 
+## 1.2.0 - 2026-06-11
+
+- Added git backup
+  - Added restore from git
+- Added tray icon with "minimize to tray" behaviour
+
+- fixed filesystem watcher also watching chromium files
+- fixed filesystem watcher looping on the cache files
+- improved look on Mac OS with inset header. [view](./docs/images/mac-os.png)
+
 ## 1.1.2 - 2026-05-13
 
 - Fixed not being able to select a new collection while moving items, fixes [#1](https://github.com/Mastermindzh/skillful/issues/1)
 - *DEV:* added devcontainer
-
 
 ## 1.1.1 - 2026-05-11
 

@@ -144,3 +144,20 @@ body {
 	outline: none !important;
 	box-shadow: none !important;
 }
+
+.platform-mac button,
+.platform-mac input,
+.platform-mac textarea,
+.platform-mac select,
+.platform-mac a,
+.platform-mac [role="button"],
+.platform-mac [role="tab"],
+.platform-mac [role="menuitem"],
+.platform-mac .mantine-ActionIcon-root,
+.platform-mac .mantine-Button-root,
+.platform-mac .mantine-Menu-dropdown,
+.platform-mac .mantine-SegmentedControl-root,
+.platform-mac .mantine-Tabs-list,
+.platform-mac .mantine-TextInput-root {
+	-webkit-app-region: no-drag;
+}

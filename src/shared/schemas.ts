@@ -20,14 +20,34 @@ export const LibraryItemToolMappingSchema = z.object({
   toolIds: z.array(z.string().min(1)),
 });
 
+export const GitBackupConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  remoteUrl: z.string().default(""),
+  branch: z.string().default("main"),
+  includeSettings: z.boolean().default(true),
+  includeDefaultLibrary: z.boolean().default(true),
+  autoBackup: z.boolean().default(false),
+  autoBackupIntervalMinutes: z.number().int().min(1).default(10),
+});
+
 export const AppConfigSchema = z.object({
   scanRoots: z.array(z.string()),
   tools: z.array(ToolConfigSchema).default([]),
   toolMappings: z.array(LibraryItemToolMappingSchema).default([]),
   suppressSuccessNotifications: z.boolean().default(false),
+  minimizeToTrayOnClose: z.boolean().default(false),
   language: APP_LANGUAGE.default("system"),
   defaultEditorMode: EDITOR_VIEW_MODE.default("preview"),
   onboardingTourCompleted: z.boolean().default(false),
+  gitBackup: GitBackupConfigSchema.default({
+    enabled: false,
+    remoteUrl: "",
+    branch: "main",
+    includeSettings: true,
+    includeDefaultLibrary: true,
+    autoBackup: false,
+    autoBackupIntervalMinutes: 10,
+  }),
 });
 
 export const CollectionArchiveManifestSchema = z.object({

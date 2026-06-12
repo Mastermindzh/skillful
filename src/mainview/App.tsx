@@ -1,4 +1,4 @@
-import { appRpc, onGitHubImportRequested } from "@mainview-bridge";
+import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useMediaQuery } from "@mantine/hooks";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { toolPresetById } from "../shared/toolPresets";
@@ -19,10 +19,11 @@ import { DeleteCollectionDialog } from "./features/navigation/DeleteCollectionDi
 import { ImportCollectionModal } from "./features/navigation/ImportCollectionModal";
 import { RenameCollectionModal } from "./features/navigation/RenameCollectionModal";
 import { useCollectionDialogs } from "./features/navigation/useCollectionDialogs";
+import { notify } from "./features/notifications/notify";
 import { OnboardingTour } from "./features/onboarding/OnboardingTour";
-import { SettingsModal } from "./features/settings/SettingsModal";
-import { useSettingsState } from "./features/settings/useSettingsState";
-import { useUpdaterState } from "./features/settings/useUpdaterState";
+import { SettingsModal } from "./features/settings/components/SettingsModal";
+import { useSettingsState } from "./features/settings/state/useSettingsState";
+import { useUpdaterState } from "./features/settings/state/useUpdaterState";
 import { KeyboardShortcutsModal } from "./features/shortcuts/KeyboardShortcutsModal";
 import { useAppShortcuts } from "./features/shortcuts/useAppShortcuts";
 import { CreateLibraryItemModal } from "./features/skills/CreateLibraryItemModal";
@@ -63,6 +64,21 @@ function App() {
   useEffect(() => {
     void settings.loadSettings();
   }, [settings.loadSettings]);
+
+  useEffect(() => {
+    return onAppMessage("autoGitBackupCompleted", (result) => {
+      if (result.changed && result.pushed) {
+        notify.info(t("settings.backup.notification.synced.message", { branch: result.branch }), {
+          title: t("settings.backup.notification.synced.title"),
+        });
+        return;
+      }
+
+      notify.error(result.message || t("settings.backup.error.run"), {
+        title: t("settings.backup.notification.failed.title"),
+      });
+    });
+  }, [t]);
 
   useEffect(() => {
     void applyAppLanguage(
@@ -140,6 +156,7 @@ function App() {
    * tells the user which one they're in, so labels would be redundant noise.
    */
   const showItemCollections = activeScope === "all" || activeScope.startsWith("tool:");
+  const syncSettingsAfterSave = settings.backup.hasUnsavedChanges && settings.backup.config.enabled;
   const activeDocumentCollectionTitle = library.activeLibraryItem
     ? (collectionTitleById.get(library.activeLibraryItem.item.collectionId) ?? null)
     : null;
@@ -353,9 +370,11 @@ function App() {
     updater.applying ||
     updater.downloading;
   const openImportCollectionModal = collectionDialogs.import.open;
+  const isMac =
+    settings.appSettings?.platform === "darwin" || navigator.platform.toLowerCase().includes("mac");
 
   useEffect(() => {
-    return onGitHubImportRequested((draft) => {
+    return onAppMessage("githubImportRequested", (draft) => {
       openImportCollectionModal(draft);
     });
   }, [openImportCollectionModal]);
@@ -379,7 +398,7 @@ function App() {
   });
 
   return (
-    <div className="skillful-shell">
+    <div className={isMac ? "skillful-shell platform-mac" : "skillful-shell"}>
       <div className="app-layout">
         <AppSidebar
           collections={sidebarCollections}
@@ -469,6 +488,8 @@ function App() {
           onLanguageChange: handleSettingsLanguageChange,
           suppressSuccessNotifications: settings.general.suppressSuccessNotifications,
           onSuppressSuccessNotificationsChange: settings.general.setSuppressSuccessNotifications,
+          minimizeToTrayOnClose: settings.general.minimizeToTrayOnClose,
+          onMinimizeToTrayOnCloseChange: settings.general.setMinimizeToTrayOnClose,
         }}
         library={{
           scanRoots: settings.library.rows,
@@ -492,6 +513,31 @@ function App() {
           activeRowId: settings.tools.activeRowId,
           onActiveRowChange: settings.tools.setActiveRowId,
         }}
+        backup={{
+          config: settings.backup.config,
+          configured: settings.backup.configured,
+          issue: settings.backup.configured ? settings.backup.issue : settings.backup.actionIssue,
+          errorMessage: settings.backup.errorMessage,
+          restoreDisabled: settings.backup.restoreHasValidationErrors || settings.modal.saving,
+          restoreNeedsConfirmation: settings.backup.restoreNeedsConfirmation,
+          restoring: settings.backup.restoring,
+          onConfigChange: settings.backup.updateConfig,
+          onReset: settings.backup.reset,
+          onRestore: (mode) =>
+            void settings.backup.restore({
+              activeLibraryItemId: library.activeLibraryItemId,
+              mode,
+              reloadSkills: library.reloadLibraryAfterRestore,
+              reloadToolStatuses: skillTools.loadToolStatuses,
+            }),
+          onSetup: () =>
+            void settings.backup.setup({
+              activeLibraryItemId: library.activeLibraryItemId,
+              toolMappings: settings.appSettings?.toolMappings ?? [],
+              reloadSkills: library.loadSkillList,
+              reloadToolStatuses: skillTools.loadToolStatuses,
+            }),
+        }}
         updates={{
           updateState: updater.updateState,
           loading: updater.loading,
@@ -505,13 +551,14 @@ function App() {
         }}
         footer={{
           hasChanges: settings.modal.hasChanges,
-          hasValidationErrors: settings.modal.hasValidationErrors,
           saving: settings.modal.saving,
           errorMessage: settings.modal.errorMessage,
+          syncAfterSave: syncSettingsAfterSave,
           onClose: settings.modal.close,
           onSave: () =>
             void settings.modal.save({
               activeLibraryItemId: library.activeLibraryItemId,
+              backupAfterSave: syncSettingsAfterSave,
               toolMappings: settings.appSettings?.toolMappings ?? [],
               reloadSkills: library.loadSkillList,
               reloadToolStatuses: skillTools.loadToolStatuses,

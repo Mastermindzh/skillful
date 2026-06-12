@@ -59,8 +59,8 @@ Skillful treats those files like a library worth maintaining. Edit once, install
 
 ## Screenshots
 
-![Skillful light theme showing a searchable local library with skills and agents, install controls, and a markdown preview.](./website/light.png)
-![Skillful dark theme showing collections, tool filters, skill and agent badges, and the markdown editor.](./website/dark.png)
+![Skillful light theme showing a searchable local library with skills and agents, install controls, and a markdown preview.](./docs/images/mac-os.png)
+![Skillful dark theme showing collections, tool filters, skill and agent badges, and the markdown editor.](./docs/images/mac-os-dark.png)
 
 ## Downloads
 

@@ -1,5 +1,14 @@
 import path from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  type OpenDialogOptions,
+  shell,
+  Tray,
+} from "electron";
 import { createDesktopRuntime, type DesktopRequestHandlers } from "../desktop/runtime";
 import { logger } from "../main/logger";
 import { measureAsync, perfEnabled } from "../main/performance";
@@ -9,7 +18,7 @@ import { AppError } from "../shared/errors";
 import type { GitHubImportDraft } from "../shared/githubImport";
 import type { AppRPC } from "../shared/rpc";
 import { wrapRequestHandlersWithAppErrorEncoding } from "../shared/rpcAdapter";
-import type { LibraryItemSummary } from "../shared/types";
+import type { GitBackupResult, LibraryItemSummary } from "../shared/types";
 import type { UpdateStatusEntry } from "../shared/updates";
 import { checkForUpdatesAfterStartup, electronUpdater } from "./updater";
 import {
@@ -22,8 +31,11 @@ import {
 type RequestName = keyof AppRPC["bun"]["requests"];
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let pendingGitHubImport: GitHubImportDraft | null = null;
 let rendererReady = false;
+let isQuitting = false;
+let minimizeToTrayOnClose = false;
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
@@ -35,10 +47,24 @@ function applyLinuxPackageCompatibilitySwitches() {
   }
 }
 
-function iconPath() {
+/**
+ * return the path of an icon in the assets/icon folder given a file
+ * @param fileName name of icon in assets/icon
+ * @returns path with ${path}/assets/icons/{fileName}
+ */
+function iconAssetPath(fileName: string) {
   return app.isPackaged
-    ? path.join(process.resourcesPath, "assets", "icons", "app-icon.png")
-    : path.join(process.cwd(), "assets", "icons", "app-icon.png");
+    ? path.join(process.resourcesPath, "assets", "icons", fileName)
+    : path.join(process.cwd(), "assets", "icons", fileName);
+}
+
+function iconPath() {
+  return iconAssetPath("app-icon.png");
+}
+
+function trayIcon() {
+  if (process.platform !== "darwin") return iconPath();
+  return iconAssetPath("icon-18.png");
 }
 
 function rendererIndexPath() {
@@ -64,16 +90,68 @@ function sendUpdateStatusChanged(entry: UpdateStatusEntry) {
   sendRendererMessage("updateStatusChanged", entry);
 }
 
+function sendAutoGitBackupCompleted(result: GitBackupResult) {
+  sendRendererMessage("autoGitBackupCompleted", result);
+}
+
 function sendGitHubImportRequested(payload: GitHubImportDraft) {
   sendRendererMessage("githubImportRequested", payload);
 }
 
 function focusMainWindow() {
   if (!mainWindow) return;
+  if (!mainWindow.isVisible()) {
+    mainWindow.show();
+  }
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
   mainWindow.focus();
+}
+
+function setMinimizeToTrayOnClose(enabled: boolean) {
+  minimizeToTrayOnClose = enabled;
+}
+
+function hideMainWindowToTray() {
+  mainWindow?.hide();
+}
+
+function toggleMainWindowVisibility() {
+  if (!mainWindow) {
+    void createWindow();
+    return;
+  }
+  if (mainWindow.isVisible()) {
+    hideMainWindowToTray();
+    return;
+  }
+  focusMainWindow();
+}
+
+function quitApp() {
+  isQuitting = true;
+  app.quit();
+}
+
+function createTray() {
+  if (tray) return tray;
+  const nextTray = new Tray(trayIcon());
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "Show Skillful", click: focusMainWindow },
+    { label: "Hide to tray", click: hideMainWindowToTray },
+    { type: "separator" },
+    { label: "Quit Skillful", click: quitApp },
+  ]);
+  nextTray.setToolTip("Skillful");
+  if (process.platform === "darwin") {
+    nextTray.on("right-click", () => nextTray.popUpContextMenu(contextMenu));
+  } else {
+    nextTray.setContextMenu(contextMenu);
+  }
+  nextTray.on("click", toggleMainWindowVisibility);
+  tray = nextTray;
+  return tray;
 }
 
 function flushPendingGitHubImport() {
@@ -114,6 +192,7 @@ async function createWindow() {
     ...(typeof state.y === "number" ? { y: state.y } : {}),
     minWidth: MIN_WINDOW_WIDTH,
     minHeight: MIN_WINDOW_HEIGHT,
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const } : {}),
     icon: iconPath(),
     autoHideMenuBar: true,
     webPreferences: {
@@ -155,8 +234,12 @@ async function createWindow() {
     }
   });
 
-  window.on("close", () => {
+  window.on("close", (event) => {
     windowStateSaver.flush();
+    if (!isQuitting && minimizeToTrayOnClose) {
+      event.preventDefault();
+      hideMainWindowToTray();
+    }
   });
 
   window.on("resize", () => {
@@ -231,6 +314,10 @@ function registerAppLifecycleHandlers() {
       logger.error("Failed to handle Skillful deep link", error);
     }
   });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
 }
 
 async function start() {
@@ -245,12 +332,14 @@ async function start() {
   registerAppLifecycleHandlers();
   logger.watch(ipcMain);
   await app.whenReady();
+  createTray();
 
   const runtime = await createDesktopRuntime({
     pickDirectory,
     pickFile,
     sendLibraryItemsUpdated,
     sendUpdateStatusChanged,
+    sendAutoGitBackupCompleted,
     shell: {
       openPath: async (target) => {
         // `shell.openPath` resolves with an empty string on success and an error string on
@@ -263,11 +352,13 @@ async function start() {
       revealPath: async (target) => {
         shell.showItemInFolder(path.resolve(target));
       },
+      setMinimizeToTrayOnClose,
     },
     updater: electronUpdater,
   });
 
   registerIpcHandlers(runtime.handlers);
+  app.once("before-quit", () => runtime.dispose());
   await createWindow();
   checkForUpdatesAfterStartup();
   await runtime.startWatching();

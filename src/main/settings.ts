@@ -8,6 +8,7 @@ import { presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
 import type {
   AppConfig,
   AppSettings,
+  GitBackupConfig,
   LibraryItemKind,
   LibraryItemToolMapping,
   ToolConfig,
@@ -26,6 +27,18 @@ type SettingsStoreOptions = ElectronStoreOptions<SettingsStoreData> & {
 
 function settingsDirectoryName() {
   return process.env.SKILLFUL_CONFIG_NAME?.trim() || DEFAULT_SETTINGS_DIRECTORY_NAME;
+}
+
+export function defaultGitBackupConfig(): GitBackupConfig {
+  return {
+    enabled: false,
+    remoteUrl: "",
+    branch: "main",
+    includeSettings: true,
+    includeDefaultLibrary: true,
+    autoBackup: false,
+    autoBackupIntervalMinutes: 10,
+  };
 }
 
 /** Returns the directory where Skillful keeps settings and the default skill library. */
@@ -53,6 +66,20 @@ export function defaultSkillRoot() {
 /** Combines the default skill library with user-configured extra scan roots. */
 export function effectiveScanRoots(customRoots: string[]) {
   return Array.from(new Set([defaultSkillRoot(), ...customRoots]));
+}
+
+export function defaultAppConfig(scanRoots: string[] = []): AppConfig {
+  return {
+    scanRoots: scanRoots.length > 0 ? normalizeConfiguredScanRoots(scanRoots) : [],
+    tools: [],
+    toolMappings: [],
+    suppressSuccessNotifications: false,
+    minimizeToTrayOnClose: false,
+    language: "system",
+    defaultEditorMode: "preview",
+    onboardingTourCompleted: false,
+    gitBackup: defaultGitBackupConfig(),
+  };
 }
 
 function resolveSavedScanRoots(scanRoots: string[]) {
@@ -144,7 +171,18 @@ export function normalizeToolMappings(mappings: LibraryItemToolMapping[], tools:
     .filter((mapping) => mapping.itemId && mapping.toolIds.length > 0);
 }
 
-function configFilePath() {
+export function normalizeAppConfig(config: AppConfig): AppConfig {
+  const scanRoots = normalizeConfiguredScanRoots(config.scanRoots);
+  const tools = normalizeToolConfigs(config.tools);
+  return {
+    ...config,
+    scanRoots,
+    tools,
+    toolMappings: normalizeToolMappings(config.toolMappings, tools),
+  };
+}
+
+export function configFilePath() {
   return path.join(settingsDirectory(), SETTINGS_FILE_NAME);
 }
 
@@ -154,9 +192,11 @@ function serializedSettings(config: AppConfig): SettingsStoreData {
     tools: config.tools,
     toolMappings: config.toolMappings,
     suppressSuccessNotifications: config.suppressSuccessNotifications,
+    minimizeToTrayOnClose: config.minimizeToTrayOnClose,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
+    gitBackup: config.gitBackup,
   };
 }
 
@@ -237,10 +277,24 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     tools,
     toolMappings,
     suppressSuccessNotifications: validated.data.suppressSuccessNotifications,
+    minimizeToTrayOnClose: validated.data.minimizeToTrayOnClose,
     language: validated.data.language,
     defaultEditorMode: validated.data.defaultEditorMode,
     onboardingTourCompleted: validated.data.onboardingTourCompleted,
+    gitBackup: validated.data.gitBackup,
   };
+}
+
+export async function loadSettingsOrDefaults(): Promise<AppConfig> {
+  const savedConfig = await loadSavedSettings();
+  if (savedConfig) return savedConfig;
+
+  const config = defaultAppConfig();
+  config.tools = await detectPresetTools();
+  if (config.tools.length > 0) {
+    await persistSettings(config);
+  }
+  return config;
 }
 
 export async function persistSettings(config: AppConfig) {
@@ -258,8 +312,10 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     tools: [...config.tools],
     toolMappings: [...config.toolMappings],
     suppressSuccessNotifications: config.suppressSuccessNotifications,
+    minimizeToTrayOnClose: config.minimizeToTrayOnClose,
     language: config.language,
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
+    gitBackup: { ...config.gitBackup },
   };
 }

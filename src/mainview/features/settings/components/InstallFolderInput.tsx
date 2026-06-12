@@ -1,7 +1,7 @@
 import { ActionIcon, TextInput } from "@mantine/core";
 import { FolderOpen } from "lucide-react";
-import { useAppTranslation } from "../../i18n/i18n";
-import { preventFileUriDrop } from "./dnd";
+import { useAppTranslation } from "../../../i18n/i18n";
+import { preventFileUriDrop } from "../utils/dnd";
 
 type InstallFolderInputProps = {
   disabled?: boolean;

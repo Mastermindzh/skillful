@@ -1,4 +1,5 @@
 import { ensureDirectory } from "../main/fs";
+import { GitBackupScheduler } from "../main/git/scheduler";
 import { measureAsync } from "../main/performance";
 import { LibraryItemStore } from "../main/skills";
 import type {
@@ -31,6 +32,10 @@ function samePathSet(left: string[], right: string[]) {
  */
 export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
   const service = new LibraryItemStore();
+  const gitBackupScheduler = new GitBackupScheduler(
+    () => service.runGitBackup(),
+    adapters.sendAutoGitBackupCompleted
+  );
   await measureAsync(
     "desktop.startup.scanAll",
     () => service.scanAll(),
@@ -56,6 +61,8 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       const config = await measureAsync("desktop.saveConfig.persistAndReconcile", () =>
         service.saveConfig(nextConfig)
       );
+      adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
+      gitBackupScheduler.configure(config.gitBackup);
       if (!samePathSet(previousConfig.effectiveScanRoots, config.effectiveScanRoots)) {
         const libraryItems = await measureAsync(
           "desktop.saveConfig.rescan",
@@ -74,6 +81,9 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
     pickImportArchive: async () => adapters.pickFile("zip"),
     pickCollectionExportFolder: async () => adapters.pickDirectory(),
     pickToolInstallFolder: async () => adapters.pickDirectory(),
+    initializeGitBackup: async ({ gitBackup }) => service.initializeGitBackup(gitBackup),
+    runGitBackup: async () => service.runGitBackup(),
+    restoreGitBackup: async ({ gitBackup, mode }) => service.restoreGitBackup(gitBackup, mode),
     importCollection: async (input) => service.importCollection(input),
     importCollectionArchive: async (input) => service.importCollectionArchive(input),
     importCollectionFromGitHub: async (input) => service.importCollectionFromGitHub(input),
@@ -130,10 +140,14 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
   adapters.updater.onUpdateStatusChange((entry) => {
     adapters.sendUpdateStatusChanged(entry);
   });
+  const config = await service.getConfig();
+  adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
+  gitBackupScheduler.configure(config.gitBackup);
 
   return {
     handlers,
     startWatching,
+    dispose: () => gitBackupScheduler.dispose(),
     // Narrow accessor for shell-level diagnostics (e.g. the bun entry point logs effective
     // scan roots on startup). Intentionally does not expose the full `LibraryItemStore` so shells
     // cannot bypass the request handlers.
