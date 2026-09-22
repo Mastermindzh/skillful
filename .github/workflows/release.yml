@@ -134,7 +134,7 @@ jobs:
           snapcraft upload --release=stable release/*.snap
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-${{ matrix.artifact_name }}
           path: release/*
@@ -159,7 +159,7 @@ jobs:
         run: bun run dist:win
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-windows
           path: release/*
@@ -184,7 +184,7 @@ jobs:
         run: bun run dist:mac
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-macos
           path: release/*
@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download built artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-artifacts
           merge-multiple: true
