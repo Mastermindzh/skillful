@@ -1,3 +1,12 @@
+function isWindowsAbsolutePath(value: string) {
+  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\");
+}
+
+/** Platform-agnostic check: accepts POSIX, drive-letter, and UNC absolute paths. */
+export function isAbsolutePath(value: string) {
+  return value.startsWith("/") || isWindowsAbsolutePath(value);
+}
+
 export function toPortablePath(filePath: string) {
   return filePath.replace(/\\/g, "/");
 }
@@ -14,7 +23,9 @@ export function portablePathBasename(filePath: string) {
 export function portablePathDirname(filePath: string) {
   const normalizedPath = toPortablePath(filePath);
   const separatorIndex = normalizedPath.lastIndexOf("/");
-  return separatorIndex === -1 ? "." : normalizedPath.slice(0, separatorIndex) || "/";
+  return separatorIndex === -1
+    ? "."
+    : normalizedPath.slice(0, separatorIndex) || "/";
 }
 
 export function portablePathLeafName(filePath: string) {

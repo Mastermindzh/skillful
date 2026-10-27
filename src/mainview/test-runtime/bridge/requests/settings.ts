@@ -1,5 +1,26 @@
+import type { GitLibrarySyncResult } from "../../../../shared/types";
 import { clone, createdDirectories, state } from "../state";
 import type { RequestClient } from "../types";
+
+function gitLibraryResult(
+  libraryId: string,
+  overrides: Partial<GitLibrarySyncResult> = {}
+): GitLibrarySyncResult {
+  const library = state.settings.gitLibraries.find((entry) => entry.id === libraryId);
+  return {
+    libraryId,
+    state: "up-to-date",
+    path: state.settings.gitLibraryPaths[libraryId] ?? "",
+    remoteUrl: library?.remoteUrl ?? "",
+    branch: library?.branch ?? "main",
+    cloned: false,
+    pulled: false,
+    pushed: false,
+    localChanges: [],
+    syncedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
 
 export const settingsRequests = {
   async getConfig() {
@@ -17,6 +38,13 @@ export const settingsRequests = {
       defaultEditorMode: nextConfig.defaultEditorMode,
       onboardingTourCompleted: nextConfig.onboardingTourCompleted,
       gitBackup: clone(nextConfig.gitBackup),
+      gitLibraries: clone(nextConfig.gitLibraries),
+      gitLibraryPaths: Object.fromEntries(
+        nextConfig.gitLibraries.map((library) => [
+          library.id,
+          library.path || `${state.settings.defaultGitLibraryRoot}/${library.id}`,
+        ])
+      ),
     };
     return clone(state.settings);
   },
@@ -61,6 +89,29 @@ export const settingsRequests = {
     };
     return clone(state.settings);
   },
+  async getGitLibraryStatuses() {
+    return state.settings.gitLibraries.map((library) => gitLibraryResult(library.id));
+  },
+  async syncGitLibrary({ libraryId }) {
+    return gitLibraryResult(libraryId, { pulled: true });
+  },
+  async syncAllGitLibraries() {
+    return state.settings.gitLibraries.map((library) =>
+      gitLibraryResult(library.id, { pulled: true })
+    );
+  },
+  async pushGitLibraryChanges({ libraryId }) {
+    return gitLibraryResult(libraryId, { pushed: true });
+  },
+  async discardGitLibraryChanges({ libraryId }) {
+    return gitLibraryResult(libraryId, { pulled: true });
+  },
+  async scanGitLibraryHostKey({ host }) {
+    return { host, keyType: "ED25519", fingerprint: "SHA256:mockfingerprintvalue" };
+  },
+  async trustGitLibraryHost() {
+    return undefined;
+  },
 } satisfies Pick<
   RequestClient,
   | "getConfig"
@@ -70,4 +121,11 @@ export const settingsRequests = {
   | "initializeGitBackup"
   | "runGitBackup"
   | "restoreGitBackup"
+  | "getGitLibraryStatuses"
+  | "syncGitLibrary"
+  | "syncAllGitLibraries"
+  | "pushGitLibraryChanges"
+  | "discardGitLibraryChanges"
+  | "scanGitLibraryHostKey"
+  | "trustGitLibraryHost"
 >;

@@ -1,6 +1,6 @@
 {
   "name": "skillful",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Manage local AI skills and agents, edit their files, and install them into your tools.",
   "author": "Mastermindzh",
   "license": "FSL-1.1-MIT",
@@ -204,5 +204,8 @@
     "dmg": {
       "backgroundColor": "#242424"
     }
-  }
+  },
+  "trustedDependencies": [
+    "electron"
+  ]
 }

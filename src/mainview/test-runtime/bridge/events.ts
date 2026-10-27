@@ -44,3 +44,7 @@ export function emitGitHubImportRequested(payload: MessageSpec["githubImportRequ
 export function emitAutoGitBackupCompleted(payload: MessageSpec["autoGitBackupCompleted"]) {
   emitEvent("autoGitBackupCompleted", payload);
 }
+
+export function emitGitLibrarySynced(payload: MessageSpec["gitLibrarySynced"]) {
+  emitEvent("gitLibrarySynced", payload);
+}

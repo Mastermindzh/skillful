@@ -2,7 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { defaultGitBackupConfig, loadSavedSettings } from "./settings";
+import { pathExists } from "./fs";
+import { defaultAppConfig, defaultGitBackupConfig, loadSavedSettings } from "./settings";
 import { LibraryItemStore } from "./skills";
 
 let configRoot: string;
@@ -88,6 +89,130 @@ describe("LibraryItemStore save warnings", () => {
     ]);
 
     expect(saved.warnings).toEqual(["notes.md: Missing frontmatter description."]);
+  });
+});
+
+describe("LibraryItemStore git libraries", () => {
+  async function storeWithGitLibrary(readOnly: boolean) {
+    const store = new LibraryItemStore([libraryRoot]);
+    await store.saveConfig({
+      ...defaultAppConfig([]),
+      scanRoots: [],
+      gitLibraries: [
+        {
+          id: "lib-1",
+          name: "Team skills",
+          remoteUrl: "git@example.com:me/skills.git",
+          branch: "main",
+          path: libraryRoot,
+          syncMode: "pull",
+          autoSync: false,
+          syncIntervalMinutes: 60,
+          readOnly,
+        },
+      ],
+    });
+    await store.scanAll();
+    return store;
+  }
+
+  it("stamps items discovered inside a git library clone", async () => {
+    const store = await storeWithGitLibrary(false);
+
+    expect(store.listLibraryItems()[0]?.sourceLibraryId).toBe("lib-1");
+  });
+
+  it("leaves items outside any git library unstamped", async () => {
+    const store = new LibraryItemStore([libraryRoot]);
+    await store.scanAll();
+
+    expect(store.listLibraryItems()[0]?.sourceLibraryId).toBeUndefined();
+  });
+
+  it("refuses to save into a read-only git library", async () => {
+    const store = await storeWithGitLibrary(true);
+    const item = store.listLibraryItems()[0];
+
+    await expect(
+      store.saveLibraryItemFiles(item.id, [{ relativePath: "notes.md", content: "nope" }])
+    ).rejects.toMatchObject({ code: "git-library-read-only" });
+  });
+
+  it("refuses to rename or delete inside a read-only git library", async () => {
+    const store = await storeWithGitLibrary(true);
+    const item = store.listLibraryItems()[0];
+
+    await expect(store.renameLibraryItem(item.id, "Renamed")).rejects.toMatchObject({
+      code: "git-library-read-only",
+    });
+    await expect(store.deleteLibraryItem(item.id)).rejects.toMatchObject({
+      code: "git-library-read-only",
+    });
+  });
+
+  it("allows writes when the git library is not read-only", async () => {
+    const store = await storeWithGitLibrary(false);
+    const item = store.listLibraryItems()[0];
+
+    const saved = await store.saveLibraryItemFiles(item.id, [
+      { relativePath: "notes.md", content: "# Notes\n\nEdited.\n" },
+    ]);
+
+    expect(saved.item.sourceLibraryId).toBe("lib-1");
+  });
+
+  it("still allows reading a read-only item", async () => {
+    const store = await storeWithGitLibrary(true);
+    const item = store.listLibraryItems()[0];
+
+    await expect(store.readLibraryItem(item.id)).resolves.toMatchObject({
+      item: { id: item.id },
+    });
+  });
+
+  it("refuses to create an item inside a read-only git library", async () => {
+    const store = await storeWithGitLibrary(true);
+
+    await expect(
+      store.createLibraryItem({
+        kind: "skill",
+        collectionId: "test-collection",
+        name: "New Skill",
+        description: "Should never be written.",
+      })
+    ).rejects.toMatchObject({ code: "git-library-read-only" });
+
+    await expect(
+      pathExists(path.join(libraryRoot, "skills", "test-collection", "new-skill"))
+    ).resolves.toBe(false);
+  });
+
+  it("allows creating an item when the git library is writable", async () => {
+    const store = await storeWithGitLibrary(false);
+
+    const created = await store.createLibraryItem({
+      kind: "skill",
+      collectionId: "test-collection",
+      name: "New Skill",
+      description: "Allowed.",
+    });
+
+    expect(created.sourceLibraryId).toBe("lib-1");
+  });
+
+  it("refuses to rename a collection that lives in a read-only git library", async () => {
+    const store = await storeWithGitLibrary(true);
+
+    await expect(store.renameCollection("test-collection", "Renamed")).rejects.toMatchObject({
+      code: "git-library-read-only",
+    });
+  });
+
+  it("marks collections inside a read-only git library so the UI can gate creation", async () => {
+    const store = await storeWithGitLibrary(true);
+
+    const collections = await store.listCollections();
+    expect(collections[0]?.sourceLibraryId).toBe("lib-1");
   });
 });
 

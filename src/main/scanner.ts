@@ -109,7 +109,8 @@ export async function readLibraryItemSummary(
   collectionId: string,
   rootPath: string,
   entryPath: string,
-  supportingFiles: string[]
+  supportingFiles: string[],
+  sourceLibraryId?: string
 ): Promise<LibraryItemSummary> {
   const content = await readFile(entryPath, "utf8");
   const frontmatter = parseFrontmatter(content);
@@ -122,6 +123,7 @@ export async function readLibraryItemSummary(
     rootPath,
     entryPath,
     supportingFiles,
+    ...(sourceLibraryId ? { sourceLibraryId } : {}),
   };
 }
 
@@ -139,7 +141,8 @@ export async function refreshLibraryItemSummary(
     libraryItem.collectionId,
     libraryItem.rootPath,
     libraryItem.entryPath,
-    supportingFiles
+    supportingFiles,
+    libraryItem.sourceLibraryId
   );
 }
 
@@ -148,6 +151,7 @@ async function discoverItemsInCollection(
   kind: LibraryItemKind,
   collectionId: string,
   entryLocations: EntryLocation[],
+  sourceLibraryId?: string,
   depth = 0
 ): Promise<void> {
   if (depth > MAX_SCAN_DEPTH) return;
@@ -162,6 +166,7 @@ async function discoverItemsInCollection(
       rootPath: currentPath,
       entryPath: path.join(currentPath, itemFile.name),
       entryFileName,
+      sourceLibraryId,
     });
     return;
   }
@@ -173,7 +178,14 @@ async function discoverItemsInCollection(
   }
   await Promise.all(
     subdirs.map((absolute) =>
-      discoverItemsInCollection(absolute, kind, collectionId, entryLocations, depth + 1)
+      discoverItemsInCollection(
+        absolute,
+        kind,
+        collectionId,
+        entryLocations,
+        sourceLibraryId,
+        depth + 1
+      )
     )
   );
 }
@@ -184,6 +196,7 @@ type EntryLocation = {
   rootPath: string;
   entryPath: string;
   entryFileName: string;
+  sourceLibraryId?: string;
 };
 
 async function buildSummaryForEntry(
@@ -203,8 +216,19 @@ async function buildSummaryForEntry(
       const supportingFiles = (
         await listRelativeFiles(entry.rootPath, entry.rootPath, SKIP_DIRECTORIES)
       ).filter((file) => file !== entry.entryFileName);
-      const refreshed: LibraryItemSummary = { ...cached.summary, supportingFiles };
-      cache?.set(entry.entryPath, { mtimeMs: entryStat.mtimeMs, summary: refreshed });
+      const refreshed: LibraryItemSummary = {
+        ...cached.summary,
+        supportingFiles,
+        // Re-stamped rather than trusted from cache: a root can stop (or start) being a
+        // git library clone without the entry file itself ever changing.
+        ...(entry.sourceLibraryId
+          ? { sourceLibraryId: entry.sourceLibraryId }
+          : { sourceLibraryId: undefined }),
+      };
+      cache?.set(entry.entryPath, {
+        mtimeMs: entryStat.mtimeMs,
+        summary: refreshed,
+      });
       return refreshed;
     }
   }
@@ -219,7 +243,8 @@ async function buildSummaryForEntry(
     entry.collectionId,
     entry.rootPath,
     entry.entryPath,
-    supportingFiles
+    supportingFiles,
+    entry.sourceLibraryId
   );
   if (cache) {
     try {
@@ -236,12 +261,19 @@ async function buildSummaryForEntry(
 async function discoverCollectionsForKind(
   scanRoot: string,
   kind: LibraryItemKind,
-  entryLocations: EntryLocation[]
+  entryLocations: EntryLocation[],
+  sourceLibraryId?: string
 ) {
   const collectionPaths = await collectionDirectoriesFromRoot(scanRoot, kind);
   await Promise.all(
     collectionPaths.map((collectionPath) =>
-      discoverItemsInCollection(collectionPath, kind, path.basename(collectionPath), entryLocations)
+      discoverItemsInCollection(
+        collectionPath,
+        kind,
+        path.basename(collectionPath),
+        entryLocations,
+        sourceLibraryId
+      )
     )
   );
 }
@@ -249,11 +281,14 @@ async function discoverCollectionsForKind(
 export async function discoverLibraryItems(
   scanRoot: string,
   libraryItems: LibraryItemSummary[],
-  cache?: LibraryItemSummaryCache
+  cache?: LibraryItemSummaryCache,
+  sourceLibraryId?: string
 ): Promise<void> {
   const entryLocations: EntryLocation[] = [];
   await Promise.all(
-    LIBRARY_ITEM_KINDS.map((kind) => discoverCollectionsForKind(scanRoot, kind, entryLocations))
+    LIBRARY_ITEM_KINDS.map((kind) =>
+      discoverCollectionsForKind(scanRoot, kind, entryLocations, sourceLibraryId)
+    )
   );
   const summaries = await mapWithConcurrency(entryLocations, SCAN_CONCURRENCY, (entry) =>
     buildSummaryForEntry(entry, cache)
@@ -262,7 +297,10 @@ export async function discoverLibraryItems(
 }
 
 /** Lists immediate collection folders across libraryItem and agent roots. */
-export async function listLibraryCollections(scanRoots: string[]) {
+export async function listLibraryCollections(
+  scanRoots: string[],
+  sourceLibraryIdByRoot: Record<string, string | undefined> = {}
+) {
   const collections = new Map<string, LibraryItemCollectionSummary>();
 
   for (const root of scanRoots) {
@@ -270,7 +308,10 @@ export async function listLibraryCollections(scanRoots: string[]) {
       for (const collectionPath of await collectionDirectoriesFromRoot(root, kind)) {
         const summary = collectionSummary(path.basename(collectionPath));
         if (!collections.has(summary.id)) {
-          collections.set(summary.id, summary);
+          // Root order matches `resolveWritableCollectionPath`, so the first root holding this
+          // collection is also the one a new item would be created in.
+          const sourceLibraryId = sourceLibraryIdByRoot[root];
+          collections.set(summary.id, sourceLibraryId ? { ...summary, sourceLibraryId } : summary);
         }
       }
     }

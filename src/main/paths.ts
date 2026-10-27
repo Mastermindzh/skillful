@@ -1,17 +1,10 @@
 import path from "node:path";
 import type { AbsolutePath } from "../shared/brand";
-
-function isWindowsAbsolutePath(value: string) {
-  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\");
-}
-
-export function isAbsolutePathString(value: string): boolean {
-  return value.startsWith("/") || isWindowsAbsolutePath(value);
-}
+import { isAbsolutePath } from "../shared/paths";
 
 /** Asserts and brands a string as an absolute path. Throws when invalid. */
 export function asAbsolutePath(value: string, label = "Path"): AbsolutePath {
-  if (!isAbsolutePathString(value)) {
+  if (!isAbsolutePath(value)) {
     throw new Error(`${label} must be an absolute path: ${value}`);
   }
   return path.resolve(value) as AbsolutePath;

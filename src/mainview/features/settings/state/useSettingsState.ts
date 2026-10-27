@@ -12,10 +12,16 @@ import { setSuppressSuccessNotifications } from "../../notifications/notify";
 import { sameScanRoots } from "../model/scanRoots";
 import { useBackupSettingsState } from "./useBackupSettingsState";
 import { useGeneralSettingsState } from "./useGeneralSettingsState";
+import { useGitLibrarySettingsState } from "./useGitLibrarySettingsState";
 import { useLibrarySettingsState } from "./useLibrarySettingsState";
 import { useToolSettingsState } from "./useToolSettingsState";
 
-export type SettingsTab = "general" | "library" | "tools" | "backup" | "updates";
+export type SettingsTab =
+  | "general"
+  | "library"
+  | "tools"
+  | "backup"
+  | "updates";
 
 type SaveSettingsOptions = {
   activeLibraryItemId: string | null;
@@ -51,9 +57,20 @@ export function useSettingsState() {
 
   const general = useGeneralSettingsState(appSettings);
   const library = useLibrarySettingsState(appSettings);
+  const gitLibraries = useGitLibrarySettingsState(appSettings);
   const tools = useToolSettingsState(appSettings);
   const backup = useBackupSettingsState(appSettings);
-  const settingsChanged = library.dirty || tools.dirty || general.dirty || backup.dirty;
+  const settingsChanged =
+    library.dirty ||
+    gitLibraries.dirty ||
+    tools.dirty ||
+    general.dirty ||
+    backup.dirty;
+  const hasValidationErrors =
+    library.validation.hasErrors ||
+    gitLibraries.validation.hasErrors ||
+    tools.validation.hasErrors ||
+    backup.validation.hasErrors;
 
   useEffect(() => {
     tRef.current = t;
@@ -62,11 +79,18 @@ export function useSettingsState() {
   const resetRows = useCallback(
     (settings: AppSettings | null) => {
       library.reset(settings);
+      gitLibraries.reset(settings);
       tools.reset(settings);
       general.reset(settings);
       backup.resetFromSettings(settings);
     },
-    [backup.resetFromSettings, general.reset, library.reset, tools.reset]
+    [
+      backup.resetFromSettings,
+      general.reset,
+      gitLibraries.reset,
+      library.reset,
+      tools.reset,
+    ],
   );
 
   const loadSettings = useCallback(async () => {
@@ -74,12 +98,16 @@ export function useSettingsState() {
       const nextSettings = await appRpc.request.getConfig();
       setAppSettings(nextSettings);
       resetRows(nextSettings);
-      setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
+      setSuppressSuccessNotifications(
+        nextSettings.suppressSuccessNotifications,
+      );
       setSettingsError(null);
       return nextSettings;
     } catch (nextError) {
       setSettingsError(
-        nextError instanceof Error ? nextError.message : tRef.current("common.error.loadSettings")
+        nextError instanceof Error
+          ? nextError.message
+          : tRef.current("common.error.loadSettings"),
       );
       return null;
     }
@@ -92,8 +120,14 @@ export function useSettingsState() {
       setSettingsError(null);
       backup.clearTransient();
       resetRows(appSettings);
+      void gitLibraries.refreshStatuses();
     },
-    [appSettings, backup.clearTransient, resetRows]
+    [
+      appSettings,
+      backup.clearTransient,
+      gitLibraries.refreshStatuses,
+      resetRows,
+    ],
   );
 
   const closeSettings = useCallback(() => {
@@ -111,25 +145,28 @@ export function useSettingsState() {
       reloadToolStatuses,
       toolMappings,
     }: SaveSettingsOptions) => {
-      if (library.validation.hasErrors || tools.validation.hasErrors || backup.validation.hasErrors)
-        return;
+      if (hasValidationErrors) return;
       setSettingsSaving(true);
       try {
         const scanRootsChanged = !sameScanRoots(
           library.validation.cleanedRoots,
-          appSettings?.scanRoots ?? []
+          appSettings?.scanRoots ?? [],
         );
         const nextSettings = await appRpc.request.saveConfig({
           scanRoots: library.validation.cleanedRoots,
           tools: tools.validation.tools,
           toolMappings,
           ...general.saveFields,
-          onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
+          onboardingTourCompleted:
+            appSettings?.onboardingTourCompleted ?? false,
           gitBackup: backup.validation.config,
+          gitLibraries: gitLibraries.validation.libraries,
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
+        setSuppressSuccessNotifications(
+          nextSettings.suppressSuccessNotifications,
+        );
         setSettingsError(null);
         if (scanRootsChanged) {
           await reloadSkills(activeLibraryItemId ?? undefined);
@@ -146,7 +183,9 @@ export function useSettingsState() {
         setSettingsOpen(false);
       } catch (nextError) {
         setSettingsError(
-          nextError instanceof Error ? nextError.message : t("common.error.saveSettings")
+          nextError instanceof Error
+            ? nextError.message
+            : t("common.error.saveSettings"),
         );
       } finally {
         setSettingsSaving(false);
@@ -156,15 +195,14 @@ export function useSettingsState() {
       appSettings?.onboardingTourCompleted,
       appSettings?.scanRoots,
       backup.validation.config,
-      backup.validation.hasErrors,
       general.saveFields,
+      gitLibraries.validation.libraries,
+      hasValidationErrors,
       library.validation.cleanedRoots,
-      library.validation.hasErrors,
       resetRows,
-      tools.validation.hasErrors,
       tools.validation.tools,
       t,
-    ]
+    ],
   );
 
   const restoreGitBackup = useCallback(
@@ -184,11 +222,15 @@ export function useSettingsState() {
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
+        setSuppressSuccessNotifications(
+          nextSettings.suppressSuccessNotifications,
+        );
         backup.setErrorMessage(null);
         setSettingsError(null);
         backup.setRestoreNeedsConfirmation(false);
-        const nextActiveLibraryItemId = await reloadSkills(activeLibraryItemId ?? undefined);
+        const nextActiveLibraryItemId = await reloadSkills(
+          activeLibraryItemId ?? undefined,
+        );
         if (nextActiveLibraryItemId) {
           await reloadToolStatuses(nextActiveLibraryItemId);
         }
@@ -203,7 +245,9 @@ export function useSettingsState() {
           return;
         }
         backup.setErrorMessage(
-          nextError instanceof Error ? nextError.message : t("settings.backup.error.restore")
+          nextError instanceof Error
+            ? nextError.message
+            : t("settings.backup.error.restore"),
         );
       } finally {
         backup.setRestoring(false);
@@ -218,7 +262,7 @@ export function useSettingsState() {
       backup.setRestoring,
       resetRows,
       t,
-    ]
+    ],
   );
 
   const setupGitBackup = useCallback(
@@ -239,22 +283,26 @@ export function useSettingsState() {
       try {
         const scanRootsChanged = !sameScanRoots(
           library.validation.cleanedRoots,
-          appSettings?.scanRoots ?? []
+          appSettings?.scanRoots ?? [],
         );
         const nextSettings = await appRpc.request.saveConfig({
           scanRoots: library.validation.cleanedRoots,
           tools: tools.validation.tools,
           toolMappings,
           ...general.saveFields,
-          onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
+          onboardingTourCompleted:
+            appSettings?.onboardingTourCompleted ?? false,
           gitBackup: {
             ...backup.restoreValidation.config,
             enabled: true,
           },
+          gitLibraries: gitLibraries.validation.libraries,
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
+        setSuppressSuccessNotifications(
+          nextSettings.suppressSuccessNotifications,
+        );
         setSettingsError(null);
         backup.setErrorMessage(null);
         backup.setRestoreNeedsConfirmation(false);
@@ -270,7 +318,9 @@ export function useSettingsState() {
         }
       } catch (nextError) {
         backup.setErrorMessage(
-          nextError instanceof Error ? nextError.message : t("settings.backup.error.run")
+          nextError instanceof Error
+            ? nextError.message
+            : t("settings.backup.error.run"),
         );
       } finally {
         setSettingsSaving(false);
@@ -285,13 +335,14 @@ export function useSettingsState() {
       backup.setErrorMessage,
       backup.setRestoreNeedsConfirmation,
       general.saveFields,
+      gitLibraries.validation.libraries,
       library.validation.cleanedRoots,
       library.validation.hasErrors,
       resetRows,
       tools.validation.hasErrors,
       tools.validation.tools,
       t,
-    ]
+    ],
   );
 
   return {
@@ -303,14 +354,13 @@ export function useSettingsState() {
       close: closeSettings,
       dirtyTabs: {
         general: general.dirty,
-        library: library.dirty,
+        library: library.dirty || gitLibraries.dirty,
         tools: tools.dirty,
         backup: backup.dirty,
       },
       errorMessage: settingsError,
       hasChanges: settingsChanged,
-      hasValidationErrors:
-        library.validation.hasErrors || tools.validation.hasErrors || backup.validation.hasErrors,
+      hasValidationErrors,
       open: openSettings,
       opened: settingsOpen,
       save: saveSettings,
@@ -324,6 +374,28 @@ export function useSettingsState() {
       removeRow: library.removeRow,
       restoreRow: library.restoreRow,
       validation: library.validation,
+    },
+    gitLibraries: {
+      addRow: gitLibraries.addRow,
+      busyIds: gitLibraries.busyIds,
+      discard: gitLibraries.discard,
+      dismissHostPrompt: gitLibraries.dismissHostPrompt,
+      errorMessage: gitLibraries.errorMessage,
+      expandedById: gitLibraries.expandedById,
+      hostPrompt: gitLibraries.hostPrompt,
+      push: gitLibraries.push,
+      refreshStatuses: gitLibraries.refreshStatuses,
+      removeRow: gitLibraries.removeRow,
+      restoreRow: gitLibraries.restoreRow,
+      rows: gitLibraries.rows,
+      statusById: gitLibraries.statusById,
+      sync: gitLibraries.sync,
+      syncAll: gitLibraries.syncAll,
+      syncingAll: gitLibraries.syncingAll,
+      toggleExpanded: gitLibraries.toggleExpanded,
+      trustHost: gitLibraries.trustHost,
+      updateRow: gitLibraries.updateRow,
+      validation: gitLibraries.validation,
     },
     general: {
       defaultEditorMode: general.defaultEditorMode,

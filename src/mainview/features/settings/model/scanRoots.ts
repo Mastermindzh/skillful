@@ -1,5 +1,6 @@
+import { isAbsolutePath } from "../../../../shared/paths";
 import type { TranslationKey, TranslationValues } from "../../../i18n/messages";
-import { cleanPath, isAbsolutePath } from "../utils/paths";
+import { cleanPath } from "../utils/paths";
 
 export type ScanRootRow = {
   id: string;
@@ -33,7 +34,9 @@ export function createScanRootRow(path = ""): ScanRootRow {
 
 /** Builds editable scan root rows and keeps one blank row visible for first-time setup. */
 export function buildScanRootRows(paths: string[]): ScanRootRow[] {
-  return (paths.length > 0 ? paths : [""]).map((path) => createScanRootRow(path));
+  return (paths.length > 0 ? paths : [""]).map((path) =>
+    createScanRootRow(path),
+  );
 }
 
 /** Validates editable scan root rows and returns the cleaned paths that can be saved. */
@@ -64,7 +67,10 @@ export function validateScanRootRows(rows: ScanRootRow[]): ScanRootValidation {
 
     const duplicateOf = seen.get(value.toLowerCase());
     if (duplicateOf) {
-      byId[row.id] = { messageKey: "settings.error.duplicatePath", values: { path: duplicateOf } };
+      byId[row.id] = {
+        messageKey: "settings.error.duplicatePath",
+        values: { path: duplicateOf },
+      };
       hasErrors = true;
       continue;
     }

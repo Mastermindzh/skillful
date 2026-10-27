@@ -681,12 +681,13 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     setActiveFilePath(null);
   }, []);
 
+  /** Resolves false when the save failed, so navigation can keep the drafts instead of dropping them. */
   const saveCurrentFile = useCallback(async () => {
     const currentFile =
       activeLibraryItem?.files.find((file) => file.relativePath === activeFilePath) ??
       activeLibraryItem?.files[0] ??
       null;
-    if (!activeLibraryItem || !currentFile) return;
+    if (!activeLibraryItem || !currentFile) return false;
 
     const activeDrafts = draftsForDocument(activeLibraryItem, draftsByFile);
     setStatus("saving");
@@ -704,17 +705,19 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
       }
       setError(null);
       setStatus("idle");
+      return true;
     } catch (nextError) {
       setStatus("error");
       setError(nextError instanceof Error ? nextError.message : t("details.error.save"));
+      return false;
     }
   }, [activeFilePath, activeLibraryItem, draftsByFile, setSkillList, t]);
 
   const saveAllFiles = useCallback(async () => {
-    if (!activeLibraryItem) return;
+    if (!activeLibraryItem) return false;
 
     const changedFiles = dirtyFilesForDocument(activeLibraryItem, draftsByFile);
-    if (changedFiles.length === 0) return;
+    if (changedFiles.length === 0) return true;
 
     const activeDrafts = draftsForDocument(activeLibraryItem, draftsByFile);
     setStatus("saving");
@@ -734,9 +737,11 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
       }
       setError(null);
       setStatus("idle");
+      return true;
     } catch (nextError) {
       setStatus("error");
       setError(nextError instanceof Error ? nextError.message : t("details.error.saveAll"));
+      return false;
     }
   }, [activeLibraryItem, draftsByFile, setSkillList, t]);
 

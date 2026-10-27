@@ -18,11 +18,11 @@ type SkillfulElectronApi = {
   perfEnabled: boolean;
   request<K extends RequestName>(
     name: K,
-    params: RequestSpec[K]["params"]
+    params: RequestSpec[K]["params"],
   ): Promise<RequestSpec[K]["response"]>;
   onMessage<K extends MessageName>(
     name: K,
-    listener: (payload: MessageSpec[K]) => void
+    listener: (payload: MessageSpec[K]) => void,
   ): () => void;
   log(level: LogLevel, message: string, details?: unknown): void;
 };
@@ -40,8 +40,12 @@ const messageNames = [
   "githubImportRequested",
   "updateStatusChanged",
   "autoGitBackupCompleted",
+  "gitLibrarySynced",
 ] as const satisfies readonly MessageName[];
-const messageListeners = new Map<MessageName, Set<(payload: unknown) => void>>();
+const messageListeners = new Map<
+  MessageName,
+  Set<(payload: unknown) => void>
+>();
 
 function electronApi() {
   if (!window.skillful) {
@@ -61,7 +65,12 @@ const request = new Proxy({} as ElectronRequestClient, {
   get(_target, prop) {
     const name = prop as RequestName;
     return (params?: unknown) =>
-      wrapRequest(electronApi().request(name, params as RequestSpec[typeof name]["params"]));
+      wrapRequest(
+        electronApi().request(
+          name,
+          params as RequestSpec[typeof name]["params"],
+        ),
+      );
   },
 });
 
@@ -80,20 +89,28 @@ function emitMessage<K extends MessageName>(name: K, payload: MessageSpec[K]) {
   for (const listener of listenersFor(name)) listener(payload);
 }
 
-export function onAppMessage<K extends MessageName>(name: K, listener: MessageListener<K>) {
+export function onAppMessage<K extends MessageName>(
+  name: K,
+  listener: MessageListener<K>,
+) {
   listenersFor(name).add(listener);
   return () => {
     listenersFor(name).delete(listener);
   };
 }
 
-export function logRenderer(level: LogLevel, message: string, details?: unknown) {
+export function logRenderer(
+  level: LogLevel,
+  message: string,
+  details?: unknown,
+) {
   if (window.skillful) {
     window.skillful.log(level, message, details);
     return;
   }
 
-  const text = details === undefined ? message : `${message} ${JSON.stringify(details)}`;
+  const text =
+    details === undefined ? message : `${message} ${JSON.stringify(details)}`;
   switch (level) {
     case "debug":
       console.debug(text);

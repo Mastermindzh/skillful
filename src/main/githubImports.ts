@@ -267,6 +267,24 @@ async function downloadGitHubArchive(
     );
   }
 
+  // The request starts at github.com but follows redirects; GitHub serves archive bytes from
+  // codeload.github.com. Pin the final response host so a hijacked redirect cannot point the
+  // importer at an attacker-controlled origin.
+  const allowedArchiveHosts = new Set(["github.com", "www.github.com", "codeload.github.com"]);
+  const finalHost = (() => {
+    try {
+      return new URL(response.url).hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  })();
+  if (response.url && !allowedArchiveHosts.has(finalHost)) {
+    throw new AppError(
+      "internal",
+      `GitHub archive download was redirected to an unexpected host: ${finalHost || "unknown"}.`
+    );
+  }
+
   const unzippedFiles = unzipArchiveBytes(
     new Uint8Array(await response.arrayBuffer()),
     COLLECTION_ARCHIVE_LIMITS,

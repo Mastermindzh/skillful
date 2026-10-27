@@ -11,7 +11,8 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { AppError } from "../shared/errors";
-import { caseFoldedPath, isAbsolutePathString } from "./paths";
+import { isAbsolutePath } from "../shared/paths";
+import { caseFoldedPath } from "./paths";
 
 const MAX_DIRECTORY_DEPTH = 12;
 
@@ -64,11 +65,15 @@ export function resolvePathList(paths: string[]) {
 /** Normalizes a list of paths that must already be absolute. */
 export function normalizeAbsolutePathList(paths: string[], label: string) {
   const cleanedPaths = cleanPathList(paths);
-  const invalidPath = cleanedPaths.find((entry) => !isAbsolutePathString(entry));
+  const invalidPath = cleanedPaths.find((entry) => !isAbsolutePath(entry));
   if (invalidPath) {
-    throw new AppError("invalid-path", `${label} must use absolute paths: ${invalidPath}`, {
-      path: invalidPath,
-    });
+    throw new AppError(
+      "invalid-path",
+      `${label} must use absolute paths: ${invalidPath}`,
+      {
+        path: invalidPath,
+      },
+    );
   }
   return resolvePathList(cleanedPaths);
 }
@@ -86,7 +91,10 @@ export function validatePathSegment(name: string, label: string) {
     segment.includes("\0") ||
     path.basename(segment) !== segment
   ) {
-    throw new AppError("invalid-name", `${label} cannot include path separators.`);
+    throw new AppError(
+      "invalid-name",
+      `${label} cannot include path separators.`,
+    );
   }
   return segment;
 }
@@ -94,7 +102,9 @@ export function validatePathSegment(name: string, label: string) {
 /** Reuses the current relative parent directory while swapping the trailing file name segment. */
 export function preserveRelativeParent(relativePath: string, fileName: string) {
   const parentDirectory = path.dirname(relativePath);
-  return parentDirectory === "." ? fileName : path.join(parentDirectory, fileName);
+  return parentDirectory === "."
+    ? fileName
+    : path.join(parentDirectory, fileName);
 }
 
 /** Creates a directory and its parents if needed. */
@@ -109,9 +119,13 @@ export async function ensureDirectory(dirPath: string) {
 export async function ensureDirectoryWithExistingParent(dirPath: string) {
   const parent = path.dirname(dirPath);
   if (!(await pathExists(parent))) {
-    throw new AppError("tool-install-missing-root", `Parent directory does not exist: ${parent}`, {
-      path: parent,
-    });
+    throw new AppError(
+      "tool-install-missing-root",
+      `Parent directory does not exist: ${parent}`,
+      {
+        path: parent,
+      },
+    );
   }
   await mkdir(dirPath, { recursive: true });
 }
@@ -122,10 +136,18 @@ export async function realpathOrNull(filePath: string) {
 }
 
 /** Lists immediate child directories under a root, excluding skipped folder names and symlinks. */
-export async function listImmediateDirectories(root: string, skip = new Set<string>()) {
+export async function listImmediateDirectories(
+  root: string,
+  skip = new Set<string>(),
+) {
   const dirents = await readdir(root, { withFileTypes: true });
   return dirents
-    .filter((dirent) => dirent.isDirectory() && !dirent.isSymbolicLink() && !skip.has(dirent.name))
+    .filter(
+      (dirent) =>
+        dirent.isDirectory() &&
+        !dirent.isSymbolicLink() &&
+        !skip.has(dirent.name),
+    )
     .map((dirent) => path.join(root, dirent.name))
     .sort((a, b) => a.localeCompare(b));
 }
@@ -138,7 +160,7 @@ export async function listRelativeFiles(
   root: string,
   currentPath = root,
   skip = new Set<string>(),
-  depth = 0
+  depth = 0,
 ): Promise<string[]> {
   if (depth > MAX_DIRECTORY_DEPTH) return [];
   const dirents = await readdir(currentPath, { withFileTypes: true });
@@ -148,7 +170,9 @@ export async function listRelativeFiles(
     if (dirent.isSymbolicLink()) continue;
     const absolutePath = path.join(currentPath, dirent.name);
     if (dirent.isDirectory()) {
-      files.push(...(await listRelativeFiles(root, absolutePath, skip, depth + 1)));
+      files.push(
+        ...(await listRelativeFiles(root, absolutePath, skip, depth + 1)),
+      );
       continue;
     }
     if (!dirent.isFile()) continue;
@@ -158,10 +182,25 @@ export async function listRelativeFiles(
 }
 
 /**
+ * True when `candidate` is `directory` itself or sits underneath it. Compares resolved paths
+ * textually, so it answers "which configured root owns this path" rather than following symlinks.
+ */
+export function isInsideDirectory(directory: string, candidate: string) {
+  const root = path.resolve(directory);
+  const target = path.resolve(candidate);
+  if (target === root) return true;
+  const rootWithSep = root.endsWith(path.sep) ? root : root + path.sep;
+  return target.startsWith(rootWithSep);
+}
+
+/**
  * Resolves a user-supplied relative path inside a trusted root and rejects any resolution that
  * escapes the root via traversal or symlinks.
  */
-export async function safeResolveRelative(rootPath: string, relativePath: string) {
+export async function safeResolveRelative(
+  rootPath: string,
+  relativePath: string,
+) {
   const resolvedRoot = await realpath(rootPath);
   return safeResolveRelativeWithResolvedRoot(resolvedRoot, relativePath);
 }
@@ -173,20 +212,34 @@ export async function safeResolveRelative(rootPath: string, relativePath: string
  */
 export async function safeResolveRelativeWithResolvedRoot(
   resolvedRoot: string,
-  relativePath: string
+  relativePath: string,
 ) {
-  if (!relativePath || relativePath.includes("\0") || path.isAbsolute(relativePath)) {
-    throw new AppError("invalid-path", `Invalid relative path: ${relativePath}`);
+  if (
+    !relativePath ||
+    relativePath.includes("\0") ||
+    path.isAbsolute(relativePath)
+  ) {
+    throw new AppError(
+      "invalid-path",
+      `Invalid relative path: ${relativePath}`,
+    );
   }
   const candidate = path.resolve(resolvedRoot, relativePath);
   const candidateReal = (await realpathOrNull(candidate)) ?? candidate;
-  const rootWithSep = resolvedRoot.endsWith(path.sep) ? resolvedRoot : resolvedRoot + path.sep;
-  const withinRoot = candidateReal === resolvedRoot || candidateReal.startsWith(rootWithSep);
+  const rootWithSep = resolvedRoot.endsWith(path.sep)
+    ? resolvedRoot
+    : resolvedRoot + path.sep;
+  const withinRoot =
+    candidateReal === resolvedRoot || candidateReal.startsWith(rootWithSep);
   if (!withinRoot) {
-    throw new AppError("invalid-path", `Path escapes its root: ${relativePath}`, {
-      root: resolvedRoot,
-      resolved: candidateReal,
-    });
+    throw new AppError(
+      "invalid-path",
+      `Path escapes its root: ${relativePath}`,
+      {
+        root: resolvedRoot,
+        resolved: candidateReal,
+      },
+    );
   }
   return candidateReal;
 }
@@ -195,7 +248,7 @@ export async function safeResolveRelativeWithResolvedRoot(
 export async function atomicWriteFile(
   targetPath: string,
   data: string | Uint8Array,
-  encoding: BufferEncoding = "utf8"
+  encoding: BufferEncoding = "utf8",
 ) {
   await ensureDirectory(path.dirname(targetPath));
   const tempPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
@@ -217,7 +270,7 @@ export async function writeFileExclusive(
   targetPath: string,
   data: string | Uint8Array,
   conflictMessage: string,
-  encoding: BufferEncoding = "utf8"
+  encoding: BufferEncoding = "utf8",
 ) {
   await ensureDirectory(path.dirname(targetPath));
   try {
@@ -246,12 +299,16 @@ export async function copyRelativeFiles(
     skip?: Set<string>;
     conflictMessage?: (relativePath: string) => string;
     overwrite?: boolean;
-  } = {}
+  } = {},
 ) {
   if (!(await pathExists(sourceRoot))) return 0;
 
   let copiedFiles = 0;
-  for (const relativePath of await listRelativeFiles(sourceRoot, sourceRoot, options.skip)) {
+  for (const relativePath of await listRelativeFiles(
+    sourceRoot,
+    sourceRoot,
+    options.skip,
+  )) {
     const sourcePath = path.join(sourceRoot, relativePath);
     const targetPath = path.join(targetRoot, relativePath);
     await ensureDirectory(path.dirname(targetPath));
@@ -266,8 +323,9 @@ export async function copyRelativeFiles(
       if (code === "EEXIST") {
         throw new AppError(
           "file-exists",
-          options.conflictMessage?.(relativePath) ?? `File already exists: ${relativePath}`,
-          { path: targetPath }
+          options.conflictMessage?.(relativePath) ??
+            `File already exists: ${relativePath}`,
+          { path: targetPath },
         );
       }
       throw error;

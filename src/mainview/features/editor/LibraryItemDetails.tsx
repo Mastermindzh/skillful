@@ -1,4 +1,4 @@
-import { Tabs } from "@mantine/core";
+import { Alert, Tabs } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { frontmatterMetadataWarningsForFiles } from "../../../shared/frontmatter";
@@ -28,6 +28,7 @@ const LibraryItemCodeEditor = lazy(async () => {
 export function LibraryItemDetails({
   document,
   collectionTitle,
+  readOnly,
   activeRelativePath,
   onActiveRelativePathChange,
   drafts,
@@ -41,6 +42,7 @@ export function LibraryItemDetails({
   const { t } = useAppTranslation();
   const compactActions = useMediaQuery("(max-width: 1280px)");
   const [viewMode, setViewMode] = useState<EditorViewMode>("preview");
+  const effectiveViewMode: EditorViewMode = readOnly ? "preview" : viewMode;
   const activeFile =
     document?.files.find((file) => file.relativePath === activeRelativePath) ??
     (activeRelativePath ? null : (document?.files[0] ?? null));
@@ -79,6 +81,7 @@ export function LibraryItemDetails({
     fileActions,
     onActiveRelativePathChange,
     saving: saveState.saving,
+    readOnly,
   });
 
   useEffect(() => {
@@ -97,7 +100,8 @@ export function LibraryItemDetails({
                 libraryItem={document.item}
                 collectionTitle={collectionTitle}
                 activeFile={activeFile}
-                viewMode={viewMode}
+                readOnly={readOnly}
+                viewMode={effectiveViewMode}
                 onViewModeChange={setViewMode}
                 compactActions={compactActions}
                 saving={saveState.saving}
@@ -121,6 +125,12 @@ export function LibraryItemDetails({
 
               <MetadataWarningPanel warnings={metadataWarnings} />
 
+              {saveState.errorMessage ? (
+                <Alert color="red" variant="light" mt="xs" role="alert">
+                  {saveState.errorMessage}
+                </Alert>
+              ) : null}
+
               <div className="detail-pane-content">
                 <Tabs
                   value={activeRelativePath}
@@ -143,7 +153,7 @@ export function LibraryItemDetails({
                       className="editor-panel"
                     >
                       <div className="editor-panel-body">
-                        {viewMode === "preview" ? (
+                        {effectiveViewMode === "preview" ? (
                           <MarkdownPreview
                             value={drafts[activeFile.relativePath] ?? activeFile.content}
                           />

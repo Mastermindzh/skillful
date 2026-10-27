@@ -3,9 +3,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "../shared/errors";
+import type { GitLibraryConfig } from "../shared/types";
 import {
   defaultGitBackupConfig,
+  defaultGitLibraryRoot,
+  effectiveScanRoots,
+  gitLibraryPath,
   loadSavedSettings,
+  normalizeGitLibraries,
   normalizeToolConfigs,
   persistSettings,
   settingsDirectory,
@@ -96,6 +101,7 @@ describe("loadSavedSettings", () => {
       defaultEditorMode: "preview",
       onboardingTourCompleted: false,
       gitBackup: defaultGitBackupConfig(),
+      gitLibraries: [],
     });
   });
 
@@ -126,6 +132,7 @@ describe("loadSavedSettings", () => {
         enabled: true,
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
+      gitLibraries: [],
     });
 
     await expect(loadSavedSettings()).resolves.toEqual({
@@ -151,6 +158,7 @@ describe("loadSavedSettings", () => {
         enabled: true,
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
+      gitLibraries: [],
     });
   });
 
@@ -200,5 +208,68 @@ describe("normalizeToolConfigs", () => {
         },
       },
     ]);
+  });
+});
+
+describe("git libraries", () => {
+  function library(overrides: Partial<GitLibraryConfig> = {}): GitLibraryConfig {
+    return {
+      id: "library-1",
+      name: "Team skills",
+      remoteUrl: "git@example.com:me/skills.git",
+      branch: "main",
+      path: "",
+      syncMode: "pull",
+      autoSync: true,
+      syncIntervalMinutes: 60,
+      readOnly: false,
+      ...overrides,
+    };
+  }
+
+  it("clones into a managed folder keyed by library id when no path is set", () => {
+    expect(gitLibraryPath(library())).toBe(path.join(defaultGitLibraryRoot(), "library-1"));
+  });
+
+  it("honours an explicit clone folder", () => {
+    expect(gitLibraryPath(library({ path: "/srv/skills" }))).toBe("/srv/skills");
+  });
+
+  it("adds every git library clone to the effective scan roots", () => {
+    const roots = effectiveScanRoots([], [library({ path: "/srv/skills" })]);
+
+    expect(roots).toContain("/srv/skills");
+    expect(roots).toContain(settingsDirectory());
+  });
+
+  it("drops libraries without a remote", () => {
+    expect(normalizeGitLibraries([library({ remoteUrl: "  " })])).toEqual([]);
+  });
+
+  it("clamps the sync interval to at least one minute", () => {
+    expect(
+      normalizeGitLibraries([library({ syncIntervalMinutes: 0 })])[0]?.syncIntervalMinutes
+    ).toBe(1);
+  });
+
+  it("rejects duplicate library ids", () => {
+    expect(() => normalizeGitLibraries([library(), library()])).toThrow(AppError);
+  });
+
+  it("rejects two libraries sharing a clone folder", () => {
+    expect(() =>
+      normalizeGitLibraries([
+        library({ id: "a", path: "/srv/skills" }),
+        library({ id: "b", path: "/srv/skills" }),
+      ])
+    ).toThrow(AppError);
+  });
+
+  it("rejects a relative clone folder", () => {
+    expect(() => normalizeGitLibraries([library({ path: "relative/path" })])).toThrow(AppError);
+  });
+
+  it("rejects a branch with whitespace", () => {
+    expect(() => normalizeGitLibraries([library({ branch: "my branch" })])).toThrow(AppError);
   });
 });

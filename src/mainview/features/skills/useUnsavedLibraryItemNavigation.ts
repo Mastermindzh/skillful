@@ -8,11 +8,32 @@ type UseUnsavedSkillNavigationOptions = {
   activeLibraryItemId: string | null;
   draftsByFile: DraftMap;
   defaultEditorMode: EditorViewMode;
-  saveAllFiles: () => Promise<void>;
+  saveAllFiles: () => Promise<boolean>;
   setActiveSkillId: (id: string | null) => void;
   setDraftsByFile: (updater: (drafts: DraftMap) => DraftMap) => void;
   pushViewModeIntent: (mode: ViewMode) => void;
 };
+
+type SaveThenNavigateEffects = {
+  saveAllFiles: () => Promise<boolean>;
+  clearDrafts: () => void;
+  navigate: () => void;
+};
+
+/**
+ * Clears drafts and navigates only after the save succeeds. A failed save must leave both alone,
+ * otherwise the dialog that promised to persist the edits is what destroys them.
+ */
+export async function saveThenNavigate({
+  saveAllFiles,
+  clearDrafts,
+  navigate,
+}: SaveThenNavigateEffects) {
+  if (!(await saveAllFiles())) return false;
+  clearDrafts();
+  navigate();
+  return true;
+}
 
 export function useUnsavedLibraryItemNavigation({
   activeLibraryItem,
@@ -56,12 +77,17 @@ export function useUnsavedLibraryItemNavigation({
   /** Save all dirty files and navigate to the pending skill. */
   const confirmSaveAndNavigate = useCallback(async () => {
     setUnsavedDialogOpen(false);
-    await saveAllFiles();
-    if (activeLibraryItem) {
-      setDraftsByFile((drafts) => clearDraftsForLibraryItem(activeLibraryItem.item.id, drafts));
-    }
-    pushViewModeIntent(defaultEditorMode);
-    setActiveSkillId(pendingSkillId);
+    await saveThenNavigate({
+      saveAllFiles,
+      clearDrafts: () => {
+        if (!activeLibraryItem) return;
+        setDraftsByFile((drafts) => clearDraftsForLibraryItem(activeLibraryItem.item.id, drafts));
+      },
+      navigate: () => {
+        pushViewModeIntent(defaultEditorMode);
+        setActiveSkillId(pendingSkillId);
+      },
+    });
     setPendingSkillId(null);
   }, [
     activeLibraryItem,

@@ -10,6 +10,7 @@ type AdditionalFilesPanelState = {
   saving: boolean;
   uploadError: string | null;
   actionPath: string | null;
+  readOnly: boolean;
 };
 
 type AdditionalFilesPanelActions = {
@@ -26,18 +27,25 @@ type AdditionalFilesPanelProps = {
   actions: AdditionalFilesPanelActions;
 };
 
-export function AdditionalFilesPanel({ files, state, actions }: AdditionalFilesPanelProps) {
+export function AdditionalFilesPanel({
+  files,
+  state,
+  actions,
+}: AdditionalFilesPanelProps) {
   const { t } = useAppTranslation();
   return (
     <>
       <div className="additional-files-toolbar">
-        <FileButton onChange={(nextFiles) => void actions.onUploadFiles(nextFiles)} multiple>
+        <FileButton
+          onChange={(nextFiles) => void actions.onUploadFiles(nextFiles)}
+          multiple
+        >
           {(props) => (
             <Button
               {...props}
               variant="light"
               leftSection={<Upload size={15} />}
-              disabled={state.saving}
+              disabled={state.saving || state.readOnly}
             >
               {t("additionalFiles.upload")}
             </Button>
@@ -61,6 +69,7 @@ export function AdditionalFilesPanel({ files, state, actions }: AdditionalFilesP
                 absolutePath={file.absolutePath}
                 label={label}
                 actionPath={state.actionPath}
+                readOnly={state.readOnly}
                 onRename={() => actions.onRenameFile(file, label)}
                 onReveal={() => actions.onRevealFile(file.absolutePath)}
                 onOpen={() => actions.onOpenFile(file.absolutePath)}

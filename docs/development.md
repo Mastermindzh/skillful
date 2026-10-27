@@ -101,6 +101,100 @@ website/                skillful.md sources
 assets/                 icons and package metadata
 ```
 
+## Adding Backend Actions (RPC, Runtime & Bridge)
+
+Skillful strictly separates the React renderer from Node/Electron APIs. The renderer never imports `electron`, `node:fs`, or `node:path`. Instead, actions flow through a strongly typed RPC contract, runtime service, and host adapters:
+
+`React Component` &rarr; `@mainview-bridge` (`appRpc.request`) &rarr; `Electron IPC` &rarr; `Desktop Runtime` (`createDesktopRuntime`) &rarr; `Desktop Adapters` (OS/Host)
+
+### 1. Declare the RPC Contract
+
+Add the request name, params, and response type to `AppRPC["bun"]["requests"]` in `src/shared/rpc.ts`:
+
+```typescript
+export type AppRPC = {
+  bun: {
+    requests: {
+      // ...
+      showBackendMessage: {
+        params: { message: string };
+        response: { acknowledged: boolean };
+      };
+    };
+  };
+};
+```
+
+### 2. Define and Implement Host Adapters (If Needed)
+
+If the action requires host/shell-specific capabilities (such as native OS dialogs or shell APIs), declare the method in `src/desktop/adapters.ts`:
+
+```typescript
+export type DesktopShellAdapter = {
+  // ...
+  showMessageBox: (message: string) => Promise<void>;
+};
+```
+
+Provide the concrete Electron implementation in `src/electron/main.ts`:
+
+```typescript
+const runtime = await createDesktopRuntime({
+  // ...
+  shell: {
+    // ...
+    showMessageBox: async (message) => {
+      await dialog.showMessageBox({
+        type: "info",
+        title: "Message",
+        message,
+        buttons: ["OK"],
+      });
+    },
+  },
+});
+```
+
+### 3. Handle the Request in the Desktop Runtime
+
+In `src/desktop/runtime.ts`, add the handler to `handlers` inside `createDesktopRuntime`. TypeScript enforces implementation for every request defined in `AppRPC`:
+
+```typescript
+const handlers: DesktopRequestHandlers = {
+  // ...
+  showBackendMessage: async ({ message }) => {
+    await adapters.shell.showMessageBox(message);
+    return { acknowledged: true };
+  },
+};
+```
+
+### 4. Invoke from React
+
+In `src/mainview/bridge.ts`, `appRpc.request` is a dynamic proxy that automatically infers types from `AppRPC["bun"]["requests"]`. Import it in your React component or hook:
+
+```tsx
+import { Button } from "@mantine/core";
+import { appRpc } from "@mainview-bridge";
+
+export function TriggerBackendButton() {
+  const handleClick = async () => {
+    try {
+      const response = await appRpc.request.showBackendMessage({
+        message: "Hello from the React UI!",
+      });
+      console.log("Acknowledged:", response.acknowledged);
+    } catch (error) {
+      console.error("Backend request failed:", error);
+    }
+  };
+
+  return <Button onClick={handleClick}>Trigger Action</Button>;
+}
+```
+
+> **Note for E2E Tests**: In Playwright E2E tests (`bun run test:e2e`), the bridge is swapped for `src/mainview/test-runtime/bridge/index.ts`. Add a corresponding mock handler in `src/mainview/test-runtime/bridge/requests/` if the action is exercised in E2E tests.
+
 ## Environment Variables
 
 Most users do not need these. They are useful for development and diagnostics.

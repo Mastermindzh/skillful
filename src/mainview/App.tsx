@@ -1,8 +1,19 @@
 import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useMediaQuery } from "@mantine/hooks";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toolPresetById } from "../shared/toolPresets";
-import type { AppLanguage, LibraryItemSummary } from "../shared/types";
+import type {
+  AppLanguage,
+  GitLibraryConfig,
+  LibraryItemSummary,
+} from "../shared/types";
 import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
 import { LibraryItemDetails } from "./features/editor/LibraryItemDetails";
 import type {
@@ -50,10 +61,13 @@ function App() {
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
   const editorRef = useRef<EditorHandle | null>(null);
   const largeLayout = useMediaQuery("(min-width: 901px)");
-  const { containerRef, isDragging, listWidth, separatorProps } = useSplitPane(largeLayout);
+  const { containerRef, isDragging, listWidth, separatorProps } =
+    useSplitPane(largeLayout);
 
   const settings = useSettingsState();
-  const library = useLibraryItemLibrary(settings.appSettings?.defaultEditorMode ?? "preview");
+  const library = useLibraryItemLibrary(
+    settings.appSettings?.defaultEditorMode ?? "preview",
+  );
   const updater = useUpdaterState();
   const skillTools = useLibraryItemTools({
     activeLibraryItem: library.activeLibraryItem,
@@ -68,9 +82,14 @@ function App() {
   useEffect(() => {
     return onAppMessage("autoGitBackupCompleted", (result) => {
       if (result.changed && result.pushed) {
-        notify.info(t("settings.backup.notification.synced.message", { branch: result.branch }), {
-          title: t("settings.backup.notification.synced.title"),
-        });
+        notify.info(
+          t("settings.backup.notification.synced.message", {
+            branch: result.branch,
+          }),
+          {
+            title: t("settings.backup.notification.synced.title"),
+          },
+        );
         return;
       }
 
@@ -80,33 +99,63 @@ function App() {
     });
   }, [t]);
 
+  const gitLibraryNames = settings.appSettings?.gitLibraries;
+  useEffect(() => {
+    return onAppMessage("gitLibrarySynced", (result) => {
+      const name =
+        gitLibraryNames?.find((entry) => entry.id === result.libraryId)?.name ||
+        result.remoteUrl;
+      if (result.state === "updated") {
+        notify.info(
+          t("settings.gitLibrary.notification.synced.message", { name }),
+          {
+            title: t("settings.gitLibrary.notification.synced.title"),
+          },
+        );
+        return;
+      }
+
+      notify.error(result.message || t("settings.gitLibrary.state.error"), {
+        title: t("settings.gitLibrary.notification.failed.title"),
+      });
+    });
+  }, [gitLibraryNames, t]);
+
   useEffect(() => {
     void applyAppLanguage(
       settings.modal.opened
         ? settings.general.language
-        : (settings.appSettings?.language ?? "system")
+        : (settings.appSettings?.language ?? "system"),
     );
-  }, [settings.appSettings?.language, settings.general.language, settings.modal.opened]);
+  }, [
+    settings.appSettings?.language,
+    settings.general.language,
+    settings.modal.opened,
+  ]);
 
   const handleSettingsLanguageChange = useCallback(
     (nextLanguage: AppLanguage) => {
       settings.general.setLanguage(nextLanguage);
       void applyAppLanguage(nextLanguage);
     },
-    [settings.general.setLanguage]
+    [settings.general.setLanguage],
   );
 
   const collections = useMemo(
     () =>
       measureRenderer(
         "renderer.buildLibraryCollections",
-        () => buildLibraryCollections(library.libraryItemList, library.collectionList),
+        () =>
+          buildLibraryCollections(
+            library.libraryItemList,
+            library.collectionList,
+          ),
         (result) => ({
           items: library.libraryItemList.length,
           collections: result.length,
-        })
+        }),
       ),
-    [library.collectionList, library.libraryItemList]
+    [library.collectionList, library.libraryItemList],
   );
   const tools = useMemo(
     () =>
@@ -116,26 +165,40 @@ function App() {
           buildToolFilters(
             library.libraryItemList,
             settings.appSettings?.tools ?? [],
-            settings.appSettings?.toolMappings ?? []
+            settings.appSettings?.toolMappings ?? [],
           ),
         (result) => ({
           items: library.libraryItemList.length,
           tools: result.length,
-        })
+        }),
       ),
-    [settings.appSettings?.toolMappings, settings.appSettings?.tools, library.libraryItemList]
+    [
+      settings.appSettings?.toolMappings,
+      settings.appSettings?.tools,
+      library.libraryItemList,
+    ],
   );
 
   const scope = useScopeState(collections, tools);
-  const { query, setQuery, activeScope, setActiveScope, kindFilter, setKindFilter } = scope;
+  const {
+    query,
+    setQuery,
+    activeScope,
+    setActiveScope,
+    kindFilter,
+    setKindFilter,
+  } = scope;
   const deferredQuery = useDeferredValue(query);
 
   const activeCollection = activeScope.startsWith("collection:")
-    ? (collections.find((collection) => collection.id === activeScope.replace("collection:", "")) ??
-      null)
+    ? (collections.find(
+        (collection) =>
+          collection.id === activeScope.replace("collection:", ""),
+      ) ?? null)
     : null;
   const activeTool = activeScope.startsWith("tool:")
-    ? (tools.find((tool) => tool.id === activeScope.replace("tool:", "")) ?? null)
+    ? (tools.find((tool) => tool.id === activeScope.replace("tool:", "")) ??
+      null)
     : null;
 
   const scopedSkills = activeScope.startsWith("tool:")
@@ -150,15 +213,44 @@ function App() {
     }
     return map;
   }, [collections]);
+  const gitLibraryById = useMemo(() => {
+    const map = new Map<string, GitLibraryConfig>();
+    for (const library of settings.appSettings?.gitLibraries ?? []) {
+      map.set(library.id, library);
+    }
+    return map;
+  }, [settings.appSettings?.gitLibraries]);
+  const readOnlyCollectionIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const collection of collections) {
+      const libraryId = collection.sourceLibraryId;
+      if (libraryId && gitLibraryById.get(libraryId)?.readOnly)
+        ids.add(collection.id);
+    }
+    return ids;
+  }, [collections, gitLibraryById]);
+  const writableCollections = useMemo(
+    () =>
+      collections.filter(
+        (collection) => !readOnlyCollectionIds.has(collection.id),
+      ),
+    [collections, readOnlyCollectionIds],
+  );
+  const activeCollectionReadOnly = Boolean(
+    activeCollection && readOnlyCollectionIds.has(activeCollection.id),
+  );
   /**
    * Show per-row collection labels only when the current scope can span more
    * than one collection. Within a single collection scope the sidebar already
    * tells the user which one they're in, so labels would be redundant noise.
    */
-  const showItemCollections = activeScope === "all" || activeScope.startsWith("tool:");
-  const syncSettingsAfterSave = settings.backup.hasUnsavedChanges && settings.backup.config.enabled;
+  const showItemCollections =
+    activeScope === "all" || activeScope.startsWith("tool:");
+  const syncSettingsAfterSave =
+    settings.backup.hasUnsavedChanges && settings.backup.config.enabled;
   const activeDocumentCollectionTitle = library.activeLibraryItem
-    ? (collectionTitleById.get(library.activeLibraryItem.item.collectionId) ?? null)
+    ? (collectionTitleById.get(library.activeLibraryItem.item.collectionId) ??
+      null)
     : null;
   const kindScopedSkills = useMemo(
     () =>
@@ -169,18 +261,18 @@ function App() {
           input: scopedSkills.length,
           output: result.length,
           kindFilter,
-        })
+        }),
       ),
-    [kindFilter, scopedSkills]
+    [kindFilter, scopedSkills],
   );
   const searchableSkills = useMemo(
     () =>
       measureRenderer(
         "renderer.buildLibraryItemSearchIndex",
         () => buildLibraryItemSearchIndex(kindScopedSkills),
-        (result) => ({ items: result.length })
+        (result) => ({ items: result.length }),
       ),
-    [kindScopedSkills]
+    [kindScopedSkills],
   );
   const shownSkills = useMemo(
     () =>
@@ -191,9 +283,9 @@ function App() {
           input: searchableSkills.length,
           output: result.length,
           queryLength: deferredQuery.trim().length,
-        })
+        }),
       ),
-    [deferredQuery, searchableSkills]
+    [deferredQuery, searchableSkills],
   );
   const sidebarCollections = useMemo(
     () =>
@@ -202,7 +294,7 @@ function App() {
         title: collection.title,
         count: collection.items.length,
       })),
-    [collections]
+    [collections],
   );
   const sidebarTools = useMemo(
     () =>
@@ -212,7 +304,7 @@ function App() {
         count: tool.items.length,
         icon: toolPresetById(tool.id)?.icon ?? "tool",
       })),
-    [tools]
+    [tools],
   );
 
   useEffect(() => {
@@ -255,39 +347,59 @@ function App() {
   }, []);
   const handleInstallTool = useCallback(
     (toolId: string) => void skillTools.runToolAction(toolId, "install"),
-    [skillTools.runToolAction]
+    [skillTools.runToolAction],
   );
   const handleRemoveTool = useCallback(
     (toolId: string) => void skillTools.runToolAction(toolId, "remove"),
-    [skillTools.runToolAction]
+    [skillTools.runToolAction],
   );
   const handleRepairTool = useCallback(
     (toolId: string) => void skillTools.runToolAction(toolId, "repair"),
-    [skillTools.runToolAction]
+    [skillTools.runToolAction],
   );
   const handleExportCollection = useCallback(
-    (collection: { id: string; title: string }) => void collectionDialogs.onExport(collection),
-    [collectionDialogs.onExport]
+    (collection: { id: string; title: string }) =>
+      void collectionDialogs.onExport(collection),
+    [collectionDialogs.onExport],
   );
   const handleOpenUpdates = useCallback(
     () => settings.modal.open("updates"),
-    [settings.modal.open]
+    [settings.modal.open],
   );
-  const handleOpenShortcuts = useCallback(() => setShortcutsModalOpen(true), []);
+  const handleOpenShortcuts = useCallback(
+    () => setShortcutsModalOpen(true),
+    [],
+  );
 
   const activeItemKind = library.activeLibraryItem?.item.kind ?? "skill";
   const libraryItemSupportsTools = Boolean(library.activeLibraryItem);
-  const canSaveCurrent = library.currentFileHasChanges && Boolean(library.currentFile);
-  const canSaveAll = library.changedFiles.length > 0;
+  const activeItemReadOnly = useMemo(() => {
+    const sourceLibraryId = library.activeLibraryItem?.item.sourceLibraryId;
+    if (!sourceLibraryId) return false;
+    return Boolean(gitLibraryById.get(sourceLibraryId)?.readOnly);
+  }, [gitLibraryById, library.activeLibraryItem?.item.sourceLibraryId]);
+  const canSaveCurrent =
+    !activeItemReadOnly &&
+    library.currentFileHasChanges &&
+    Boolean(library.currentFile);
+  const canSaveAll = !activeItemReadOnly && library.changedFiles.length > 0;
   const listPermissions = useMemo(
     () => ({
-      canCreate: collections.length > 0,
-      canRename: Boolean(library.activeLibraryItem),
-      canDelete: Boolean(library.activeLibraryItem),
+      canCreate: writableCollections.length > 0 && !activeCollectionReadOnly,
+      canRename: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
+      canDelete: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
       canReveal: Boolean(library.activeLibraryItem),
-      canMove: collections.length > 1 && Boolean(library.activeLibraryItem),
+      canMove:
+        writableCollections.length > 1 &&
+        Boolean(library.activeLibraryItem) &&
+        !activeItemReadOnly,
     }),
-    [collections.length, library.activeLibraryItem]
+    [
+      activeCollectionReadOnly,
+      activeItemReadOnly,
+      library.activeLibraryItem,
+      writableCollections.length,
+    ],
   );
   const detailsSaveState = useMemo<LibraryItemDetailsSaveState>(
     () => ({
@@ -305,20 +417,30 @@ function App() {
       library.saveAllFiles,
       library.saveCurrentFile,
       library.status,
-    ]
+    ],
   );
   const emptyToolAction = useCallback(() => {}, []);
   const detailsTooling = useMemo<LibraryItemDetailsTooling>(
     () => ({
-      tools: libraryItemSupportsTools ? (settings.appSettings?.tools ?? []) : [],
+      tools: libraryItemSupportsTools
+        ? (settings.appSettings?.tools ?? [])
+        : [],
       toolStatuses: libraryItemSupportsTools ? skillTools.toolStatuses : [],
-      activeToolActionId: libraryItemSupportsTools ? skillTools.toolActionId : null,
+      activeToolActionId: libraryItemSupportsTools
+        ? skillTools.toolActionId
+        : null,
       onRefreshToolStatuses: libraryItemSupportsTools
         ? skillTools.refreshToolStatuses
         : emptyToolAction,
-      onInstallTool: libraryItemSupportsTools ? handleInstallTool : emptyToolAction,
-      onRemoveTool: libraryItemSupportsTools ? handleRemoveTool : emptyToolAction,
-      onRepairTool: libraryItemSupportsTools ? handleRepairTool : emptyToolAction,
+      onInstallTool: libraryItemSupportsTools
+        ? handleInstallTool
+        : emptyToolAction,
+      onRemoveTool: libraryItemSupportsTools
+        ? handleRemoveTool
+        : emptyToolAction,
+      onRepairTool: libraryItemSupportsTools
+        ? handleRepairTool
+        : emptyToolAction,
     }),
     [
       emptyToolAction,
@@ -330,7 +452,7 @@ function App() {
       skillTools.refreshToolStatuses,
       skillTools.toolActionId,
       skillTools.toolStatuses,
-    ]
+    ],
   );
   const detailsFileActions = useMemo<LibraryItemDetailsFileActions>(
     () => ({
@@ -351,7 +473,7 @@ function App() {
       library.renameAdditionalLibraryItemFile,
       library.renameLibraryItemFile,
       library.uploadLibraryItemFiles,
-    ]
+    ],
   );
   const shortcutsDisabled =
     collectionDialogs.create.opened ||
@@ -371,7 +493,8 @@ function App() {
     updater.downloading;
   const openImportCollectionModal = collectionDialogs.import.open;
   const isMac =
-    settings.appSettings?.platform === "darwin" || navigator.platform.toLowerCase().includes("mac");
+    settings.appSettings?.platform === "darwin" ||
+    navigator.platform.toLowerCase().includes("mac");
 
   useEffect(() => {
     return onAppMessage("githubImportRequested", (draft) => {
@@ -381,19 +504,21 @@ function App() {
 
   useAppShortcuts({
     enabled: !shortcutsDisabled,
-    canCreateItem: collections.length > 0,
+    canCreateItem: writableCollections.length > 0 && !activeCollectionReadOnly,
     canDeleteItem: Boolean(library.activeLibraryItem),
     canRenameItem: Boolean(library.activeLibraryItem),
     onCreateItem: skillDialogs.create.open,
     onDeleteItem: () => {
-      if (library.activeLibraryItem) skillDialogs.delete.request(library.activeLibraryItem.item);
+      if (library.activeLibraryItem)
+        skillDialogs.delete.request(library.activeLibraryItem.item);
     },
     onFocusSearch: scope.handleFocusSearch,
     onOpenSettings: () => settings.modal.open("general"),
     onOpenShortcuts: () => setShortcutsModalOpen(true),
     onRefreshLibrary: library.refreshLibraryItems,
     onRenameItem: () => {
-      if (library.activeLibraryItem) skillDialogs.rename.request(library.activeLibraryItem.item);
+      if (library.activeLibraryItem)
+        skillDialogs.rename.request(library.activeLibraryItem.item);
     },
   });
 
@@ -407,6 +532,9 @@ function App() {
           refreshing={library.refreshingSkills}
           onSelectScope={setActiveScope}
           onRefresh={library.refreshLibraryItems}
+          gitLibraryCount={settings.appSettings?.gitLibraries.length ?? 0}
+          syncingGitLibraries={settings.gitLibraries.syncingAll}
+          onSyncGitLibraries={settings.gitLibraries.syncAll}
           onCreateCollection={collectionDialogs.create.open}
           onImportCollection={collectionDialogs.import.open}
           onRenameCollection={collectionDialogs.rename.request}
@@ -422,7 +550,9 @@ function App() {
         <main className="main-column">
           <div
             ref={containerRef}
-            className={isDragging ? "workspace-frame resizing" : "workspace-frame"}
+            className={
+              isDragging ? "workspace-frame resizing" : "workspace-frame"
+            }
             style={
               largeLayout
                 ? {
@@ -435,13 +565,21 @@ function App() {
               libraryItems={shownSkills}
               selectedId={library.activeLibraryItemId}
               query={query}
-              title={activeTool?.title ?? activeCollection?.title ?? t("library.allItems")}
+              title={
+                activeTool?.title ??
+                activeCollection?.title ??
+                t("library.allItems")
+              }
               focusSearchToken={scope.focusSearchToken}
               kindFilter={kindFilter}
               onKindFilterChange={setKindFilter}
               permissions={listPermissions}
               showItemCollections={showItemCollections}
               collectionTitleById={collectionTitleById}
+              gitLibraryById={gitLibraryById}
+              gitLibrarySyncedAt={
+                settings.appSettings?.gitLibrarySyncedAt ?? {}
+              }
               onCreateSkill={skillDialogs.create.open}
               onRenameSkill={skillDialogs.rename.request}
               onMoveSkill={skillDialogs.move.request}
@@ -464,6 +602,7 @@ function App() {
             <LibraryItemDetails
               document={library.activeLibraryItem}
               collectionTitle={activeDocumentCollectionTitle}
+              readOnly={activeItemReadOnly}
               activeRelativePath={library.activeFilePath}
               onActiveRelativePathChange={library.setActiveFilePath}
               drafts={library.activeDrafts}
@@ -486,10 +625,13 @@ function App() {
           onDefaultEditorModeChange: settings.general.setDefaultEditorMode,
           language: settings.general.language,
           onLanguageChange: handleSettingsLanguageChange,
-          suppressSuccessNotifications: settings.general.suppressSuccessNotifications,
-          onSuppressSuccessNotificationsChange: settings.general.setSuppressSuccessNotifications,
+          suppressSuccessNotifications:
+            settings.general.suppressSuccessNotifications,
+          onSuppressSuccessNotificationsChange:
+            settings.general.setSuppressSuccessNotifications,
           minimizeToTrayOnClose: settings.general.minimizeToTrayOnClose,
-          onMinimizeToTrayOnCloseChange: settings.general.setMinimizeToTrayOnClose,
+          onMinimizeToTrayOnCloseChange:
+            settings.general.setMinimizeToTrayOnClose,
         }}
         library={{
           scanRoots: settings.library.rows,
@@ -499,6 +641,27 @@ function App() {
           onAddScanRoot: settings.library.addRow,
           onRemoveScanRoot: settings.library.removeRow,
           onRestoreScanRoot: settings.library.restoreRow,
+        }}
+        gitLibraries={{
+          rows: settings.gitLibraries.rows,
+          issueById: settings.gitLibraries.validation.issueById,
+          statusById: settings.gitLibraries.statusById,
+          libraryPaths: settings.appSettings?.gitLibraryPaths ?? {},
+          defaultRoot: settings.appSettings?.defaultGitLibraryRoot ?? "",
+          busyIds: settings.gitLibraries.busyIds,
+          errorMessage: settings.gitLibraries.errorMessage,
+          hostPrompt: settings.gitLibraries.hostPrompt,
+          expandedById: settings.gitLibraries.expandedById,
+          onToggleExpanded: settings.gitLibraries.toggleExpanded,
+          onAddRow: settings.gitLibraries.addRow,
+          onUpdateRow: settings.gitLibraries.updateRow,
+          onRemoveRow: settings.gitLibraries.removeRow,
+          onRestoreRow: settings.gitLibraries.restoreRow,
+          onSync: settings.gitLibraries.sync,
+          onPush: settings.gitLibraries.push,
+          onDiscard: settings.gitLibraries.discard,
+          onTrustHost: settings.gitLibraries.trustHost,
+          onDismissHostPrompt: settings.gitLibraries.dismissHostPrompt,
         }}
         tools={{
           tools: settings.tools.rows,
@@ -516,9 +679,12 @@ function App() {
         backup={{
           config: settings.backup.config,
           configured: settings.backup.configured,
-          issue: settings.backup.configured ? settings.backup.issue : settings.backup.actionIssue,
+          issue: settings.backup.configured
+            ? settings.backup.issue
+            : settings.backup.actionIssue,
           errorMessage: settings.backup.errorMessage,
-          restoreDisabled: settings.backup.restoreHasValidationErrors || settings.modal.saving,
+          restoreDisabled:
+            settings.backup.restoreHasValidationErrors || settings.modal.saving,
           restoreNeedsConfirmation: settings.backup.restoreNeedsConfirmation,
           restoring: settings.backup.restoring,
           onConfigChange: settings.backup.updateConfig,
@@ -603,7 +769,7 @@ function App() {
         opened={skillDialogs.create.opened}
         saving={skillDialogs.create.saving}
         errorMessage={skillDialogs.create.errorMessage}
-        collections={collections}
+        collections={writableCollections}
         defaultCollectionId={skillDialogs.create.defaultCollectionId}
         onClose={skillDialogs.create.close}
         onCreate={skillDialogs.create.onCreate}
@@ -624,7 +790,7 @@ function App() {
         itemKind={skillDialogs.move.target?.kind ?? activeItemKind}
         itemTitle={skillDialogs.move.target?.title ?? ""}
         currentCollectionId={skillDialogs.move.target?.collectionId ?? ""}
-        collections={collections}
+        collections={writableCollections}
         saving={skillDialogs.move.moving}
         errorMessage={skillDialogs.move.errorMessage}
         onClose={skillDialogs.move.close}

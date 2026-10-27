@@ -1,7 +1,8 @@
+import { isAbsolutePath } from "../../../../shared/paths";
 import { TOOL_PRESETS, type ToolPreset } from "../../../../shared/toolPresets";
 import type { ToolConfig } from "../../../../shared/types";
 import type { TranslationKey } from "../../../i18n/messages";
-import { cleanPath, isAbsolutePath } from "../utils/paths";
+import { cleanPath } from "../utils/paths";
 
 export type ToolRow = {
   id: string;
@@ -49,16 +50,19 @@ export function availableToolPresets(rows: ToolRow[]) {
   const activeRows = rows.filter((row) => !row.pendingRemoval);
   const usedIds = new Set(activeRows.map((row) => row.id));
   const usedNames = new Set(
-    activeRows.map((row) => cleanedName(row.name).toLowerCase()).filter(Boolean)
+    activeRows
+      .map((row) => cleanedName(row.name).toLowerCase())
+      .filter(Boolean),
   );
   return TOOL_PRESETS.filter(
-    (preset) => !usedIds.has(preset.id) && !usedNames.has(preset.name.toLowerCase())
+    (preset) =>
+      !usedIds.has(preset.id) && !usedNames.has(preset.name.toLowerCase()),
   );
 }
 
 export function toolRowFromPreset(
   preset: ToolPreset,
-  installRoots = { skill: "", agent: "" }
+  installRoots = { skill: "", agent: "" },
 ): ToolRow {
   return {
     id: preset.id,
@@ -126,7 +130,12 @@ export function validateToolRows(rows: ToolRow[]): ToolValidation {
       seenNames.add(normalizedName);
     }
 
-    if (issue.name || issue.installRoots || issue.skillInstallRoot || issue.agentInstallRoot) {
+    if (
+      issue.name ||
+      issue.installRoots ||
+      issue.skillInstallRoot ||
+      issue.agentInstallRoot
+    ) {
       byId[row.id] = issue;
       hasErrors = true;
       continue;
@@ -158,10 +167,12 @@ export function sameTools(left: ToolConfig[], right: ToolConfig[]) {
       tool.installRoots.skill.length === other.installRoots.skill.length &&
       tool.installRoots.agent.length === other.installRoots.agent.length &&
       tool.installRoots.skill.every(
-        (installRoot, installIndex) => installRoot === other.installRoots.skill[installIndex]
+        (installRoot, installIndex) =>
+          installRoot === other.installRoots.skill[installIndex],
       ) &&
       tool.installRoots.agent.every(
-        (installRoot, installIndex) => installRoot === other.installRoots.agent[installIndex]
+        (installRoot, installIndex) =>
+          installRoot === other.installRoots.agent[installIndex],
       )
     );
   });
