@@ -27,19 +27,12 @@ type AdditionalFilesPanelProps = {
   actions: AdditionalFilesPanelActions;
 };
 
-export function AdditionalFilesPanel({
-  files,
-  state,
-  actions,
-}: AdditionalFilesPanelProps) {
+export function AdditionalFilesPanel({ files, state, actions }: AdditionalFilesPanelProps) {
   const { t } = useAppTranslation();
   return (
     <>
       <div className="additional-files-toolbar">
-        <FileButton
-          onChange={(nextFiles) => void actions.onUploadFiles(nextFiles)}
-          multiple
-        >
+        <FileButton onChange={(nextFiles) => void actions.onUploadFiles(nextFiles)} multiple>
           {(props) => (
             <Button
               {...props}

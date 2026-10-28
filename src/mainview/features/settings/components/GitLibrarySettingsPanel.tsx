@@ -28,7 +28,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { formatGitRemoteLabel } from "../../../../shared/gitRemote";
-import type { GitLibrarySyncResult, GitLibrarySyncState } from "../../../../shared/types";
+import type { GitLibrarySyncResult, GitLibrarySyncState, Platform } from "../../../../shared/types";
 import { DialogErrorMessage } from "../../../components/dialogs/DialogErrorMessage";
 import { useAppTranslation } from "../../../i18n/i18n";
 import type { TranslationKey } from "../../../i18n/messages";
@@ -39,10 +39,12 @@ import {
 } from "../model/gitLibraries";
 import type { GitLibraryHostPrompt } from "../state/useGitLibrarySettingsState";
 import { preventFileUriDrop } from "../utils/dnd";
+import { OtherPlatformPathNotice } from "./OtherPlatformPathNotice";
 import { PendingRemovalBadge } from "./PendingRemovalBadge";
 
 export type GitLibrarySettingsPanelProps = {
   rows: GitLibraryRow[];
+  platform?: Platform;
   issueById: Record<string, GitLibraryIssue>;
   statusById: Record<string, GitLibrarySyncResult>;
   libraryPaths: Record<string, string>;
@@ -93,6 +95,7 @@ const STATE_COLORS: Record<GitLibrarySyncState, string> = {
 
 export function GitLibrarySettingsPanel({
   rows,
+  platform,
   issueById,
   statusById,
   libraryPaths,
@@ -129,7 +132,9 @@ export function GitLibrarySettingsPanel({
         <Alert
           color="orange"
           icon={<ShieldQuestion size={16} />}
-          title={t("settings.gitLibrary.hostKey.title", { host: hostPrompt.hostKey.host })}
+          title={t("settings.gitLibrary.hostKey.title", {
+            host: hostPrompt.hostKey.host,
+          })}
         >
           <Stack gap="xs">
             <Text size="sm">{t("settings.gitLibrary.hostKey.description")}</Text>
@@ -204,7 +209,9 @@ export function GitLibrarySettingsPanel({
                       color="gray"
                       size={36}
                       onClick={() => onRestoreRow(row.id)}
-                      aria-label={t("settings.gitLibrary.restore", { index: index + 1 })}
+                      aria-label={t("settings.gitLibrary.restore", {
+                        index: index + 1,
+                      })}
                     >
                       <Undo2 size={16} />
                     </ActionIcon>
@@ -214,7 +221,9 @@ export function GitLibrarySettingsPanel({
                       color="gray"
                       size={36}
                       onClick={() => onRemoveRow(row.id)}
-                      aria-label={t("settings.gitLibrary.remove", { index: index + 1 })}
+                      aria-label={t("settings.gitLibrary.remove", {
+                        index: index + 1,
+                      })}
                     >
                       <Minus size={16} />
                     </ActionIcon>
@@ -271,6 +280,9 @@ export function GitLibrarySettingsPanel({
                           }
                         />
                       </Group>
+                      {issue.path ? null : (
+                        <OtherPlatformPathNotice path={row.path} platform={platform} />
+                      )}
 
                       <Stack gap={4}>
                         <Text size="sm" fw={500}>
@@ -282,8 +294,14 @@ export function GitLibrarySettingsPanel({
                             onUpdateRow(row.id, "syncMode", value as GitLibraryRow["syncMode"])
                           }
                           data={[
-                            { value: "pull", label: t("settings.gitLibrary.syncMode.pull") },
-                            { value: "two-way", label: t("settings.gitLibrary.syncMode.twoWay") },
+                            {
+                              value: "pull",
+                              label: t("settings.gitLibrary.syncMode.pull"),
+                            },
+                            {
+                              value: "two-way",
+                              label: t("settings.gitLibrary.syncMode.twoWay"),
+                            },
                           ]}
                         />
                         <Text size="xs" c="dimmed">

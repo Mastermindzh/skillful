@@ -43,12 +43,7 @@ import {
   renameLibraryItem,
   resolveWritableCollectionPath,
 } from "./creation";
-import {
-  atomicWriteFile,
-  ensureDirectory,
-  isInsideDirectory,
-  pathExists,
-} from "./fs";
+import { atomicWriteFile, ensureDirectory, isInsideDirectory, pathExists } from "./fs";
 import {
   initializeGitBackup,
   restoreGitBackup as restoreGitBackupFromGit,
@@ -60,10 +55,12 @@ import {
   pushGitLibraryChanges,
   readGitLibraryStatus,
   syncGitLibrary,
+  unavailableGitLibraryResult,
 } from "./git/libraries";
 import { importLibraryCollectionFromGitHub } from "./githubImports";
 import {
   getLibraryItemToolStatuses,
+  installRootsForSkill,
   repairLibraryItemToolInstall,
   syncLibraryItemInstalls,
 } from "./installer";
@@ -86,6 +83,7 @@ import {
   configScanRoots,
   defaultAppConfig,
   defaultSkillRoot,
+  gitLibraryAvailable,
   gitLibraryIdsByPath,
   gitLibraryPath,
   loadSettingsOrDefaults,
@@ -148,7 +146,7 @@ export class LibraryItemStore {
     const next = this.configMutex.then(wrapped, wrapped);
     this.configMutex = next.then(
       () => {},
-      () => {},
+      () => {}
     );
     return next;
   }
@@ -175,10 +173,7 @@ export class LibraryItemStore {
     return runGitBackup(this.config);
   }
 
-  async restoreGitBackup(
-    gitBackupConfig: GitBackupConfig,
-    mode: GitBackupRestoreMode,
-  ) {
+  async restoreGitBackup(gitBackupConfig: GitBackupConfig, mode: GitBackupRestoreMode) {
     await this.ensureConfigLoaded();
     const config = normalizeAppConfig({
       ...this.config,
@@ -186,10 +181,7 @@ export class LibraryItemStore {
     });
     const result = await restoreGitBackupFromGit(config.gitBackup, mode);
     if (!result.restored) {
-      throw new AppError(
-        "internal",
-        result.message || "Backup restore failed.",
-      );
+      throw new AppError("internal", result.message || "Backup restore failed.");
     }
     const restoredConfig = await loadSettingsOrDefaults();
     this.config = normalizeAppConfig(
@@ -198,7 +190,7 @@ export class LibraryItemStore {
         : {
             ...restoredConfig,
             gitBackup: { ...config.gitBackup, branch: result.branch },
-          },
+          }
     );
     await this.persistConfig();
     return settingsFromConfig(this.config);
@@ -206,14 +198,9 @@ export class LibraryItemStore {
 
   private async gitLibraryById(libraryId: string) {
     await this.ensureConfigLoaded();
-    const library = this.config.gitLibraries.find(
-      (entry) => entry.id === libraryId,
-    );
+    const library = this.config.gitLibraries.find((entry) => entry.id === libraryId);
     if (!library) {
-      throw new AppError(
-        "skill-not-found",
-        `Unknown git library: ${libraryId}`,
-      );
+      throw new AppError("skill-not-found", `Unknown git library: ${libraryId}`);
     }
     return { library, targetPath: gitLibraryPath(library) };
   }
@@ -225,13 +212,13 @@ export class LibraryItemStore {
    */
   private runGitLibraryOperation(
     libraryId: string,
-    operation: (
-      library: GitLibraryConfig,
-      targetPath: string,
-    ) => Promise<GitLibrarySyncResult>,
+    operation: (library: GitLibraryConfig, targetPath: string) => Promise<GitLibrarySyncResult>
   ) {
     return this.withConfigLock(async () => {
       const { library, targetPath } = await this.gitLibraryById(libraryId);
+      if (!gitLibraryAvailable(library)) {
+        return unavailableGitLibraryResult(library, targetPath);
+      }
       const result = await operation(library, targetPath);
       if (result.syncedAt) {
         this.config = {
@@ -254,14 +241,12 @@ export class LibraryItemStore {
   private assertLibraryItemWritable(libraryItem: LibraryItemSummary) {
     const libraryId = libraryItem.sourceLibraryId;
     if (!libraryId) return;
-    const library = this.config.gitLibraries.find(
-      (entry) => entry.id === libraryId,
-    );
+    const library = this.config.gitLibraries.find((entry) => entry.id === libraryId);
     if (!library?.readOnly) return;
     throw new AppError(
       "git-library-read-only",
       `"${library.name}" is a read-only git library. Turn off read-only in settings to change it.`,
-      { libraryId, libraryName: library.name },
+      { libraryId, libraryName: library.name }
     );
   }
 
@@ -269,7 +254,7 @@ export class LibraryItemStore {
   private gitLibraryForPath(targetPath: string) {
     return (
       this.config.gitLibraries.find((entry) =>
-        isInsideDirectory(gitLibraryPath(entry), targetPath),
+        isInsideDirectory(gitLibraryPath(entry), targetPath)
       ) ?? null
     );
   }
@@ -284,7 +269,7 @@ export class LibraryItemStore {
     throw new AppError(
       "git-library-read-only",
       `"${library.name}" is a read-only git library. Turn off read-only in settings to change it.`,
-      { libraryId: library.id, libraryName: library.name },
+      { libraryId: library.id, libraryName: library.name }
     );
   }
 
@@ -292,8 +277,10 @@ export class LibraryItemStore {
     await this.ensureConfigLoaded();
     return Promise.all(
       this.config.gitLibraries.map((library) =>
-        readGitLibraryStatus(library, gitLibraryPath(library)),
-      ),
+        gitLibraryAvailable(library)
+          ? readGitLibraryStatus(library, gitLibraryPath(library))
+          : unavailableGitLibraryResult(library, gitLibraryPath(library))
+      )
     );
   }
 
@@ -344,9 +331,7 @@ export class LibraryItemStore {
       await this.persistConfig();
 
       const libraryItemIds = new Set(
-        [...previousMappings, ...config.toolMappings].map(
-          (mapping) => mapping.itemId,
-        ),
+        [...previousMappings, ...config.toolMappings].map((mapping) => mapping.itemId)
       );
       for (const itemId of libraryItemIds) {
         const libraryItem = this.libraryItems.get(itemId);
@@ -357,13 +342,10 @@ export class LibraryItemStore {
             previousTools,
             previousMappings,
             config.tools,
-            config.toolMappings,
+            config.toolMappings
           );
         } catch (error) {
-          logger.error(
-            `Failed to reconcile tool installs for ${libraryItem.title}.`,
-            error,
-          );
+          logger.error(`Failed to reconcile tool installs for ${libraryItem.title}.`, error);
         }
       }
 
@@ -387,8 +369,7 @@ export class LibraryItemStore {
    */
   private getLibraryItemOrThrow(itemId: string): LibraryItemSummary {
     const libraryItem = this.libraryItems.get(itemId);
-    if (!libraryItem)
-      throw new AppError("skill-not-found", `Skill not found: ${itemId}`);
+    if (!libraryItem) throw new AppError("skill-not-found", `Skill not found: ${itemId}`);
     return libraryItem;
   }
 
@@ -408,10 +389,8 @@ export class LibraryItemStore {
         new Set(
           toolIds
             .map((toolId) => toolId.trim())
-            .filter((toolId) =>
-              this.config.tools.some((tool) => tool.id === toolId),
-            ),
-        ),
+            .filter((toolId) => this.config.tools.some((tool) => tool.id === toolId))
+        )
       );
 
       const nextMappings = [
@@ -424,7 +403,7 @@ export class LibraryItemStore {
         this.config.tools,
         previousMappings,
         this.config.tools,
-        nextMappings,
+        nextMappings
       );
       this.config.toolMappings = nextMappings;
       await this.persistConfig();
@@ -435,39 +414,32 @@ export class LibraryItemStore {
   async getLibraryItemToolStatuses(itemId: string) {
     await this.ensureConfigLoaded();
     const libraryItem = this.getLibraryItemOrThrow(itemId);
-    return getLibraryItemToolStatuses(
-      libraryItem,
-      this.config.tools,
-      this.config.toolMappings,
-    );
+    return getLibraryItemToolStatuses(libraryItem, this.config.tools, this.config.toolMappings);
   }
 
   async installLibraryItemTool(itemId: string, toolId: string) {
     await this.ensureConfigLoaded();
     const libraryItem = this.getLibraryItemOrThrow(itemId);
     const tool = this.config.tools.find((entry) => entry.id === toolId);
-    if (!tool)
-      throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
-    if ((tool.installRoots[libraryItem.kind] ?? []).length === 0) {
+    if (!tool) throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
+    if (installRootsForSkill(tool, libraryItem).length === 0) {
       throw new AppError(
         "tool-install-missing-root",
-        `${tool.name} has no ${libraryItem.kind} install folder configured.`,
+        `${tool.name} has no ${libraryItem.kind} install folder configured.`
       );
     }
     const currentToolIds =
-      this.config.toolMappings.find((mapping) => mapping.itemId === itemId)
-        ?.toolIds ?? [];
+      this.config.toolMappings.find((mapping) => mapping.itemId === itemId)?.toolIds ?? [];
     return this.updateLibraryItemTools(itemId, [...currentToolIds, toolId]);
   }
 
   async removeLibraryItemTool(itemId: string, toolId: string) {
     await this.ensureConfigLoaded();
     const currentToolIds =
-      this.config.toolMappings.find((mapping) => mapping.itemId === itemId)
-        ?.toolIds ?? [];
+      this.config.toolMappings.find((mapping) => mapping.itemId === itemId)?.toolIds ?? [];
     return this.updateLibraryItemTools(
       itemId,
-      currentToolIds.filter((currentToolId) => currentToolId !== toolId),
+      currentToolIds.filter((currentToolId) => currentToolId !== toolId)
     );
   }
 
@@ -477,12 +449,10 @@ export class LibraryItemStore {
       const libraryItem = this.getLibraryItemOrThrow(itemId);
 
       const tool = this.config.tools.find((entry) => entry.id === toolId);
-      if (!tool)
-        throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
+      if (!tool) throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
 
       const mappedToolIds =
-        this.config.toolMappings.find((mapping) => mapping.itemId === itemId)
-          ?.toolIds ?? [];
+        this.config.toolMappings.find((mapping) => mapping.itemId === itemId)?.toolIds ?? [];
       if (!mappedToolIds.includes(toolId)) {
         // Delegate to install path which runs inside its own lock acquisition.
         // We release by returning from this closure first.
@@ -531,9 +501,7 @@ export class LibraryItemStore {
           }
         }
         const roots = this.scanRoots();
-        const sourceLibraryIdByRoot = gitLibraryIdsByPath(
-          this.config.gitLibraries,
-        );
+        const sourceLibraryIdByRoot = gitLibraryIdsByPath(this.config.gitLibraries);
         const discovered: LibraryItemSummary[] = [];
         const nextCache: LibraryItemSummaryCache = new Map();
         for (const root of roots) {
@@ -544,9 +512,9 @@ export class LibraryItemStore {
                 root,
                 discovered,
                 this.summaryCache,
-                sourceLibraryIdByRoot[root],
+                sourceLibraryIdByRoot[root]
               ),
-            () => ({ root, discovered: discovered.length }),
+            () => ({ root, discovered: discovered.length })
           );
         }
         // Retain only entries that resurfaced during this scan. Everything else has been
@@ -557,9 +525,7 @@ export class LibraryItemStore {
         }
         this.summaryCache = nextCache;
         discovered.sort(compareLibraryItems);
-        this.libraryItems = new Map(
-          discovered.map((libraryItem) => [libraryItem.id, libraryItem]),
-        );
+        this.libraryItems = new Map(discovered.map((libraryItem) => [libraryItem.id, libraryItem]));
         // Fire-and-forget persist; ensures the next cold start can skip YAML parsing.
         void saveScanIndex(this.summaryCache);
         return discovered;
@@ -567,7 +533,7 @@ export class LibraryItemStore {
       (libraryItems) => ({
         items: libraryItems.length,
         roots: this.scanRoots().length,
-      }),
+      })
     );
   }
 
@@ -590,7 +556,7 @@ export class LibraryItemStore {
 
   private async refreshLibraryItemDocument(
     libraryItem: LibraryItemSummary,
-    warnings: string[] = [],
+    warnings: string[] = []
   ): Promise<LibraryItemDocument> {
     const nextLibraryItem = await this.refreshLibraryItem(libraryItem);
     const document = await this.readLibraryItem(nextLibraryItem.id);
@@ -609,7 +575,7 @@ export class LibraryItemStore {
     libraryItem: LibraryItemSummary,
     previousMappings: LibraryItemToolMapping[],
     operation: "rename" | "move",
-    warnings: string[],
+    warnings: string[]
   ) {
     try {
       await syncLibraryItemInstalls(
@@ -617,17 +583,12 @@ export class LibraryItemStore {
         this.config.tools,
         previousMappings,
         this.config.tools,
-        previousMappings.filter((mapping) => mapping.itemId !== libraryItem.id),
+        previousMappings.filter((mapping) => mapping.itemId !== libraryItem.id)
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(
-        `Failed to remove existing tool installs before ${operation}.`,
-        error,
-      );
-      warnings.push(
-        `Could not remove old tool installs before ${operation}: ${message}`,
-      );
+      logger.error(`Failed to remove existing tool installs before ${operation}.`, error);
+      warnings.push(`Could not remove old tool installs before ${operation}: ${message}`);
     }
   }
 
@@ -635,12 +596,10 @@ export class LibraryItemStore {
     previousItemId: string,
     previousMapping: LibraryItemToolMapping,
     nextLibraryItem: LibraryItemSummary,
-    warnings: string[],
+    warnings: string[]
   ) {
     this.config.toolMappings = this.config.toolMappings.map((mapping) =>
-      mapping.itemId === previousItemId
-        ? { ...mapping, itemId: nextLibraryItem.id }
-        : mapping,
+      mapping.itemId === previousItemId ? { ...mapping, itemId: nextLibraryItem.id } : mapping
     );
     await this.persistConfig();
 
@@ -651,12 +610,9 @@ export class LibraryItemStore {
         await repairLibraryItemToolInstall(nextLibraryItem, tool);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        logger.error(
-          `Failed to relink ${nextLibraryItem.title} into ${tool.name}.`,
-          error,
-        );
+        logger.error(`Failed to relink ${nextLibraryItem.title} into ${tool.name}.`, error);
         warnings.push(
-          `Could not relink "${nextLibraryItem.title}" into "${tool.name}": ${message}`,
+          `Could not relink "${nextLibraryItem.title}" into "${tool.name}": ${message}`
         );
       }
     }
@@ -669,10 +625,10 @@ export class LibraryItemStore {
         await this.ensureScanRoots();
         return listLibraryCollections(
           this.scanRoots(),
-          gitLibraryIdsByPath(this.config.gitLibraries),
+          gitLibraryIdsByPath(this.config.gitLibraries)
         );
       },
-      (collections) => ({ collections: collections.length }),
+      (collections) => ({ collections: collections.length })
     );
   }
 
@@ -690,20 +646,14 @@ export class LibraryItemStore {
 
   async importCollectionArchive(input: ImportCollectionFromArchiveInput) {
     await this.ensureScanRoots();
-    const collection = await importLibraryCollectionArchive(
-      defaultSkillRoot(),
-      input,
-    );
+    const collection = await importLibraryCollectionArchive(defaultSkillRoot(), input);
     await this.scanAll();
     return collection;
   }
 
   async importCollectionFromGitHub(input: ImportCollectionFromGitHubInput) {
     await this.ensureScanRoots();
-    const collection = await importLibraryCollectionFromGitHub(
-      defaultSkillRoot(),
-      input,
-    );
+    const collection = await importLibraryCollectionFromGitHub(defaultSkillRoot(), input);
     await this.scanAll();
     return collection;
   }
@@ -717,11 +667,7 @@ export class LibraryItemStore {
     await this.ensureScanRoots();
     for (const kind of LIBRARY_ITEM_KINDS) {
       this.assertPathWritable(
-        await resolveWritableCollectionPath(
-          this.scanRoots(),
-          kind,
-          collectionId,
-        ),
+        await resolveWritableCollectionPath(this.scanRoots(), kind, collectionId)
       );
     }
     return renameLibraryCollection(this.scanRoots(), collectionId, name);
@@ -731,29 +677,18 @@ export class LibraryItemStore {
     return this.withConfigLock(async () => {
       await this.ensureScanRoots();
       this.assertPathWritable(
-        await resolveWritableCollectionPath(
-          this.scanRoots(),
-          input.kind,
-          input.collectionId,
-        ),
+        await resolveWritableCollectionPath(this.scanRoots(), input.kind, input.collectionId)
       );
       const createdLibraryItem = await createNewSkill(this.scanRoots(), input);
       // The scanner stamps this during a rescan; do it here too so the guard applies immediately.
-      const sourceLibraryId = this.gitLibraryForPath(
-        createdLibraryItem.rootPath,
-      )?.id;
+      const sourceLibraryId = this.gitLibraryForPath(createdLibraryItem.rootPath)?.id;
       return this.setLibraryItem(
-        sourceLibraryId
-          ? { ...createdLibraryItem, sourceLibraryId }
-          : createdLibraryItem,
+        sourceLibraryId ? { ...createdLibraryItem, sourceLibraryId } : createdLibraryItem
       );
     });
   }
 
-  async renameLibraryItem(
-    id: string,
-    name: string,
-  ): Promise<LibraryItemDocument> {
+  async renameLibraryItem(id: string, name: string): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       await this.ensureConfigLoaded();
 
@@ -761,15 +696,14 @@ export class LibraryItemStore {
 
       const warnings: string[] = [];
       const previousMappings = [...this.config.toolMappings];
-      const previousMapping =
-        previousMappings.find((mapping) => mapping.itemId === id) ?? null;
+      const previousMapping = previousMappings.find((mapping) => mapping.itemId === id) ?? null;
 
       if (previousMapping) {
         await this.unlinkToolInstallsBeforeIdChange(
           libraryItem,
           previousMappings,
           "rename",
-          warnings,
+          warnings
         );
       }
 
@@ -781,12 +715,7 @@ export class LibraryItemStore {
       });
 
       if (previousMapping) {
-        await this.relinkToolInstallsAfterIdChange(
-          id,
-          previousMapping,
-          nextLibraryItem,
-          warnings,
-        );
+        await this.relinkToolInstallsAfterIdChange(id, previousMapping, nextLibraryItem, warnings);
       }
 
       const document = await this.readLibraryItem(nextLibraryItem.id);
@@ -794,21 +723,14 @@ export class LibraryItemStore {
     });
   }
 
-  async moveLibraryItem(
-    input: MoveLibraryItemInput,
-  ): Promise<LibraryItemDocument> {
+  async moveLibraryItem(input: MoveLibraryItemInput): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       await this.ensureScanRoots();
 
       const libraryItem = this.getWritableLibraryItemOrThrow(input.id);
-      if (libraryItem.collectionId === input.collectionId)
-        return this.readLibraryItem(input.id);
+      if (libraryItem.collectionId === input.collectionId) return this.readLibraryItem(input.id);
       this.assertPathWritable(
-        await resolveWritableCollectionPath(
-          this.scanRoots(),
-          libraryItem.kind,
-          input.collectionId,
-        ),
+        await resolveWritableCollectionPath(this.scanRoots(), libraryItem.kind, input.collectionId)
       );
 
       const warnings: string[] = [];
@@ -821,7 +743,7 @@ export class LibraryItemStore {
           libraryItem,
           previousMappings,
           "move",
-          warnings,
+          warnings
         );
       }
 
@@ -841,7 +763,7 @@ export class LibraryItemStore {
           input.id,
           previousMapping,
           nextLibraryItem,
-          warnings,
+          warnings
         );
       }
 
@@ -850,10 +772,7 @@ export class LibraryItemStore {
     });
   }
 
-  async createLibraryItemFile(
-    id: string,
-    name: string,
-  ): Promise<LibraryItemDocument> {
+  async createLibraryItemFile(id: string, name: string): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
       await createEditableSkillFile(libraryItem, name);
@@ -864,7 +783,7 @@ export class LibraryItemStore {
   async renameLibraryItemFile(
     id: string,
     relativePath: string,
-    name: string,
+    name: string
   ): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
@@ -875,7 +794,7 @@ export class LibraryItemStore {
 
   async uploadLibraryItemFiles(
     id: string,
-    files: Array<{ name: string; contentBase64: string }>,
+    files: Array<{ name: string; contentBase64: string }>
   ): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
@@ -886,7 +805,7 @@ export class LibraryItemStore {
 
   async deleteAdditionalLibraryItemFile(
     id: string,
-    relativePath: string,
+    relativePath: string
   ): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
@@ -898,7 +817,7 @@ export class LibraryItemStore {
   async renameAdditionalLibraryItemFile(
     id: string,
     relativePath: string,
-    name: string,
+    name: string
   ): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
@@ -907,10 +826,7 @@ export class LibraryItemStore {
     });
   }
 
-  async deleteLibraryItemFile(
-    id: string,
-    relativePath: string,
-  ): Promise<LibraryItemDocument> {
+  async deleteLibraryItemFile(id: string, relativePath: string): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
       await deleteEditableSkillFile(libraryItem, relativePath);
@@ -923,9 +839,7 @@ export class LibraryItemStore {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
       await deleteLibraryItem(libraryItem);
       // Drop any stale tool mapping for the deleted libraryItem.
-      const filteredMappings = this.config.toolMappings.filter(
-        (mapping) => mapping.itemId !== id,
-      );
+      const filteredMappings = this.config.toolMappings.filter((mapping) => mapping.itemId !== id);
       if (filteredMappings.length !== this.config.toolMappings.length) {
         this.config.toolMappings = filteredMappings;
         await this.persistConfig();
@@ -944,10 +858,7 @@ export class LibraryItemStore {
           this.assertLibraryItemWritable(libraryItem);
         }
       }
-      const collections = await deleteLibraryCollection(
-        this.scanRoots(),
-        collectionId,
-      );
+      const collections = await deleteLibraryCollection(this.scanRoots(), collectionId);
       const deletedItemIds: string[] = [];
       for (const [id, libraryItem] of this.libraryItems) {
         if (libraryItem.collectionId === collectionId) {
@@ -958,7 +869,7 @@ export class LibraryItemStore {
       if (deletedItemIds.length > 0) {
         const deletedItemIdSet = new Set(deletedItemIds);
         const filteredMappings = this.config.toolMappings.filter(
-          (mapping) => !deletedItemIdSet.has(mapping.itemId),
+          (mapping) => !deletedItemIdSet.has(mapping.itemId)
         );
         if (filteredMappings.length !== this.config.toolMappings.length) {
           this.config.toolMappings = filteredMappings;
@@ -977,49 +888,35 @@ export class LibraryItemStore {
   async saveLibraryItem(
     id: string,
     relativePath: string,
-    content: string,
+    content: string
   ): Promise<LibraryItemDocument> {
     return this.saveLibraryItemFiles(id, [{ relativePath, content }]);
   }
 
   async saveLibraryItemFiles(
     id: string,
-    files: Array<{ relativePath: string; content: string }>,
+    files: Array<{ relativePath: string; content: string }>
   ): Promise<LibraryItemDocument> {
     return this.withConfigLock(async () => {
       const libraryItem = this.getWritableLibraryItemOrThrow(id);
       await Promise.all(
         files.map(async (file) => {
-          const filePath = await resolveLibraryItemFilePath(
-            libraryItem,
-            file.relativePath,
-          );
+          const filePath = await resolveLibraryItemFilePath(libraryItem, file.relativePath);
           // Atomic write so a crash mid-save cannot leave a half-written entry file.
           await atomicWriteFile(filePath, file.content, "utf8");
-        }),
+        })
       );
-      const warnings = frontmatterMetadataWarningsForFiles(
-        libraryItem.entryPath,
-        files,
-      );
+      const warnings = frontmatterMetadataWarningsForFiles(libraryItem.entryPath, files);
       return this.refreshLibraryItemDocument(libraryItem, warnings);
     });
   }
 
-  async watch(
-    onSkillsChanged: (
-      libraryItems: LibraryItemSummary[],
-      reason: string,
-    ) => void,
-  ) {
+  async watch(onSkillsChanged: (libraryItems: LibraryItemSummary[], reason: string) => void) {
     return this.withConfigLock(() => this.watchLocked(onSkillsChanged));
   }
 
   private async watchLocked(
-    onSkillsChanged: (
-      libraryItems: LibraryItemSummary[],
-      reason: string,
-    ) => void,
+    onSkillsChanged: (libraryItems: LibraryItemSummary[], reason: string) => void
   ) {
     this.stopWatching();
     await this.ensureScanRoots();
@@ -1043,10 +940,7 @@ export class LibraryItemStore {
 
   private async watchRoot(
     watchedRoot: string,
-    onSkillsChanged: (
-      libraryItems: LibraryItemSummary[],
-      reason: string,
-    ) => void,
+    onSkillsChanged: (libraryItems: LibraryItemSummary[], reason: string) => void
   ) {
     try {
       watchLogger.debug("register recursive watcher", { watchedRoot });
@@ -1074,12 +968,11 @@ export class LibraryItemStore {
               rebuildWatchers: true,
             });
             this.queueRescan(watchedRoot, onSkillsChanged, true);
-          }),
+          })
         );
         const dirents = await readdir(dirPath, { withFileTypes: true });
         for (const dirent of dirents) {
-          if (!dirent.isDirectory() || SKIP_DIRECTORIES.has(dirent.name))
-            continue;
+          if (!dirent.isDirectory() || SKIP_DIRECTORIES.has(dirent.name)) continue;
           await register(path.join(dirPath, dirent.name));
         }
       };
@@ -1099,11 +992,8 @@ export class LibraryItemStore {
 
   private queueRescan(
     root: string,
-    onSkillsChanged: (
-      libraryItems: LibraryItemSummary[],
-      reason: string,
-    ) => void,
-    rebuildWatchers = false,
+    onSkillsChanged: (libraryItems: LibraryItemSummary[], reason: string) => void,
+    rebuildWatchers = false
   ) {
     this.pendingRescanRoots.add(root);
     if (rebuildWatchers) this.pendingRescanRebuild = true;

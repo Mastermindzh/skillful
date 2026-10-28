@@ -1,8 +1,5 @@
 import { isAbsolutePath } from "../../../../shared/paths";
-import type {
-  GitLibraryConfig,
-  GitLibrarySyncState,
-} from "../../../../shared/types";
+import type { GitLibraryConfig, GitLibrarySyncState } from "../../../../shared/types";
 import type { TranslationKey } from "../../../i18n/messages";
 
 export type GitLibraryIssue = {
@@ -24,10 +21,7 @@ export type GitLibraryValidation = {
 };
 
 /** Sync states that mean the user has work on disk that the remote does not know about. */
-const UNSYNCED_STATES = new Set<GitLibrarySyncState>([
-  "local-changes",
-  "diverged",
-]);
+const UNSYNCED_STATES = new Set<GitLibrarySyncState>(["local-changes", "diverged"]);
 
 export function gitLibraryHasLocalWork(state: GitLibrarySyncState) {
   return UNSYNCED_STATES.has(state);
@@ -47,9 +41,7 @@ export function createGitLibraryRow(): GitLibraryRow {
   };
 }
 
-export function buildGitLibraryRows(
-  libraries: GitLibraryConfig[],
-): GitLibraryRow[] {
+export function buildGitLibraryRows(libraries: GitLibraryConfig[]): GitLibraryRow[] {
   return libraries.map((library) => ({ ...library }));
 }
 
@@ -57,9 +49,7 @@ export function buildGitLibraryRows(
  * Mirrors the main-process `normalizeGitLibraries` checks so the user sees the problem inline
  * instead of as a thrown error after pressing save.
  */
-export function validateGitLibraryRows(
-  rows: GitLibraryRow[],
-): GitLibraryValidation {
+export function validateGitLibraryRows(rows: GitLibraryRow[]): GitLibraryValidation {
   const issueById: Record<string, GitLibraryIssue> = {};
   const libraries: GitLibraryConfig[] = [];
   const seenPaths = new Map<string, string>();
@@ -109,8 +99,7 @@ export function validateGitLibraryRows(
 
     if (
       library.autoSync &&
-      (!Number.isInteger(library.syncIntervalMinutes) ||
-        library.syncIntervalMinutes < 1)
+      (!Number.isInteger(library.syncIntervalMinutes) || library.syncIntervalMinutes < 1)
     ) {
       issue.syncIntervalMinutes = "settings.gitLibrary.error.syncInterval";
     }
@@ -126,10 +115,7 @@ export function validateGitLibraryRows(
   };
 }
 
-export function sameGitLibraries(
-  left: GitLibraryConfig[],
-  right: GitLibraryConfig[],
-) {
+export function sameGitLibraries(left: GitLibraryConfig[], right: GitLibraryConfig[]) {
   if (left.length !== right.length) return false;
   return left.every((library, index) => {
     const other = right[index];

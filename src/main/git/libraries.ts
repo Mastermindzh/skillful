@@ -24,7 +24,7 @@ const MAX_REPORTED_CHANGES = 200;
 function baseResult(
   library: GitLibraryConfig,
   targetPath: string,
-  state: GitLibrarySyncState,
+  state: GitLibrarySyncState
 ): GitLibrarySyncResult {
   return {
     libraryId: library.id,
@@ -42,17 +42,25 @@ function baseResult(
 function failureResult(
   library: GitLibraryConfig,
   targetPath: string,
-  error: unknown,
+  error: unknown
 ): GitLibrarySyncResult {
   const message = gitErrorMessage(error, library.remoteUrl);
   const state = classifyGitFailure(message);
   return {
     ...baseResult(library, targetPath, state),
-    host:
-      state === "host-key-unverified"
-        ? (sshHost(library.remoteUrl) ?? undefined)
-        : undefined,
+    host: state === "host-key-unverified" ? (sshHost(library.remoteUrl) ?? undefined) : undefined,
     message: message || "Git sync failed.",
+  };
+}
+
+/** Result for a library whose folder belongs to another OS; nothing runs against it here. */
+export function unavailableGitLibraryResult(
+  library: GitLibraryConfig,
+  targetPath: string
+): GitLibrarySyncResult {
+  return {
+    ...baseResult(library, targetPath, "error"),
+    message: `Folder is not available on this system: ${targetPath}`,
   };
 }
 
@@ -78,10 +86,7 @@ function validateLibrary(library: GitLibraryConfig) {
   const branch = cleanBranch(library.branch);
   if (!remoteUrl || !branch) return false;
   if (/\s/.test(branch)) {
-    throw new AppError(
-      "invalid-name",
-      "Git library branch cannot contain whitespace.",
-    );
+    throw new AppError("invalid-name", "Git library branch cannot contain whitespace.");
   }
   validateRemoteUrlTransport(remoteUrl);
   return true;
@@ -112,41 +117,28 @@ function parsePorcelain(stdout: string): GitLibraryChange[] {
 }
 
 async function localChanges(targetPath: string) {
-  const result = await runGit(
-    ["status", "--porcelain", "-z", "--untracked-files=all"],
-    targetPath,
-  );
+  const result = await runGit(["status", "--porcelain", "-z", "--untracked-files=all"], targetPath);
   return parsePorcelain(result.stdout);
 }
 
 async function currentCommit(targetPath: string) {
-  const result = await runGit(
-    ["rev-parse", "--short", "HEAD"],
-    targetPath,
-  ).catch(() => null);
+  const result = await runGit(["rev-parse", "--short", "HEAD"], targetPath).catch(() => null);
   return result?.stdout.trim() || undefined;
 }
 
 async function commitsBetween(targetPath: string, from: string, to: string) {
-  const result = await runGit(
-    ["rev-list", "--count", `${from}..${to}`],
-    targetPath,
-  ).catch(() => null);
+  const result = await runGit(["rev-list", "--count", `${from}..${to}`], targetPath).catch(
+    () => null
+  );
   return Number.parseInt(result?.stdout.trim() ?? "0", 10) || 0;
 }
 
 async function ensureIdentity(targetPath: string) {
-  const userName = await runGit(
-    ["config", "--get", "user.name"],
-    targetPath,
-  ).catch(() => null);
+  const userName = await runGit(["config", "--get", "user.name"], targetPath).catch(() => null);
   if (!userName?.stdout.trim()) {
     await runGit(["config", "user.name", "Skillful"], targetPath);
   }
-  const userEmail = await runGit(
-    ["config", "--get", "user.email"],
-    targetPath,
-  ).catch(() => null);
+  const userEmail = await runGit(["config", "--get", "user.email"], targetPath).catch(() => null);
   if (!userEmail?.stdout.trim()) {
     await runGit(["config", "user.email", "skillful@localhost"], targetPath);
   }
@@ -154,10 +146,7 @@ async function ensureIdentity(targetPath: string) {
 
 async function ensureRemote(library: GitLibraryConfig, targetPath: string) {
   const remoteUrl = library.remoteUrl.trim();
-  const current = await runGit(
-    ["remote", "get-url", "origin"],
-    targetPath,
-  ).catch(() => null);
+  const current = await runGit(["remote", "get-url", "origin"], targetPath).catch(() => null);
   if (!current?.stdout.trim()) {
     await runGit(["remote", "add", "origin", remoteUrl], targetPath);
     return;
@@ -173,7 +162,7 @@ async function cloneLibrary(library: GitLibraryConfig, targetPath: string) {
   if ((await pathExists(targetPath)) && !(await directoryIsEmpty(targetPath))) {
     throw new AppError(
       "invalid-path",
-      "The folder for this git library already exists and is not empty.",
+      "The folder for this git library already exists and is not empty."
     );
   }
   await runGit([
@@ -193,7 +182,7 @@ async function cloneLibrary(library: GitLibraryConfig, targetPath: string) {
  */
 export async function readGitLibraryStatus(
   library: GitLibraryConfig,
-  targetPath: string,
+  targetPath: string
 ): Promise<GitLibrarySyncResult> {
   try {
     if (!validateLibrary(library)) {
@@ -204,11 +193,7 @@ export async function readGitLibraryStatus(
     }
 
     const changes = await localChanges(targetPath);
-    const ahead = await commitsBetween(
-      targetPath,
-      `origin/${cleanBranch(library.branch)}`,
-      "HEAD",
-    );
+    const ahead = await commitsBetween(targetPath, `origin/${cleanBranch(library.branch)}`, "HEAD");
     const state: GitLibrarySyncState =
       changes.length > 0 || ahead > 0 ? "local-changes" : "up-to-date";
     return {
@@ -231,7 +216,7 @@ export async function readGitLibraryStatus(
  */
 export async function syncGitLibrary(
   library: GitLibraryConfig,
-  targetPath: string,
+  targetPath: string
 ): Promise<GitLibrarySyncResult> {
   try {
     if (!validateLibrary(library)) {
@@ -266,10 +251,7 @@ export async function syncGitLibrary(
     const committed = library.syncMode === "two-way" && changes.length > 0;
     if (committed) {
       await runGit(["add", "--all"], targetPath);
-      await runGit(
-        ["commit", "-m", `Skillful sync ${new Date().toISOString()}`],
-        targetPath,
-      );
+      await runGit(["commit", "-m", `Skillful sync ${new Date().toISOString()}`], targetPath);
     } else if (changes.length > 0) {
       return {
         ...baseResult(library, targetPath, "local-changes"),
@@ -290,16 +272,13 @@ export async function syncGitLibrary(
           message: "The local and remote histories have diverged.",
         };
       }
-      const rebased = await runGit(["rebase", remoteRef], targetPath).catch(
-        (error) => error,
-      );
+      const rebased = await runGit(["rebase", remoteRef], targetPath).catch((error) => error);
       if (rebased instanceof Error) {
         await runGit(["rebase", "--abort"], targetPath).catch(() => null);
         return {
           ...baseResult(library, targetPath, "diverged"),
           lastCommit: await currentCommit(targetPath),
-          message:
-            "Local changes conflict with the remote and need manual resolution.",
+          message: "Local changes conflict with the remote and need manual resolution.",
         };
       }
     } else if (behind > 0) {
@@ -307,8 +286,7 @@ export async function syncGitLibrary(
     }
 
     const pushable = library.syncMode === "two-way";
-    const shouldPush =
-      pushable && (await commitsBetween(targetPath, remoteRef, "HEAD")) > 0;
+    const shouldPush = pushable && (await commitsBetween(targetPath, remoteRef, "HEAD")) > 0;
     if (shouldPush) {
       await runGit(["push", "origin", `HEAD:${branch}`], targetPath);
     }
@@ -328,7 +306,7 @@ export async function syncGitLibrary(
 /** Commits everything in the working tree and pushes it, for the explicit "sync skills" action. */
 export async function pushGitLibraryChanges(
   library: GitLibraryConfig,
-  targetPath: string,
+  targetPath: string
 ): Promise<GitLibrarySyncResult> {
   try {
     if (!validateLibrary(library)) {
@@ -347,25 +325,19 @@ export async function pushGitLibraryChanges(
     const changes = await localChanges(targetPath);
     if (changes.length > 0) {
       await runGit(["add", "--all"], targetPath);
-      await runGit(
-        ["commit", "-m", `Skillful sync ${new Date().toISOString()}`],
-        targetPath,
-      );
+      await runGit(["commit", "-m", `Skillful sync ${new Date().toISOString()}`], targetPath);
     }
 
     await runGit(["fetch", "origin", branch], targetPath);
     if ((await commitsBetween(targetPath, "HEAD", remoteRef)) > 0) {
-      const rebased = await runGit(["rebase", remoteRef], targetPath).catch(
-        (error) => error,
-      );
+      const rebased = await runGit(["rebase", remoteRef], targetPath).catch((error) => error);
       if (rebased instanceof Error) {
         await runGit(["rebase", "--abort"], targetPath).catch(() => null);
         return {
           ...baseResult(library, targetPath, "diverged"),
           localChanges: await localChanges(targetPath),
           lastCommit: await currentCommit(targetPath),
-          message:
-            "Local changes conflict with the remote and need manual resolution.",
+          message: "Local changes conflict with the remote and need manual resolution.",
         };
       }
     }
@@ -389,7 +361,7 @@ export async function pushGitLibraryChanges(
 /** Throws away every local commit and edit so the clone matches the remote branch again. */
 export async function discardGitLibraryChanges(
   library: GitLibraryConfig,
-  targetPath: string,
+  targetPath: string
 ): Promise<GitLibrarySyncResult> {
   try {
     if (!validateLibrary(library)) {

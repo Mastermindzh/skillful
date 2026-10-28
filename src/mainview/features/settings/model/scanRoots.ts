@@ -34,9 +34,7 @@ export function createScanRootRow(path = ""): ScanRootRow {
 
 /** Builds editable scan root rows and keeps one blank row visible for first-time setup. */
 export function buildScanRootRows(paths: string[]): ScanRootRow[] {
-  return (paths.length > 0 ? paths : [""]).map((path) =>
-    createScanRootRow(path),
-  );
+  return (paths.length > 0 ? paths : [""]).map((path) => createScanRootRow(path));
 }
 
 /** Validates editable scan root rows and returns the cleaned paths that can be saved. */

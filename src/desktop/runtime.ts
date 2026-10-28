@@ -2,6 +2,7 @@ import { ensureDirectory } from "../main/fs";
 import { GitLibrarySyncScheduler } from "../main/git/librarySyncScheduler";
 import { GitBackupScheduler } from "../main/git/scheduler";
 import { measureAsync } from "../main/performance";
+import { gitLibraryAvailable } from "../main/settings";
 import { LibraryItemStore } from "../main/skills";
 import type { GitLibrarySyncResult } from "../shared/types";
 import type {
@@ -90,7 +91,7 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       );
       adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
       gitBackupScheduler.configure(config.gitBackup);
-      gitLibraryScheduler.configure(config.gitLibraries);
+      gitLibraryScheduler.configure(config.gitLibraries.filter(gitLibraryAvailable));
       if (!samePathSet(previousConfig.effectiveScanRoots, config.effectiveScanRoots)) {
         const libraryItems = await measureAsync(
           "desktop.saveConfig.rescan",
@@ -183,7 +184,7 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
   const config = await service.getConfig();
   adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
   gitBackupScheduler.configure(config.gitBackup);
-  gitLibraryScheduler.configure(config.gitLibraries);
+  gitLibraryScheduler.configure(config.gitLibraries.filter(gitLibraryAvailable));
 
   return {
     handlers,

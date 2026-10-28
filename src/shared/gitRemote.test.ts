@@ -26,31 +26,31 @@ describe("parseScpRemote", () => {
 describe("formatGitRemoteLabel", () => {
   it("condenses an scp-style ssh remote", () => {
     expect(formatGitRemoteLabel("git@github.com:you/team-skills.git")).toBe(
-      "github.com:you/team-skills",
+      "github.com:you/team-skills"
     );
   });
 
   it("condenses an https remote", () => {
-    expect(
-      formatGitRemoteLabel("https://github.com/frontlinersnl/skills"),
-    ).toBe("github.com:frontlinersnl/skills");
+    expect(formatGitRemoteLabel("https://github.com/frontlinersnl/skills")).toBe(
+      "github.com:frontlinersnl/skills"
+    );
   });
 
   it("drops the port and credentials from an ssh:// remote", () => {
-    expect(
-      formatGitRemoteLabel("ssh://git@git.example.com:2222/you/skills.git"),
-    ).toBe("git.example.com:you/skills");
+    expect(formatGitRemoteLabel("ssh://git@git.example.com:2222/you/skills.git")).toBe(
+      "git.example.com:you/skills"
+    );
   });
 
   it("appends the branch when one is given", () => {
-    expect(
-      formatGitRemoteLabel("https://github.com/you/skills.git", "main"),
-    ).toBe("github.com:you/skills@main");
+    expect(formatGitRemoteLabel("https://github.com/you/skills.git", "main")).toBe(
+      "github.com:you/skills@main"
+    );
   });
 
   it("ignores a blank branch", () => {
     expect(formatGitRemoteLabel("https://github.com/you/skills", "  ")).toBe(
-      "github.com:you/skills",
+      "github.com:you/skills"
     );
   });
 
@@ -63,8 +63,6 @@ describe("formatGitRemoteLabel", () => {
   });
 
   it("keeps a local path remote intact", () => {
-    expect(formatGitRemoteLabel("/srv/git/skills.git")).toBe(
-      "/srv/git/skills.git",
-    );
+    expect(formatGitRemoteLabel("/srv/git/skills.git")).toBe("/srv/git/skills.git");
   });
 });

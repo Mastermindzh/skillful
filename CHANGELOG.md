@@ -1,9 +1,15 @@
 # Changelog
 
-## 1.2.2 - 2026-xx-xx
+## 1.3.0 - 2026-xx-xx
 
+- Added git libraries, use a git repository as a skill/agent library
+  - Added auto-sync with a configurable interval
+  - Added pull-only and two-way sync modes
+  - Added read-only libraries
 - Added security checks to github importer
 - Added CSP
+- Added support for home-relative paths starting with `~/`, also on Windows
+- Fixed folders from another OS (e.g. via git backup) breaking settings, they are now skipped and flagged in settings
 
 ## 1.2.1 - 2026-06-12
 

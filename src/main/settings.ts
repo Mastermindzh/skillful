@@ -3,6 +3,7 @@ import path from "node:path";
 import type { Options as ElectronStoreOptions } from "electron-store";
 import { AppError } from "../shared/errors";
 import { LIBRARY_ITEM_KINDS } from "../shared/library";
+import { isAbsolutePath, isHomePath } from "../shared/paths";
 import { AppConfigSchema } from "../shared/schemas";
 import { presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
 import type {
@@ -15,6 +16,7 @@ import type {
   ToolConfig,
 } from "../shared/types";
 import { normalizeAbsolutePathList, pathExists, resolvePathList } from "./fs";
+import { filterUsablePaths, isNativeAbsolutePath, resolveUserPath } from "./paths";
 
 const SETTINGS_FILE_NAME = "settings.json";
 const SETTINGS_STORE_NAME = "settings";
@@ -73,8 +75,14 @@ export function defaultGitLibraryRoot() {
 /** Resolves where a git library is (or will be) cloned, honouring a per-library override. */
 export function gitLibraryPath(library: GitLibraryConfig) {
   const override = library.path.trim();
-  if (override) return path.resolve(override);
+  if (override) return isNativeAbsolutePath(override) ? resolveUserPath(override) : override;
   return path.join(defaultGitLibraryRoot(), library.id);
+}
+
+/** False when the folder override is another OS's path, so the clone cannot live here. */
+export function gitLibraryAvailable(library: GitLibraryConfig) {
+  const override = library.path.trim();
+  return !override || isNativeAbsolutePath(override);
 }
 
 export function gitLibraryPathsById(gitLibraries: GitLibraryConfig[]) {
@@ -94,10 +102,14 @@ export function gitLibraryIdsByPath(gitLibraries: GitLibraryConfig[]) {
   return ids;
 }
 
-/** Combines the default skill library with user-configured extra scan roots. */
+/** Combines the default skill library with user-configured extra scan roots this OS can use. */
 export function effectiveScanRoots(customRoots: string[], gitLibraries: GitLibraryConfig[] = []) {
   return Array.from(
-    new Set([defaultSkillRoot(), ...customRoots, ...gitLibraries.map(gitLibraryPath)])
+    new Set([
+      defaultSkillRoot(),
+      ...filterUsablePaths(customRoots),
+      ...gitLibraries.filter(gitLibraryAvailable).map(gitLibraryPath),
+    ])
   );
 }
 
@@ -250,13 +262,14 @@ export function normalizeGitLibraries(gitLibraries: GitLibraryConfig[]) {
       }
       // Resolving a relative path here would silently anchor the clone to the process working
       // directory, so an explicit override has to already be absolute.
-      if (library.path && !path.isAbsolute(library.path)) {
+      if (library.path && !isAbsolutePath(library.path)) {
         throw new AppError("invalid-path", `Git library folder must be absolute: ${library.name}`);
       }
 
+      const nativePath = isNativeAbsolutePath(library.path) && !isHomePath(library.path);
       const normalized = {
         ...library,
-        path: library.path ? path.normalize(library.path) : "",
+        path: nativePath ? path.normalize(library.path) : library.path,
       };
 
       const clonePath = gitLibraryPath(normalized);

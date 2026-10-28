@@ -5,10 +5,7 @@
  * user actually recognises: `host:owner/repo`. Anything that cannot be parsed falls back to the
  * original string rather than guessing.
  */
-export function formatGitRemoteLabel(
-  remoteUrl: string,
-  branch?: string,
-): string {
+export function formatGitRemoteLabel(remoteUrl: string, branch?: string): string {
   const value = remoteUrl.trim();
   if (!value) return "";
 
@@ -26,9 +23,7 @@ function stripGitSuffix(repoPath: string) {
 }
 
 /** Parses scp-style `[user@]host:path` remotes; a `/` right after the colon means it is not scp-style. */
-export function parseScpRemote(
-  value: string,
-): { host: string; path: string } | null {
+export function parseScpRemote(value: string): { host: string; path: string } | null {
   const match = value.match(/^(?:[^@/\s]+@)?([^:/\s]+):(?!\/)(.*)$/);
   if (!match) return null;
   const [, host = "", repoPath = ""] = match;

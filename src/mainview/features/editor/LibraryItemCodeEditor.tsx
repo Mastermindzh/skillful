@@ -29,31 +29,19 @@ export function LibraryItemCodeEditor({
   // A fresh compartment per mount (document/file combo) keeps theme swaps tied to the current
   // EditorView instance dispatching a reconfigure against a disposed view would throw.
   // biome-ignore lint/correctness/useExhaustiveDependencies: recreate compartment when the editor remounts (document/file change), not on theme flips.
-  const themeCompartment = useMemo(
-    () => new Compartment(),
-    [documentId, filePath],
-  );
+  const themeCompartment = useMemo(() => new Compartment(), [documentId, filePath]);
   const viewRef = useRef<EditorView | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: excludes computedColorScheme on purpose, theme is reconfigured through the compartment so EditorState (cursor/selection) stays intact across light/dark flips.
   const extensions = useMemo(
-    () =>
-      buildEditorExtensions(
-        filePath,
-        computedColorScheme,
-        onSave,
-        themeCompartment,
-        readOnly,
-      ),
-    [filePath, onSave, readOnly, themeCompartment],
+    () => buildEditorExtensions(filePath, computedColorScheme, onSave, themeCompartment, readOnly),
+    [filePath, onSave, readOnly, themeCompartment]
   );
 
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
     view.dispatch({
-      effects: themeCompartment.reconfigure(
-        editorThemeExtension(computedColorScheme),
-      ),
+      effects: themeCompartment.reconfigure(editorThemeExtension(computedColorScheme)),
     });
   }, [computedColorScheme, themeCompartment]);
 

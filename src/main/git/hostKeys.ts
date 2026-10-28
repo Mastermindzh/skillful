@@ -37,13 +37,7 @@ async function scanHostKey(host: string): Promise<ScannedHostKey | null> {
   const value = host.trim();
   assertScannableHost(value);
 
-  const scanned = await runCommand("ssh-keyscan", [
-    "-T",
-    "10",
-    "-t",
-    "ed25519,ecdsa,rsa",
-    value,
-  ])
+  const scanned = await runCommand("ssh-keyscan", ["-T", "10", "-t", "ed25519,ecdsa,rsa", value])
     .then((result) => result.stdout)
     .catch(() => "");
 
@@ -53,12 +47,7 @@ async function scanHostKey(host: string): Promise<ScannedHostKey | null> {
     .find((entry) => entry && !entry.startsWith("#"));
   if (!line) return null;
 
-  const fingerprint = await runCommand(
-    "ssh-keygen",
-    ["-lf", "-"],
-    undefined,
-    line,
-  )
+  const fingerprint = await runCommand("ssh-keygen", ["-lf", "-"], undefined, line)
     .then((result) => result.stdout.trim())
     .catch(() => "");
 
@@ -83,9 +72,7 @@ async function scanHostKey(host: string): Promise<ScannedHostKey | null> {
  * continue connecting?". Skillful shows it to the user and only writes to `known_hosts` after
  * they confirm, so trust-on-first-use stays an explicit decision instead of a silent one.
  */
-export async function scanGitLibraryHostKey(
-  host: string,
-): Promise<GitLibraryHostKey | null> {
+export async function scanGitLibraryHostKey(host: string): Promise<GitLibraryHostKey | null> {
   return (await scanHostKey(host))?.key ?? null;
 }
 
@@ -93,9 +80,7 @@ async function appendKnownHost(line: string) {
   const knownHosts = knownHostsPath();
   await ensureDirectory(path.dirname(knownHosts));
   const existing = await readFile(knownHosts, "utf8").catch(() => "");
-  const alreadyTrusted = existing
-    .split(/\r?\n/)
-    .some((entry) => entry.trim() === line);
+  const alreadyTrusted = existing.split(/\r?\n/).some((entry) => entry.trim() === line);
   if (alreadyTrusted) return;
 
   const prefix = existing && !existing.endsWith("\n") ? "\n" : "";
@@ -115,15 +100,12 @@ async function appendKnownHost(line: string) {
 export async function trustGitLibraryHost(approved: GitLibraryHostKey) {
   const scanned = await scanHostKey(approved.host);
   if (!scanned) {
-    throw new AppError(
-      "internal",
-      `Could not read the host key for ${approved.host}.`,
-    );
+    throw new AppError("internal", `Could not read the host key for ${approved.host}.`);
   }
   if (scanned.key.fingerprint !== approved.fingerprint) {
     throw new AppError(
       "internal",
-      `The host key for ${approved.host} changed since it was shown. Nothing was trusted.`,
+      `The host key for ${approved.host} changed since it was shown. Nothing was trusted.`
     );
   }
 

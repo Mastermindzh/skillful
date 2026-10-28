@@ -40,8 +40,7 @@ export const enMessages = {
   "library.inCollection": "in {collection}",
   "library.inCollectionPrefix": "in",
   "details.noSelection.title": "No item selected",
-  "details.noSelection.message":
-    "Choose an item from the list to edit its files.",
+  "details.noSelection.message": "Choose an item from the list to edit its files.",
   "details.noDescription": "No description.",
   "details.edit": "Edit",
   "details.preview": "Preview",
@@ -81,10 +80,8 @@ export const enMessages = {
   "settings.general.editorMode.preview": "Preview",
   "settings.general.editorMode.edit": "Edit",
   "settings.general.notifications.title": "Notifications",
-  "settings.general.notifications.hideSuccess":
-    "Hide success and info notifications",
-  "settings.general.notifications.hideSuccessDescription":
-    "Errors and warnings will still appear.",
+  "settings.general.notifications.hideSuccess": "Hide success and info notifications",
+  "settings.general.notifications.hideSuccessDescription": "Errors and warnings will still appear.",
   "settings.general.tray.title": "App tray",
   "settings.general.tray.minimizeOnClose": "Minimize to app tray on close",
   "settings.general.tray.minimizeOnCloseDescription":
@@ -104,14 +101,12 @@ export const enMessages = {
   "common.error.downloadUpdate": "Failed to download update.",
   "common.error.applyUpdate": "Failed to apply update.",
   "collection.create.title": "New collection",
-  "collection.create.description":
-    "Collections are folders in your default Skillful library.",
+  "collection.create.description": "Collections are folders in your default Skillful library.",
   "collection.name": "Collection name",
   "collection.name.placeholder": "Work",
   "collection.create.submit": "Create collection",
   "collection.rename.title": "Rename collection",
-  "collection.rename.description":
-    "This renames the collection folders used by Skillful.",
+  "collection.rename.description": "This renames the collection folders used by Skillful.",
   "collection.rename.submit": "Rename collection",
   "collection.delete.title": "Delete collection",
   "collection.delete.description":
@@ -130,8 +125,7 @@ export const enMessages = {
   "collection.notification.exported.title": "Collection exported",
   "collection.notification.exported.message": "Exported {name} to {path}",
   "collection.notification.exportFailed.title": "Export failed",
-  "collection.notification.exportFailed.message":
-    "Failed to export collection.",
+  "collection.notification.exportFailed.message": "Failed to export collection.",
   "import.title": "Import collection",
   "import.description":
     "Import a Skillful archive, an existing folder that contains skill and agent folders, or a public GitHub repo through its source archive.",
@@ -149,8 +143,7 @@ export const enMessages = {
   "import.collectionPlaceholder": "Imported Skills",
   "import.submit": "Import collection",
   "import.github.repository": "Repository",
-  "import.github.repositoryPlaceholder":
-    "owner/repo or https://github.com/owner/repo",
+  "import.github.repositoryPlaceholder": "owner/repo or https://github.com/owner/repo",
   "import.github.advanced": "Advanced options",
   "import.github.ref": "Ref",
   "import.github.refPlaceholder": "main, v1.0.0, or a commit hash",
@@ -186,8 +179,7 @@ export const enMessages = {
     "Create a collection first. Skills and agents live inside collections.",
   "item.create.submit": "Create {kind}",
   "item.rename.title": "Rename {kind}",
-  "item.rename.description":
-    "This updates the {kind} title and its folder name.",
+  "item.rename.description": "This updates the {kind} title and its folder name.",
   "item.rename.submit": "Rename {kind}",
   "item.delete.title": "Delete {kind}",
   "item.delete.description":
@@ -195,8 +187,7 @@ export const enMessages = {
   "item.move.title": "Move {kind}",
   "item.move.description": "Move {name} to another collection.",
   "item.move.destination": "Destination collection",
-  "item.move.createCollectionFirst":
-    "Create another collection before moving this {kind}.",
+  "item.move.createCollectionFirst": "Create another collection before moving this {kind}.",
   "item.move.submit": "Move {kind}",
   "item.error.create": "Failed to create {kind}.",
   "item.error.createGeneric": "Failed to create item.",
@@ -225,12 +216,10 @@ export const enMessages = {
   "file.name.placeholder": "notes.md",
   "file.create.submit": "Create file",
   "file.rename.title": "Rename file",
-  "file.rename.description":
-    "Rename this file without moving it outside the current item.",
+  "file.rename.description": "Rename this file without moving it outside the current item.",
   "file.rename.submit": "Rename file",
   "file.delete.title": "Delete file",
-  "file.delete.description":
-    "Delete {name}? This removes the file from the item.",
+  "file.delete.description": "Delete {name}? This removes the file from the item.",
   "file.openDefault": "Open with default app",
   "file.actions": "{name} actions",
   "file.manageCurrent": "Manage current file",
@@ -245,8 +234,7 @@ export const enMessages = {
   "additionalFiles.upload": "Upload files",
   "additionalFiles.tab": "Additional files",
   "additionalFiles.empty.title": "No additional files",
-  "additionalFiles.empty.message":
-    "Upload supporting files that should travel with this item.",
+  "additionalFiles.empty.message": "Upload supporting files that should travel with this item.",
   "shortcuts.title": "Keyboard shortcuts",
   "shortcuts.macHint": "Use Cmd instead of Ctrl on macOS.",
   "shortcuts.focusSearch": "Focus search",
@@ -259,8 +247,7 @@ export const enMessages = {
   "shortcuts.deleteSelectedItem": "Delete selected item",
   "shortcuts.showShortcuts": "Show shortcuts",
   "unsaved.title": "Unsaved changes",
-  "unsaved.description":
-    "You have unsaved changes. Would you like to save them before switching?",
+  "unsaved.description": "You have unsaved changes. Would you like to save them before switching?",
   "settings.library.title": "Library folders",
   "settings.library.description":
     "Skillful always scans {path}. Add extra folders here if you want to include more libraries.",
@@ -276,13 +263,11 @@ export const enMessages = {
   "settings.gitLibrary.untitled": "Git library {index}",
   "settings.gitLibrary.remove": "Remove git library {index}",
   "settings.gitLibrary.restore": "Undo remove for git library {index}",
-  "settings.gitLibrary.markedForRemoval":
-    "Marked for removal - applies on Save",
+  "settings.gitLibrary.markedForRemoval": "Marked for removal - applies on Save",
   "settings.gitLibrary.name": "Name",
   "settings.gitLibrary.namePlaceholder": "Team skills",
   "settings.gitLibrary.remoteUrl": "Remote URL",
-  "settings.gitLibrary.remoteUrlPlaceholder":
-    "git@github.com:you/team-skills.git",
+  "settings.gitLibrary.remoteUrlPlaceholder": "git@github.com:you/team-skills.git",
   "settings.gitLibrary.branch": "Branch",
   "settings.gitLibrary.branchPlaceholder": "main",
   "settings.gitLibrary.path": "Folder",
@@ -307,8 +292,7 @@ export const enMessages = {
   "settings.gitLibrary.pushChanges": "Push local changes",
   "settings.gitLibrary.discardChanges": "Discard local changes",
   "settings.gitLibrary.saveFirst": "Save settings before syncing this library.",
-  "settings.gitLibrary.localChangeCount":
-    "{count} local change(s) not on the remote.",
+  "settings.gitLibrary.localChangeCount": "{count} local change(s) not on the remote.",
   "settings.gitLibrary.hostKey.title": "Trust the host key for {host}?",
   "settings.gitLibrary.hostKey.description":
     "This host is not in your known_hosts yet. Only continue if this fingerprint matches the one your git host publishes.",
@@ -326,19 +310,14 @@ export const enMessages = {
   "settings.gitLibrary.state.error": "Error",
   "settings.gitLibrary.error.nameRequired": "Add a name.",
   "settings.gitLibrary.error.remoteRequired": "Add a git remote URL.",
-  "settings.gitLibrary.error.remoteTransport":
-    "This git transport is not supported.",
+  "settings.gitLibrary.error.remoteTransport": "This git transport is not supported.",
   "settings.gitLibrary.error.branchRequired": "Add a branch.",
-  "settings.gitLibrary.error.branchWhitespace":
-    "Branch cannot contain whitespace.",
-  "settings.gitLibrary.error.pathAbsolute": "Use an absolute path.",
-  "settings.gitLibrary.error.pathDuplicate":
-    "Another git library already uses this folder.",
-  "settings.gitLibrary.error.syncInterval":
-    "Use an interval of at least 1 minute.",
+  "settings.gitLibrary.error.branchWhitespace": "Branch cannot contain whitespace.",
+  "settings.gitLibrary.error.pathAbsolute": "Use an absolute path or one starting with ~/.",
+  "settings.gitLibrary.error.pathDuplicate": "Another git library already uses this folder.",
+  "settings.gitLibrary.error.syncInterval": "Use an interval of at least 1 minute.",
   "settings.gitLibrary.notification.synced.title": "Git library synced",
-  "settings.gitLibrary.notification.synced.message":
-    "{name} was updated from the remote.",
+  "settings.gitLibrary.notification.synced.message": "{name} was updated from the remote.",
   "settings.gitLibrary.notification.failed.title": "Git library sync failed",
   "sidebar.syncGitLibraries": "Sync git libraries",
   "library.gitOrigin.ariaLabel": "From git library {name}",
@@ -346,8 +325,10 @@ export const enMessages = {
   "library.gitOrigin.neverSynced": "Not synced yet",
   "library.gitOrigin.readOnly": "Read-only",
   "error.gitLibraryReadOnly": "This item belongs to a read-only git library.",
-  "settings.error.absolutePath": "Use an absolute path.",
+  "settings.error.absolutePath": "Use an absolute path or one starting with ~/.",
   "settings.error.duplicatePath": "Duplicate of {path}.",
+  "settings.error.otherPlatformPath":
+    "This folder belongs to another operating system and is skipped on this one.",
   "settings.tools.description":
     "Tools are install destinations. Skills and agents can each use their own folder.",
   "settings.tools.quickAdd": "Quick add",
@@ -364,16 +345,14 @@ export const enMessages = {
   "settings.tools.skillFolderPlaceholder": "/path/to/tool/skills",
   "settings.tools.agentFolderPlaceholder": "/path/to/tool/agents",
   "settings.tools.error.nameRequired": "Add a tool name.",
-  "settings.tools.error.installRootRequired":
-    "Add at least one install folder.",
+  "settings.tools.error.installRootRequired": "Add at least one install folder.",
   "settings.tools.error.namesUnique": "Tool names must be unique.",
   "settings.backup.title": "Git backup",
   "settings.backup.enabled": "Enable git backup",
   "settings.backup.enabledDescription":
     "Uses your existing git authentication. Skillful does not store credentials.",
   "settings.backup.remoteUrl": "Remote URL",
-  "settings.backup.remoteUrlPlaceholder":
-    "git@github.com:you/skillful-backup.git",
+  "settings.backup.remoteUrlPlaceholder": "git@github.com:you/skillful-backup.git",
   "settings.backup.branch": "Branch",
   "settings.backup.branchPlaceholder": "main",
   "settings.backup.includeTitle": "Include",
@@ -381,8 +360,7 @@ export const enMessages = {
   "settings.backup.includeDefaultLibrary": "Default Skillful library",
   "settings.backup.automationTitle": "Automation",
   "settings.backup.autoBackup": "Back up automatically after changes",
-  "settings.backup.autoBackupDescription":
-    "Runs on the interval below when backup is enabled.",
+  "settings.backup.autoBackupDescription": "Runs on the interval below when backup is enabled.",
   "settings.backup.autoBackupInterval": "Interval in minutes",
   "settings.backup.setupBackup": "Set up backup",
   "settings.backup.restoreFromGit": "Restore from git",
@@ -391,15 +369,13 @@ export const enMessages = {
   "settings.backup.error.remoteRequired": "Add a git remote URL.",
   "settings.backup.error.branchRequired": "Add a branch.",
   "settings.backup.error.branchWhitespace": "Branch cannot contain whitespace.",
-  "settings.backup.error.autoBackupInterval":
-    "Use an interval of at least 1 minute.",
+  "settings.backup.error.autoBackupInterval": "Use an interval of at least 1 minute.",
   "settings.backup.error.localContent":
     "Local skills or agents already exist. Click replace to restore from git and overwrite the local library.",
   "settings.backup.error.restore": "Failed to restore backup.",
   "settings.backup.error.run": "Failed to run backup.",
   "settings.backup.notification.synced.title": "Backup synced",
-  "settings.backup.notification.synced.message":
-    "Automatic backup pushed to {branch}.",
+  "settings.backup.notification.synced.message": "Automatic backup pushed to {branch}.",
   "settings.backup.notification.failed.title": "Automatic backup failed",
   "settings.tabUnsavedIndicator": "Unsaved changes",
   "updates.title": "Updates",

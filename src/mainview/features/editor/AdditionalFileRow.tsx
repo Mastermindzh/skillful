@@ -48,10 +48,7 @@ export function AdditionalFileRow({
       withinPortal
     >
       <Menu.Target>
-        <contextMenu.Anchor
-          x={contextMenu.position.x}
-          y={contextMenu.position.y}
-        />
+        <contextMenu.Anchor x={contextMenu.position.x} y={contextMenu.position.y} />
       </Menu.Target>
       <fieldset
         className="additional-file-row"
@@ -126,24 +123,14 @@ export function AdditionalFileRow({
             {t("file.rename.title")}
           </Menu.Item>
         )}
-        <Menu.Item
-          leftSection={<FolderOpen size={14} />}
-          onClick={() => void onReveal()}
-        >
+        <Menu.Item leftSection={<FolderOpen size={14} />} onClick={() => void onReveal()}>
           {t("common.openContainingFolder")}
         </Menu.Item>
-        <Menu.Item
-          leftSection={<ExternalLink size={14} />}
-          onClick={() => void onOpen()}
-        >
+        <Menu.Item leftSection={<ExternalLink size={14} />} onClick={() => void onOpen()}>
           {t("file.openDefault")}
         </Menu.Item>
         {readOnly ? null : (
-          <Menu.Item
-            color="red"
-            leftSection={<Trash2 size={14} />}
-            onClick={onDelete}
-          >
+          <Menu.Item color="red" leftSection={<Trash2 size={14} />} onClick={onDelete}>
             {t("file.delete.title")}
           </Menu.Item>
         )}

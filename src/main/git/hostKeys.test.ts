@@ -52,9 +52,7 @@ describe("scanGitLibraryHostKey", () => {
   });
 
   it("refuses host names that could be read as ssh options", async () => {
-    await expect(
-      scanGitLibraryHostKey("-oProxyCommand=touch /tmp/pwned"),
-    ).rejects.toMatchObject({
+    await expect(scanGitLibraryHostKey("-oProxyCommand=touch /tmp/pwned")).rejects.toMatchObject({
       code: "invalid-name",
     });
     expect(runCommand).not.toHaveBeenCalled();
@@ -68,8 +66,7 @@ describe("scanGitLibraryHostKey", () => {
 
   it("returns null when the fingerprint cannot be computed", async () => {
     runCommand.mockImplementation(async (command: string) => {
-      if (command === "ssh-keyscan")
-        return { stdout: `${ED25519_LINE}\n`, stderr: "" };
+      if (command === "ssh-keyscan") return { stdout: `${ED25519_LINE}\n`, stderr: "" };
       throw new Error("ssh-keygen unavailable");
     });
 
@@ -89,9 +86,7 @@ describe("trustGitLibraryHost", () => {
 
     await trustGitLibraryHost(approved);
 
-    await expect(readFile(knownHostsPath(), "utf8")).resolves.toBe(
-      `${ED25519_LINE}\n`,
-    );
+    await expect(readFile(knownHostsPath(), "utf8")).resolves.toBe(`${ED25519_LINE}\n`);
   });
 
   it("refuses to write when the host key changed since it was shown", async () => {
@@ -121,21 +116,16 @@ describe("trustGitLibraryHost", () => {
     await trustGitLibraryHost(approved);
 
     expect(keyscans).toBe(1);
-    await expect(readFile(knownHostsPath(), "utf8")).resolves.toBe(
-      `${ED25519_LINE}\n`,
-    );
+    await expect(readFile(knownHostsPath(), "utf8")).resolves.toBe(`${ED25519_LINE}\n`);
   });
 
   it("does not trust a host whose fingerprint could not be computed", async () => {
     runCommand.mockImplementation(async (command: string) => {
-      if (command === "ssh-keyscan")
-        return { stdout: `${ED25519_LINE}\n`, stderr: "" };
+      if (command === "ssh-keyscan") return { stdout: `${ED25519_LINE}\n`, stderr: "" };
       throw new Error("ssh-keygen unavailable");
     });
 
-    await expect(
-      trustGitLibraryHost({ ...approved, fingerprint: "" }),
-    ).rejects.toMatchObject({
+    await expect(trustGitLibraryHost({ ...approved, fingerprint: "" })).rejects.toMatchObject({
       code: "internal",
     });
   });
@@ -149,26 +139,18 @@ describe("trustGitLibraryHost", () => {
     await trustGitLibraryHost(approved);
     await trustGitLibraryHost(approved);
 
-    const lines = (await readFile(knownHostsPath(), "utf8"))
-      .split("\n")
-      .filter(Boolean);
+    const lines = (await readFile(knownHostsPath(), "utf8")).split("\n").filter(Boolean);
     expect(lines).toEqual([existing, ED25519_LINE]);
   });
 
   it("separates the appended key when the file has no trailing newline", async () => {
     mockScan(ED25519_LINE, "256 SHA256:abc123 github.com (ED25519)");
     await mkdir(path.join(home, ".ssh"), { recursive: true });
-    await writeFile(
-      knownHostsPath(),
-      "gitlab.com ssh-ed25519 AAAAEXISTING",
-      "utf8",
-    );
+    await writeFile(knownHostsPath(), "gitlab.com ssh-ed25519 AAAAEXISTING", "utf8");
 
     await trustGitLibraryHost(approved);
 
-    const lines = (await readFile(knownHostsPath(), "utf8"))
-      .split("\n")
-      .filter(Boolean);
+    const lines = (await readFile(knownHostsPath(), "utf8")).split("\n").filter(Boolean);
     expect(lines).toHaveLength(2);
     expect(lines[1]).toBe(ED25519_LINE);
   });

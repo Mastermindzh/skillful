@@ -16,12 +16,7 @@ import { useGitLibrarySettingsState } from "./useGitLibrarySettingsState";
 import { useLibrarySettingsState } from "./useLibrarySettingsState";
 import { useToolSettingsState } from "./useToolSettingsState";
 
-export type SettingsTab =
-  | "general"
-  | "library"
-  | "tools"
-  | "backup"
-  | "updates";
+export type SettingsTab = "general" | "library" | "tools" | "backup" | "updates";
 
 type SaveSettingsOptions = {
   activeLibraryItemId: string | null;
@@ -61,11 +56,7 @@ export function useSettingsState() {
   const tools = useToolSettingsState(appSettings);
   const backup = useBackupSettingsState(appSettings);
   const settingsChanged =
-    library.dirty ||
-    gitLibraries.dirty ||
-    tools.dirty ||
-    general.dirty ||
-    backup.dirty;
+    library.dirty || gitLibraries.dirty || tools.dirty || general.dirty || backup.dirty;
   const hasValidationErrors =
     library.validation.hasErrors ||
     gitLibraries.validation.hasErrors ||
@@ -84,13 +75,7 @@ export function useSettingsState() {
       general.reset(settings);
       backup.resetFromSettings(settings);
     },
-    [
-      backup.resetFromSettings,
-      general.reset,
-      gitLibraries.reset,
-      library.reset,
-      tools.reset,
-    ],
+    [backup.resetFromSettings, general.reset, gitLibraries.reset, library.reset, tools.reset]
   );
 
   const loadSettings = useCallback(async () => {
@@ -98,16 +83,12 @@ export function useSettingsState() {
       const nextSettings = await appRpc.request.getConfig();
       setAppSettings(nextSettings);
       resetRows(nextSettings);
-      setSuppressSuccessNotifications(
-        nextSettings.suppressSuccessNotifications,
-      );
+      setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
       setSettingsError(null);
       return nextSettings;
     } catch (nextError) {
       setSettingsError(
-        nextError instanceof Error
-          ? nextError.message
-          : tRef.current("common.error.loadSettings"),
+        nextError instanceof Error ? nextError.message : tRef.current("common.error.loadSettings")
       );
       return null;
     }
@@ -122,12 +103,7 @@ export function useSettingsState() {
       resetRows(appSettings);
       void gitLibraries.refreshStatuses();
     },
-    [
-      appSettings,
-      backup.clearTransient,
-      gitLibraries.refreshStatuses,
-      resetRows,
-    ],
+    [appSettings, backup.clearTransient, gitLibraries.refreshStatuses, resetRows]
   );
 
   const closeSettings = useCallback(() => {
@@ -150,23 +126,20 @@ export function useSettingsState() {
       try {
         const scanRootsChanged = !sameScanRoots(
           library.validation.cleanedRoots,
-          appSettings?.scanRoots ?? [],
+          appSettings?.scanRoots ?? []
         );
         const nextSettings = await appRpc.request.saveConfig({
           scanRoots: library.validation.cleanedRoots,
           tools: tools.validation.tools,
           toolMappings,
           ...general.saveFields,
-          onboardingTourCompleted:
-            appSettings?.onboardingTourCompleted ?? false,
+          onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
           gitBackup: backup.validation.config,
           gitLibraries: gitLibraries.validation.libraries,
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(
-          nextSettings.suppressSuccessNotifications,
-        );
+        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
         setSettingsError(null);
         if (scanRootsChanged) {
           await reloadSkills(activeLibraryItemId ?? undefined);
@@ -183,9 +156,7 @@ export function useSettingsState() {
         setSettingsOpen(false);
       } catch (nextError) {
         setSettingsError(
-          nextError instanceof Error
-            ? nextError.message
-            : t("common.error.saveSettings"),
+          nextError instanceof Error ? nextError.message : t("common.error.saveSettings")
         );
       } finally {
         setSettingsSaving(false);
@@ -202,7 +173,7 @@ export function useSettingsState() {
       resetRows,
       tools.validation.tools,
       t,
-    ],
+    ]
   );
 
   const restoreGitBackup = useCallback(
@@ -222,15 +193,11 @@ export function useSettingsState() {
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(
-          nextSettings.suppressSuccessNotifications,
-        );
+        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
         backup.setErrorMessage(null);
         setSettingsError(null);
         backup.setRestoreNeedsConfirmation(false);
-        const nextActiveLibraryItemId = await reloadSkills(
-          activeLibraryItemId ?? undefined,
-        );
+        const nextActiveLibraryItemId = await reloadSkills(activeLibraryItemId ?? undefined);
         if (nextActiveLibraryItemId) {
           await reloadToolStatuses(nextActiveLibraryItemId);
         }
@@ -245,9 +212,7 @@ export function useSettingsState() {
           return;
         }
         backup.setErrorMessage(
-          nextError instanceof Error
-            ? nextError.message
-            : t("settings.backup.error.restore"),
+          nextError instanceof Error ? nextError.message : t("settings.backup.error.restore")
         );
       } finally {
         backup.setRestoring(false);
@@ -262,7 +227,7 @@ export function useSettingsState() {
       backup.setRestoring,
       resetRows,
       t,
-    ],
+    ]
   );
 
   const setupGitBackup = useCallback(
@@ -283,15 +248,14 @@ export function useSettingsState() {
       try {
         const scanRootsChanged = !sameScanRoots(
           library.validation.cleanedRoots,
-          appSettings?.scanRoots ?? [],
+          appSettings?.scanRoots ?? []
         );
         const nextSettings = await appRpc.request.saveConfig({
           scanRoots: library.validation.cleanedRoots,
           tools: tools.validation.tools,
           toolMappings,
           ...general.saveFields,
-          onboardingTourCompleted:
-            appSettings?.onboardingTourCompleted ?? false,
+          onboardingTourCompleted: appSettings?.onboardingTourCompleted ?? false,
           gitBackup: {
             ...backup.restoreValidation.config,
             enabled: true,
@@ -300,9 +264,7 @@ export function useSettingsState() {
         });
         setAppSettings(nextSettings);
         resetRows(nextSettings);
-        setSuppressSuccessNotifications(
-          nextSettings.suppressSuccessNotifications,
-        );
+        setSuppressSuccessNotifications(nextSettings.suppressSuccessNotifications);
         setSettingsError(null);
         backup.setErrorMessage(null);
         backup.setRestoreNeedsConfirmation(false);
@@ -318,9 +280,7 @@ export function useSettingsState() {
         }
       } catch (nextError) {
         backup.setErrorMessage(
-          nextError instanceof Error
-            ? nextError.message
-            : t("settings.backup.error.run"),
+          nextError instanceof Error ? nextError.message : t("settings.backup.error.run")
         );
       } finally {
         setSettingsSaving(false);
@@ -342,7 +302,7 @@ export function useSettingsState() {
       tools.validation.hasErrors,
       tools.validation.tools,
       t,
-    ],
+    ]
   );
 
   return {

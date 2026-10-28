@@ -37,14 +37,12 @@ export const nlMessages = {
   "library.clearSearch": "Zoekopdracht wissen",
   "library.itemsAriaLabel": "{title} items",
   "library.empty.title": "Geen items gevonden",
-  "library.empty.message":
-    "Probeer een andere collectie, tool, soort of zoekopdracht.",
+  "library.empty.message": "Probeer een andere collectie, tool, soort of zoekopdracht.",
   "library.notification.openItem": "Item openen",
   "library.inCollection": "in {collection}",
   "library.inCollectionPrefix": "in",
   "details.noSelection.title": "Geen item geselecteerd",
-  "details.noSelection.message":
-    "Kies een item uit de lijst om de bestanden te bewerken.",
+  "details.noSelection.message": "Kies een item uit de lijst om de bestanden te bewerken.",
   "details.noDescription": "Geen beschrijving.",
   "details.edit": "Bewerken",
   "details.preview": "Voorbeeld",
@@ -84,13 +82,11 @@ export const nlMessages = {
   "settings.general.editorMode.preview": "Voorbeeld",
   "settings.general.editorMode.edit": "Bewerken",
   "settings.general.notifications.title": "Notificaties",
-  "settings.general.notifications.hideSuccess":
-    "Succes- en infomeldingen verbergen",
+  "settings.general.notifications.hideSuccess": "Succes- en infomeldingen verbergen",
   "settings.general.notifications.hideSuccessDescription":
     "Fouten en waarschuwingen blijven zichtbaar.",
   "settings.general.tray.title": "Apptray",
-  "settings.general.tray.minimizeOnClose":
-    "Minimaliseren naar apptray bij sluiten",
+  "settings.general.tray.minimizeOnClose": "Minimaliseren naar apptray bij sluiten",
   "settings.general.tray.minimizeOnCloseDescription":
     "Laat Skillful actief in de tray wanneer het venster wordt gesloten.",
   "settings.language.system": "Systeemstandaard",
@@ -108,14 +104,12 @@ export const nlMessages = {
   "common.error.downloadUpdate": "Update downloaden is mislukt.",
   "common.error.applyUpdate": "Update toepassen is mislukt.",
   "collection.create.title": "Nieuwe collectie",
-  "collection.create.description":
-    "Collecties zijn mappen in je standaard Skillful-bibliotheek.",
+  "collection.create.description": "Collecties zijn mappen in je standaard Skillful-bibliotheek.",
   "collection.name": "Collectienaam",
   "collection.name.placeholder": "Werk",
   "collection.create.submit": "Collectie maken",
   "collection.rename.title": "Collectie hernoemen",
-  "collection.rename.description":
-    "Dit hernoemt de collectiemappen die Skillful gebruikt.",
+  "collection.rename.description": "Dit hernoemt de collectiemappen die Skillful gebruikt.",
   "collection.rename.submit": "Collectie hernoemen",
   "collection.delete.title": "Collectie verwijderen",
   "collection.delete.description":
@@ -134,8 +128,7 @@ export const nlMessages = {
   "collection.notification.exported.title": "Collectie geexporteerd",
   "collection.notification.exported.message": "{name} geexporteerd naar {path}",
   "collection.notification.exportFailed.title": "Exporteren mislukt",
-  "collection.notification.exportFailed.message":
-    "Collectie exporteren is mislukt.",
+  "collection.notification.exportFailed.message": "Collectie exporteren is mislukt.",
   "import.title": "Collectie importeren",
   "import.description":
     "Importeer een Skillful-archief, een bestaande map met skill- en agentmappen, of een publieke GitHub-repository via het bronarchief.",
@@ -153,8 +146,7 @@ export const nlMessages = {
   "import.collectionPlaceholder": "Geimporteerde skills",
   "import.submit": "Collectie importeren",
   "import.github.repository": "Repository",
-  "import.github.repositoryPlaceholder":
-    "owner/repo of https://github.com/owner/repo",
+  "import.github.repositoryPlaceholder": "owner/repo of https://github.com/owner/repo",
   "import.github.advanced": "Geavanceerde opties",
   "import.github.ref": "Ref",
   "import.github.refPlaceholder": "main, v1.0.0, of een commit-hash",
@@ -186,20 +178,17 @@ export const nlMessages = {
   "item.name.agentPlaceholder": "Release-triage-agent",
   "item.description": "Beschrijving",
   "item.descriptionPlaceholder": "Korte samenvatting in de detailkop.",
-  "item.createCollectionFirst":
-    "Maak eerst een collectie. Skills en agents staan in collecties.",
+  "item.createCollectionFirst": "Maak eerst een collectie. Skills en agents staan in collecties.",
   "item.create.submit": "{kind} maken",
   "item.rename.title": "{kind} hernoemen",
   "item.rename.description": "Dit werkt de titel en mapnaam van de {kind} bij.",
   "item.rename.submit": "{kind} hernoemen",
   "item.delete.title": "{kind} verwijderen",
-  "item.delete.description":
-    "{name} verwijderen? Dit verwijdert de {kind}map met alles erin.",
+  "item.delete.description": "{name} verwijderen? Dit verwijdert de {kind}map met alles erin.",
   "item.move.title": "{kind} verplaatsen",
   "item.move.description": "Verplaats {name} naar een andere collectie.",
   "item.move.destination": "Doelcollectie",
-  "item.move.createCollectionFirst":
-    "Maak een andere collectie voordat je deze {kind} verplaatst.",
+  "item.move.createCollectionFirst": "Maak een andere collectie voordat je deze {kind} verplaatst.",
   "item.move.submit": "{kind} verplaatsen",
   "item.error.create": "{kind} maken is mislukt.",
   "item.error.createGeneric": "Item maken is mislukt.",
@@ -210,10 +199,8 @@ export const nlMessages = {
   "item.error.moveGeneric": "Item verplaatsen is mislukt.",
   "item.error.load": "Bibliotheekitems laden is mislukt.",
   "item.error.open": "Item openen is mislukt.",
-  "item.error.saveBeforeRename":
-    "Sla wijzigingen op voordat je deze {kind} hernoemt.",
-  "item.error.saveBeforeMove":
-    "Sla wijzigingen op voordat je deze {kind} verplaatst.",
+  "item.error.saveBeforeRename": "Sla wijzigingen op voordat je deze {kind} hernoemt.",
+  "item.error.saveBeforeMove": "Sla wijzigingen op voordat je deze {kind} verplaatst.",
   "item.notification.created.title": "{kind} gemaakt",
   "item.notification.created.message": "“{name}” gemaakt.",
   "item.notification.renamed.title": "{kind} hernoemd",
@@ -234,8 +221,7 @@ export const nlMessages = {
     "Hernoem dit bestand zonder het buiten het huidige item te verplaatsen.",
   "file.rename.submit": "Bestand hernoemen",
   "file.delete.title": "Bestand verwijderen",
-  "file.delete.description":
-    "{name} verwijderen? Dit verwijdert het bestand uit het item.",
+  "file.delete.description": "{name} verwijderen? Dit verwijdert het bestand uit het item.",
   "file.openDefault": "Openen met standaardapp",
   "file.actions": "{name} acties",
   "file.manageCurrent": "Huidig bestand beheren",
@@ -245,14 +231,12 @@ export const nlMessages = {
   "file.error.upload": "Bestanden uploaden is mislukt.",
   "file.error.renameAdditional": "Extra bestand hernoemen is mislukt.",
   "file.error.deleteAdditional": "Extra bestand verwijderen is mislukt.",
-  "file.error.saveBeforeRename":
-    "Sla wijzigingen op voordat je bestanden hernoemt.",
+  "file.error.saveBeforeRename": "Sla wijzigingen op voordat je bestanden hernoemt.",
   "file.error.read": "Bestand lezen is mislukt.",
   "additionalFiles.upload": "Bestanden uploaden",
   "additionalFiles.tab": "Extra bestanden",
   "additionalFiles.empty.title": "Geen extra bestanden",
-  "additionalFiles.empty.message":
-    "Upload ondersteunende bestanden die met dit item mee moeten.",
+  "additionalFiles.empty.message": "Upload ondersteunende bestanden die met dit item mee moeten.",
   "shortcuts.title": "Sneltoetsen",
   "shortcuts.macHint": "Gebruik Cmd in plaats van Ctrl op macOS.",
   "shortcuts.focusSearch": "Zoeken focussen",
@@ -275,8 +259,7 @@ export const nlMessages = {
   "settings.library.placeholder": "/pad/naar/andere-skill-bibliotheek",
   "settings.library.removePath": "Pad {index} verwijderen",
   "settings.library.restorePath": "Verwijderen van pad {index} ongedaan maken",
-  "settings.library.markedForRemoval":
-    "Gemarkeerd voor verwijdering - wordt toegepast bij Opslaan",
+  "settings.library.markedForRemoval": "Gemarkeerd voor verwijdering - wordt toegepast bij Opslaan",
   "settings.library.addFolder": "Map toevoegen",
   "settings.gitLibrary.title": "Git-bibliotheken",
   "settings.gitLibrary.description":
@@ -284,15 +267,13 @@ export const nlMessages = {
   "settings.gitLibrary.addLibrary": "Git-bibliotheek toevoegen",
   "settings.gitLibrary.untitled": "Git-bibliotheek {index}",
   "settings.gitLibrary.remove": "Git-bibliotheek {index} verwijderen",
-  "settings.gitLibrary.restore":
-    "Verwijderen van git-bibliotheek {index} ongedaan maken",
+  "settings.gitLibrary.restore": "Verwijderen van git-bibliotheek {index} ongedaan maken",
   "settings.gitLibrary.markedForRemoval":
     "Gemarkeerd voor verwijdering - wordt toegepast bij Opslaan",
   "settings.gitLibrary.name": "Naam",
   "settings.gitLibrary.namePlaceholder": "Teamskills",
   "settings.gitLibrary.remoteUrl": "Remote-URL",
-  "settings.gitLibrary.remoteUrlPlaceholder":
-    "git@github.com:jij/team-skills.git",
+  "settings.gitLibrary.remoteUrlPlaceholder": "git@github.com:jij/team-skills.git",
   "settings.gitLibrary.branch": "Branch",
   "settings.gitLibrary.branchPlaceholder": "main",
   "settings.gitLibrary.path": "Map",
@@ -305,8 +286,7 @@ export const nlMessages = {
   "settings.gitLibrary.syncMode.twoWayDescription":
     "Commit en pusht je lokale aanpassingen bij elke synchronisatie.",
   "settings.gitLibrary.autoSync": "Automatisch synchroniseren",
-  "settings.gitLibrary.autoSyncDescription":
-    "Draait op het interval hieronder.",
+  "settings.gitLibrary.autoSyncDescription": "Draait op het interval hieronder.",
   "settings.gitLibrary.syncInterval": "Interval in minuten",
   "settings.gitLibrary.readOnly": "Alleen-lezen",
   "settings.gitLibrary.readOnlyDescription":
@@ -317,10 +297,8 @@ export const nlMessages = {
   "settings.gitLibrary.syncNow": "Nu synchroniseren",
   "settings.gitLibrary.pushChanges": "Lokale wijzigingen pushen",
   "settings.gitLibrary.discardChanges": "Lokale wijzigingen verwerpen",
-  "settings.gitLibrary.saveFirst":
-    "Sla de instellingen op voordat je deze bibliotheek synct.",
-  "settings.gitLibrary.localChangeCount":
-    "{count} lokale wijziging(en) staan niet op de remote.",
+  "settings.gitLibrary.saveFirst": "Sla de instellingen op voordat je deze bibliotheek synct.",
+  "settings.gitLibrary.localChangeCount": "{count} lokale wijziging(en) staan niet op de remote.",
   "settings.gitLibrary.hostKey.title": "Hostsleutel van {host} vertrouwen?",
   "settings.gitLibrary.hostKey.description":
     "Deze host staat nog niet in je known_hosts. Ga alleen verder als deze vingerafdruk overeenkomt met die van je git-host.",
@@ -338,39 +316,33 @@ export const nlMessages = {
   "settings.gitLibrary.state.error": "Fout",
   "settings.gitLibrary.error.nameRequired": "Voeg een naam toe.",
   "settings.gitLibrary.error.remoteRequired": "Voeg een git-remote-URL toe.",
-  "settings.gitLibrary.error.remoteTransport":
-    "Dit git-transport wordt niet ondersteund.",
+  "settings.gitLibrary.error.remoteTransport": "Dit git-transport wordt niet ondersteund.",
   "settings.gitLibrary.error.branchRequired": "Voeg een branch toe.",
-  "settings.gitLibrary.error.branchWhitespace":
-    "Branch mag geen spaties bevatten.",
-  "settings.gitLibrary.error.pathAbsolute": "Gebruik een absoluut pad.",
-  "settings.gitLibrary.error.pathDuplicate":
-    "Een andere git-bibliotheek gebruikt deze map al.",
-  "settings.gitLibrary.error.syncInterval":
-    "Gebruik een interval van minstens 1 minuut.",
-  "settings.gitLibrary.notification.synced.title":
-    "Git-bibliotheek gesynchroniseerd",
-  "settings.gitLibrary.notification.synced.message":
-    "{name} is bijgewerkt vanaf de remote.",
-  "settings.gitLibrary.notification.failed.title":
-    "Synchroniseren van git-bibliotheek mislukt",
+  "settings.gitLibrary.error.branchWhitespace": "Branch mag geen spaties bevatten.",
+  "settings.gitLibrary.error.pathAbsolute":
+    "Gebruik een absoluut pad of een pad dat begint met ~/.",
+  "settings.gitLibrary.error.pathDuplicate": "Een andere git-bibliotheek gebruikt deze map al.",
+  "settings.gitLibrary.error.syncInterval": "Gebruik een interval van minstens 1 minuut.",
+  "settings.gitLibrary.notification.synced.title": "Git-bibliotheek gesynchroniseerd",
+  "settings.gitLibrary.notification.synced.message": "{name} is bijgewerkt vanaf de remote.",
+  "settings.gitLibrary.notification.failed.title": "Synchroniseren van git-bibliotheek mislukt",
   "sidebar.syncGitLibraries": "Git-bibliotheken synchroniseren",
   "library.gitOrigin.ariaLabel": "Uit git-bibliotheek {name}",
   "library.gitOrigin.lastSynced": "Laatst gesynchroniseerd {time}",
   "library.gitOrigin.neverSynced": "Nog niet gesynchroniseerd",
   "library.gitOrigin.readOnly": "Alleen-lezen",
-  "error.gitLibraryReadOnly":
-    "Dit item hoort bij een alleen-lezen git-bibliotheek.",
-  "settings.error.absolutePath": "Gebruik een absoluut pad.",
+  "error.gitLibraryReadOnly": "Dit item hoort bij een alleen-lezen git-bibliotheek.",
+  "settings.error.absolutePath": "Gebruik een absoluut pad of een pad dat begint met ~/.",
   "settings.error.duplicatePath": "Duplicaat van {path}.",
+  "settings.error.otherPlatformPath":
+    "Deze map hoort bij een ander besturingssysteem en wordt hier overgeslagen.",
   "settings.tools.description":
     "Tools zijn installatiedoelen. Skills en agents kunnen elk hun eigen map gebruiken.",
   "settings.tools.quickAdd": "Snel toevoegen",
   "settings.tools.addTool": "Tool toevoegen",
   "settings.tools.removeTool": "Tool verwijderen",
   "settings.tools.restoreTool": "Verwijderen ongedaan maken",
-  "settings.tools.markedForRemoval":
-    "Gemarkeerd voor verwijdering - wordt toegepast bij Opslaan",
+  "settings.tools.markedForRemoval": "Gemarkeerd voor verwijdering - wordt toegepast bij Opslaan",
   "settings.tools.defaultName": "Tool {index}",
   "settings.tools.name": "Toolnaam",
   "settings.tools.skillFolder": "Skill-installatiemap",
@@ -380,16 +352,14 @@ export const nlMessages = {
   "settings.tools.skillFolderPlaceholder": "/pad/naar/tool/skills",
   "settings.tools.agentFolderPlaceholder": "/pad/naar/tool/agents",
   "settings.tools.error.nameRequired": "Voeg een toolnaam toe.",
-  "settings.tools.error.installRootRequired":
-    "Voeg minstens een installatiemap toe.",
+  "settings.tools.error.installRootRequired": "Voeg minstens een installatiemap toe.",
   "settings.tools.error.namesUnique": "Toolnamen moeten uniek zijn.",
   "settings.backup.title": "Git-backup",
   "settings.backup.enabled": "Git-backup inschakelen",
   "settings.backup.enabledDescription":
     "Gebruikt je bestaande git-authenticatie. Skillful slaat geen inloggegevens op.",
   "settings.backup.remoteUrl": "Remote-URL",
-  "settings.backup.remoteUrlPlaceholder":
-    "git@github.com:jij/skillful-backup.git",
+  "settings.backup.remoteUrlPlaceholder": "git@github.com:jij/skillful-backup.git",
   "settings.backup.branch": "Branch",
   "settings.backup.branchPlaceholder": "main",
   "settings.backup.includeTitle": "Opnemen",
@@ -406,17 +376,14 @@ export const nlMessages = {
   "settings.backup.reset": "Backupinstellingen resetten",
   "settings.backup.error.remoteRequired": "Voeg een git remote-URL toe.",
   "settings.backup.error.branchRequired": "Voeg een branch toe.",
-  "settings.backup.error.branchWhitespace":
-    "Branch mag geen witruimte bevatten.",
-  "settings.backup.error.autoBackupInterval":
-    "Gebruik een interval van minimaal 1 minuut.",
+  "settings.backup.error.branchWhitespace": "Branch mag geen witruimte bevatten.",
+  "settings.backup.error.autoBackupInterval": "Gebruik een interval van minimaal 1 minuut.",
   "settings.backup.error.localContent":
     "Er bestaan al lokale skills of agents. Klik op vervangen om vanuit git te herstellen en de lokale bibliotheek te overschrijven.",
   "settings.backup.error.restore": "Backup herstellen is mislukt.",
   "settings.backup.error.run": "Backup uitvoeren is mislukt.",
   "settings.backup.notification.synced.title": "Backup gesynchroniseerd",
-  "settings.backup.notification.synced.message":
-    "Automatische backup gepusht naar {branch}.",
+  "settings.backup.notification.synced.message": "Automatische backup gepusht naar {branch}.",
   "settings.backup.notification.failed.title": "Automatische backup mislukt",
   "settings.tabUnsavedIndicator": "Niet-opgeslagen wijzigingen",
   "updates.title": "Updates",

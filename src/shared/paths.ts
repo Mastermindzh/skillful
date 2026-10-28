@@ -1,10 +1,25 @@
+import type { Platform } from "./types";
+
+const HOME_PATH_PATTERN = /^~(?:[\\/]|$)/;
+
 function isWindowsAbsolutePath(value: string) {
-  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\");
+  return /^[A-Za-z]:[\\/]/.test(value) || /^[\\/]{2}/.test(value);
 }
 
-/** Platform-agnostic check: accepts POSIX, drive-letter, and UNC absolute paths. */
+/** `~`, `~/...`, or `~\...`: relative to the home directory of whichever OS reads it. */
+export function isHomePath(value: string) {
+  return HOME_PATH_PATTERN.test(value);
+}
+
+/** Platform-agnostic check: accepts home, POSIX, drive-letter, and UNC paths. */
 export function isAbsolutePath(value: string) {
-  return value.startsWith("/") || isWindowsAbsolutePath(value);
+  return isHomePath(value) || value.startsWith("/") || isWindowsAbsolutePath(value);
+}
+
+/** Usable under `platform`'s rules; synced settings can hold paths from another OS. */
+export function isAbsolutePathOnPlatform(value: string, platform: Platform) {
+  if (isHomePath(value)) return true;
+  return platform === "win32" ? isWindowsAbsolutePath(value) : value.startsWith("/");
 }
 
 export function toPortablePath(filePath: string) {
@@ -23,9 +38,7 @@ export function portablePathBasename(filePath: string) {
 export function portablePathDirname(filePath: string) {
   const normalizedPath = toPortablePath(filePath);
   const separatorIndex = normalizedPath.lastIndexOf("/");
-  return separatorIndex === -1
-    ? "."
-    : normalizedPath.slice(0, separatorIndex) || "/";
+  return separatorIndex === -1 ? "." : normalizedPath.slice(0, separatorIndex) || "/";
 }
 
 export function portablePathLeafName(filePath: string) {

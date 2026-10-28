@@ -46,7 +46,7 @@ const darkTheme = EditorView.theme(
       color: "#d7d1ca",
     },
   },
-  { dark: true },
+  { dark: true }
 );
 
 const lightTheme = EditorView.theme(
@@ -90,7 +90,7 @@ const lightTheme = EditorView.theme(
       color: "#1e1e2e",
     },
   },
-  { dark: false },
+  { dark: false }
 );
 
 const warmDarkModeHighlight = HighlightStyle.define([
@@ -131,9 +131,7 @@ export type EditorColorScheme = "light" | "dark";
  * Returns the theme extension for a given color scheme. Kept as a standalone helper so the
  * editor can reconfigure a `Compartment` on theme flips without tearing down the EditorState.
  */
-export function editorThemeExtension(
-  colorScheme: EditorColorScheme,
-): Extension {
+export function editorThemeExtension(colorScheme: EditorColorScheme): Extension {
   return colorScheme === "dark"
     ? [darkTheme, syntaxHighlighting(warmDarkModeHighlight)]
     : [lightTheme, syntaxHighlighting(warmLightHighlight)];
@@ -144,7 +142,7 @@ export function buildEditorExtensions(
   colorScheme: EditorColorScheme,
   onSave: () => void,
   themeCompartment: Compartment,
-  readOnly = false,
+  readOnly = false
 ) {
   const extensions: Extension[] = [
     EditorView.lineWrapping,
@@ -162,10 +160,7 @@ export function buildEditorExtensions(
   ];
 
   if (readOnly) {
-    extensions.push(
-      EditorState.readOnly.of(true),
-      EditorView.editable.of(false),
-    );
+    extensions.push(EditorState.readOnly.of(true), EditorView.editable.of(false));
   }
 
   if (isMarkdownFile(filePath)) {
@@ -177,9 +172,5 @@ export function buildEditorExtensions(
 
 function isMarkdownFile(filePath: string) {
   const lowerPath = filePath.toLowerCase();
-  return (
-    lowerPath.endsWith(".md") ||
-    lowerPath.endsWith(".mdx") ||
-    lowerPath.endsWith(".mdc")
-  );
+  return lowerPath.endsWith(".md") || lowerPath.endsWith(".mdx") || lowerPath.endsWith(".mdc");
 }
