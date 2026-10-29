@@ -108,45 +108,21 @@
 }
 
 .library-kind-badge-skill {
-  background: color-mix(
-    in srgb,
-    var(--mantine-primary-color-filled) 14%,
-    transparent
-  );
-  color: color-mix(
-    in srgb,
-    var(--mantine-primary-color-filled) 86%,
-    var(--mantine-color-text)
-  );
+  background: color-mix(in srgb, var(--mantine-primary-color-filled) 14%, transparent);
+  color: color-mix(in srgb, var(--mantine-primary-color-filled) 86%, var(--mantine-color-text));
 }
 
 .library-kind-badge-agent {
-  background: color-mix(
-    in srgb,
-    var(--mantine-color-teal-filled) 12%,
-    transparent
-  );
-  color: color-mix(
-    in srgb,
-    var(--mantine-color-teal-filled) 82%,
-    var(--mantine-color-text)
-  );
+  background: color-mix(in srgb, var(--mantine-color-teal-filled) 12%, transparent);
+  color: color-mix(in srgb, var(--mantine-color-teal-filled) 82%, var(--mantine-color-text));
 }
 
 [data-mantine-color-scheme="dark"] .library-kind-badge-skill {
-  background: color-mix(
-    in srgb,
-    var(--mantine-primary-color-filled) 18%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--mantine-primary-color-filled) 18%, transparent);
   color: color-mix(in srgb, var(--mantine-primary-color-filled) 92%, white 8%);
 }
 
 [data-mantine-color-scheme="dark"] .library-kind-badge-agent {
-  background: color-mix(
-    in srgb,
-    var(--mantine-color-teal-filled) 18%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--mantine-color-teal-filled) 18%, transparent);
   color: color-mix(in srgb, var(--mantine-color-teal-filled) 88%, white 12%);
 }

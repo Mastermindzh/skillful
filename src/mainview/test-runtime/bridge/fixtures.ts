@@ -208,7 +208,7 @@ export function normalizeUpdateState(updateState?: Partial<AppUpdateState>): App
   return {
     localInfo: {
       ...(fallback?.localInfo ?? fallbackLocalInfo),
-      ...(updateState?.localInfo ?? {}),
+      ...updateState?.localInfo,
     },
     updateInfo: updateState?.updateInfo
       ? {

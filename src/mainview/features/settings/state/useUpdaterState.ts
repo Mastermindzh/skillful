@@ -1,5 +1,5 @@
 import { appRpc, onAppMessage } from "@mainview-bridge";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppUpdateState, UpdateStatusEntry } from "../../../../shared/updates";
 import { useAppTranslation } from "../../../i18n/i18n";
 import { notify } from "../../notifications/notify";
@@ -44,7 +44,7 @@ export function useUpdaterState() {
   const [action, setAction] = useState<UpdaterAction>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [hasStartupChecked, setHasStartupChecked] = useState(false);
+  const startupCheckDoneRef = useRef(false);
 
   const loadUpdateState = useCallback(async () => {
     setLoading(true);
@@ -67,6 +67,7 @@ export function useUpdaterState() {
 
   useEffect(() => {
     if (hasLoadedOnce) return;
+    // oxlint-disable-next-line react/set-state-in-effect -- initial load from the main process; only the loading flag is set synchronously
     void loadUpdateState();
   }, [hasLoadedOnce, loadUpdateState]);
 
@@ -102,20 +103,22 @@ export function useUpdaterState() {
   );
 
   useEffect(() => {
-    if (!hasLoadedOnce || hasStartupChecked || !updateState?.localInfo) return;
-
-    setHasStartupChecked(true);
+    if (!hasLoadedOnce || startupCheckDoneRef.current || !updateState?.localInfo) return;
 
     if (updateState.localInfo.channel === "dev" || !updateState.localInfo.baseUrl.trim()) {
+      startupCheckDoneRef.current = true;
       return;
     }
 
+    // Only mark done once the timer fires, so a dependency change during the delay reschedules
+    // the check instead of cancelling it.
     const timeoutId = window.setTimeout(() => {
+      startupCheckDoneRef.current = true;
       void runCheckForUpdates(true);
     }, STARTUP_UPDATE_CHECK_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [hasLoadedOnce, hasStartupChecked, runCheckForUpdates, updateState?.localInfo]);
+  }, [hasLoadedOnce, runCheckForUpdates, updateState?.localInfo]);
 
   const checkForUpdates = useCallback(async () => runCheckForUpdates(false), [runCheckForUpdates]);
 
@@ -155,7 +158,6 @@ export function useUpdaterState() {
       checking: action === "checking",
       downloading: action === "downloading",
       errorMessage,
-      hasStartupChecked,
       hasLoadedOnce,
       isBusy: action !== null || loading,
       latestStatus: updateState?.latestStatus ?? null,
@@ -164,7 +166,7 @@ export function useUpdaterState() {
       updateReady: updateState?.updateInfo?.updateReady ?? false,
       updateState,
     }),
-    [action, errorMessage, hasLoadedOnce, hasStartupChecked, loading, updateState]
+    [action, errorMessage, hasLoadedOnce, loading, updateState]
   );
 
   return {

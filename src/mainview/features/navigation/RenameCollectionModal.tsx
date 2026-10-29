@@ -1,7 +1,8 @@
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LibraryItemCollectionSummary } from "../../../shared/types";
 import { TextEntryDialog } from "../../components/dialogs/TextEntryDialog";
+import { useOnDialogOpen } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 
 type RenameCollectionModalProps = {
@@ -24,10 +25,7 @@ export function RenameCollectionModal({
   const { t } = useAppTranslation();
   const [name, setName] = useState(currentName);
 
-  useEffect(() => {
-    if (!opened) return;
-    setName(currentName);
-  }, [currentName, opened]);
+  useOnDialogOpen(opened, () => setName(currentName));
 
   const handleSubmit: ComponentPropsWithoutRef<"form">["onSubmit"] = async (event) => {
     event.preventDefault();

@@ -20,12 +20,12 @@ HTTPS redirect unless you fully control the publishing surface.
 
 ## Parameters
 
-| Parameter | Required | Description |
-| --- | --- | --- |
-| `repo` | Yes | GitHub repository in `owner/repo` format |
-| `ref` | No | Branch, tag, or commit |
-| `path` | No | Subdirectory to import from the repository archive |
-| `collection` | No | Suggested destination collection name |
+| Parameter    | Required | Description                                        |
+| ------------ | -------- | -------------------------------------------------- |
+| `repo`       | Yes      | GitHub repository in `owner/repo` format           |
+| `ref`        | No       | Branch, tag, or commit                             |
+| `path`       | No       | Subdirectory to import from the repository archive |
+| `collection` | No       | Suggested destination collection name              |
 
 ## Generator
 

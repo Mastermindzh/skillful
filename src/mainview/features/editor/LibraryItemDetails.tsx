@@ -1,6 +1,6 @@
 import { Alert, Tabs } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { frontmatterMetadataWarningsForFiles } from "../../../shared/frontmatter";
 import type { EditorViewMode } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
@@ -8,8 +8,8 @@ import { useAppTranslation } from "../../i18n/i18n";
 import { countToolStatuses } from "../tools/status";
 import { ToolStatusPanel } from "../tools/ToolStatusPanel";
 import { AdditionalFilesPanel } from "./AdditionalFilesPanel";
-import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
 import { ADDITIONAL_FILES_TAB } from "./constants";
+import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
 import { DeleteLibraryItemFileDialog } from "./DeleteLibraryItemFileDialog";
 import { LibraryItemDetailsHeader } from "./LibraryItemDetailsHeader";
 import { LibraryItemFooter } from "./LibraryItemFooter";
@@ -33,7 +33,8 @@ export function LibraryItemDetails({
   onActiveRelativePathChange,
   drafts,
   onDraftChange,
-  viewModeIntent,
+  viewMode,
+  onViewModeChange,
   saveState,
   tooling,
   fileActions,
@@ -41,7 +42,6 @@ export function LibraryItemDetails({
 }: LibraryItemDetailsProps) {
   const { t } = useAppTranslation();
   const compactActions = useMediaQuery("(max-width: 1280px)");
-  const [viewMode, setViewMode] = useState<EditorViewMode>("preview");
   const effectiveViewMode: EditorViewMode = readOnly ? "preview" : viewMode;
   const activeFile =
     document?.files.find((file) => file.relativePath === activeRelativePath) ??
@@ -84,12 +84,6 @@ export function LibraryItemDetails({
     readOnly,
   });
 
-  useEffect(() => {
-    const { mode, token } = viewModeIntent;
-    void token;
-    setViewMode(mode);
-  }, [viewModeIntent]);
-
   return (
     <section className="split-pane detail-pane" data-tour="details-pane">
       {document ? (
@@ -102,7 +96,7 @@ export function LibraryItemDetails({
                 activeFile={activeFile}
                 readOnly={readOnly}
                 viewMode={effectiveViewMode}
-                onViewModeChange={setViewMode}
+                onViewModeChange={onViewModeChange}
                 compactActions={compactActions}
                 saving={saveState.saving}
                 canSaveCurrent={saveState.canSaveCurrent}

@@ -10,6 +10,7 @@
 - Added CSP
 - Added support for home-relative paths starting with `~/`, also on Windows
 - Fixed folders from another OS (e.g. via git backup) breaking settings, they are now skipped and flagged in settings
+- Replaced Biome with oxlint (linting) and oxfmt (formatting)
 
 ## 1.2.1 - 2026-06-12
 
@@ -28,7 +29,7 @@
 ## 1.1.2 - 2026-05-13
 
 - Fixed not being able to select a new collection while moving items, fixes [#1](https://github.com/Mastermindzh/skillful/issues/1)
-- *DEV:* added devcontainer
+- _DEV:_ added devcontainer
 
 ## 1.1.1 - 2026-05-11
 

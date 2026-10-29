@@ -1,5 +1,5 @@
 import { appRpc } from "@mainview-bridge";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { type EventData, Joyride, STATUS, type Step } from "react-joyride";
 import type { AppSettings } from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
@@ -13,16 +13,11 @@ type OnboardingTourProps = {
 export function OnboardingTour({ appSettings, blocked, setAppSettings }: OnboardingTourProps) {
   const { t } = useAppTranslation();
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
-  const [run, setRun] = useState(false);
   const savingRef = useRef(false);
 
-  const shouldRun = Boolean(
+  const run = Boolean(
     appSettings && !appSettings.onboardingTourCompleted && !blocked && !dismissedThisSession
   );
-
-  useEffect(() => {
-    setRun(shouldRun);
-  }, [shouldRun]);
 
   const steps = useMemo<Step[]>(
     () => [
@@ -75,7 +70,6 @@ export function OnboardingTour({ appSettings, blocked, setAppSettings }: Onboard
   const completeTour = useCallback(async () => {
     if (!appSettings || savingRef.current) return;
     savingRef.current = true;
-    setRun(false);
     setDismissedThisSession(true);
     try {
       const nextSettings = await appRpc.request.setOnboardingTourCompleted({ completed: true });

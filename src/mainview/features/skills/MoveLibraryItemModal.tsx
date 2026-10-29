@@ -1,6 +1,6 @@
 import { Modal, Select, Stack, Text } from "@mantine/core";
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { LibraryItemKind } from "../../../shared/types";
 import { DialogErrorMessage } from "../../components/dialogs/DialogErrorMessage";
 import { DialogFooter } from "../../components/dialogs/DialogFooter";
@@ -39,18 +39,15 @@ export function MoveLibraryItemModal({
     () => collections.filter((collection) => collection.id !== currentCollectionId),
     [collections, currentCollectionId]
   );
-  const [collectionId, setCollectionId] = useState<string | null>(targetCollections[0]?.id ?? null);
+  const [selectedCollectionId, setCollectionId] = useState<string | null>(
+    targetCollections[0]?.id ?? null
+  );
+  const collectionId = targetCollections.some(
+    (collection) => collection.id === selectedCollectionId
+  )
+    ? selectedCollectionId
+    : (targetCollections[0]?.id ?? null);
   const kindLabel = t(itemKind === "agent" ? "item.kind.agent" : "item.kind.skill").toLowerCase();
-
-  useEffect(() => {
-    if (!opened) return;
-    setCollectionId((currentCollectionId) =>
-      currentCollectionId &&
-      targetCollections.some((collection) => collection.id === currentCollectionId)
-        ? currentCollectionId
-        : (targetCollections[0]?.id ?? null)
-    );
-  }, [opened, targetCollections]);
 
   const collectionOptions = useMemo(
     () =>

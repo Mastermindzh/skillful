@@ -1,9 +1,10 @@
 import { Modal, SegmentedControl, Select, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { CreateLibraryItemInput, LibraryItemKind } from "../../../shared/types";
 import { DialogErrorMessage } from "../../components/dialogs/DialogErrorMessage";
 import { DialogFooter } from "../../components/dialogs/DialogFooter";
+import { useOnDialogOpen } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 
 type CreateLibraryItemCollection = {
@@ -36,17 +37,12 @@ export function CreateLibraryItemModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    if (!opened) {
-      setKind("skill");
-      setCollectionId(defaultCollectionId);
-      setName("");
-      setDescription("");
-      return;
-    }
-
+  useOnDialogOpen(opened, () => {
+    setKind("skill");
     setCollectionId(defaultCollectionId ?? collections[0]?.id ?? null);
-  }, [collections, defaultCollectionId, opened]);
+    setName("");
+    setDescription("");
+  });
 
   const collectionOptions = useMemo(
     () =>
