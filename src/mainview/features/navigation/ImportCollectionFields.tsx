@@ -51,7 +51,7 @@ export function FileSourceImportFields({
 
 type GitHubImportFieldsProps = {
   repo: string;
-  ref: string;
+  gitRef: string;
   path: string;
   repoError?: string;
   refError?: string;
@@ -65,7 +65,7 @@ type GitHubImportFieldsProps = {
 
 export function GitHubImportFields({
   repo,
-  ref,
+  gitRef,
   path,
   repoError,
   refError,
@@ -111,7 +111,7 @@ export function GitHubImportFields({
           <TextInput
             label={t("import.github.ref")}
             placeholder={t("import.github.refPlaceholder")}
-            value={ref}
+            value={gitRef}
             onChange={(event) => onRefChange(event.currentTarget.value)}
             error={refError}
           />

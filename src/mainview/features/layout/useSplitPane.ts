@@ -26,6 +26,12 @@ export function useSplitPane(enabled: boolean) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(readStoredWidth);
   const [isDragging, setIsDragging] = useState(false);
+  const [wasEnabled, setWasEnabled] = useState(enabled);
+
+  if (enabled !== wasEnabled) {
+    setWasEnabled(enabled);
+    if (!enabled) setIsDragging(false);
+  }
 
   const setClampedWidth = useCallback((nextWidth: number) => {
     setWidth(clamp(nextWidth, MIN_LIST_WIDTH, MAX_LIST_WIDTH));
@@ -34,12 +40,6 @@ export function useSplitPane(enabled: boolean) {
   const startDragging = useCallback(() => {
     if (!enabled) return;
     setIsDragging(true);
-  }, [enabled]);
-
-  useEffect(() => {
-    if (!enabled) {
-      setIsDragging(false);
-    }
   }, [enabled]);
 
   useEffect(() => {

@@ -40,6 +40,7 @@ const messageNames = [
   "githubImportRequested",
   "updateStatusChanged",
   "autoGitBackupCompleted",
+  "gitLibrarySynced",
 ] as const satisfies readonly MessageName[];
 const messageListeners = new Map<MessageName, Set<(payload: unknown) => void>>();
 

@@ -33,7 +33,11 @@ export function MarkdownPreview({ value }: MarkdownPreviewProps) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[[rehypeSanitize, markdownSanitizeSchema]]}
         components={{
-          a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noreferrer" />,
+          a: ({ node: _node, children, ...props }) => (
+            <a {...props} target="_blank" rel="noreferrer">
+              {children}
+            </a>
+          ),
         }}
       >
         {stripFrontmatter(value)}

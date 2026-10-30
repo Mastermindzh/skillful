@@ -1,18 +1,38 @@
 import { useCallback, useMemo, useState } from "react";
 import type { EditorViewMode, LibraryItemDocument } from "../../../shared/types";
 import { clearDraftsForLibraryItem, type DraftMap, dirtyFilesForDocument } from "../editor/drafts";
-import type { ViewMode } from "./useLibraryItemViewModeIntent";
 
 type UseUnsavedSkillNavigationOptions = {
   activeLibraryItem: LibraryItemDocument | null;
   activeLibraryItemId: string | null;
   draftsByFile: DraftMap;
   defaultEditorMode: EditorViewMode;
-  saveAllFiles: () => Promise<void>;
+  saveAllFiles: () => Promise<boolean>;
   setActiveSkillId: (id: string | null) => void;
   setDraftsByFile: (updater: (drafts: DraftMap) => DraftMap) => void;
-  pushViewModeIntent: (mode: ViewMode) => void;
+  setViewMode: (mode: EditorViewMode) => void;
 };
+
+type SaveThenNavigateEffects = {
+  saveAllFiles: () => Promise<boolean>;
+  clearDrafts: () => void;
+  navigate: () => void;
+};
+
+/**
+ * Clears drafts and navigates only after the save succeeds. A failed save must leave both alone,
+ * otherwise the dialog that promised to persist the edits is what destroys them.
+ */
+export async function saveThenNavigate({
+  saveAllFiles,
+  clearDrafts,
+  navigate,
+}: SaveThenNavigateEffects) {
+  if (!(await saveAllFiles())) return false;
+  clearDrafts();
+  navigate();
+  return true;
+}
 
 export function useUnsavedLibraryItemNavigation({
   activeLibraryItem,
@@ -22,7 +42,7 @@ export function useUnsavedLibraryItemNavigation({
   saveAllFiles,
   setActiveSkillId,
   setDraftsByFile,
-  pushViewModeIntent,
+  setViewMode,
 }: UseUnsavedSkillNavigationOptions) {
   const [pendingSkillId, setPendingSkillId] = useState<string | null>(null);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
@@ -41,33 +61,32 @@ export function useUnsavedLibraryItemNavigation({
         setUnsavedDialogOpen(true);
         return;
       }
-      pushViewModeIntent(defaultEditorMode);
+      setViewMode(defaultEditorMode);
       setActiveSkillId(nextId);
     },
-    [
-      activeLibraryItemId,
-      defaultEditorMode,
-      hasUnsavedChanges,
-      pushViewModeIntent,
-      setActiveSkillId,
-    ]
+    [activeLibraryItemId, defaultEditorMode, hasUnsavedChanges, setViewMode, setActiveSkillId]
   );
 
   /** Save all dirty files and navigate to the pending skill. */
   const confirmSaveAndNavigate = useCallback(async () => {
     setUnsavedDialogOpen(false);
-    await saveAllFiles();
-    if (activeLibraryItem) {
-      setDraftsByFile((drafts) => clearDraftsForLibraryItem(activeLibraryItem.item.id, drafts));
-    }
-    pushViewModeIntent(defaultEditorMode);
-    setActiveSkillId(pendingSkillId);
+    await saveThenNavigate({
+      saveAllFiles,
+      clearDrafts: () => {
+        if (!activeLibraryItem) return;
+        setDraftsByFile((drafts) => clearDraftsForLibraryItem(activeLibraryItem.item.id, drafts));
+      },
+      navigate: () => {
+        setViewMode(defaultEditorMode);
+        setActiveSkillId(pendingSkillId);
+      },
+    });
     setPendingSkillId(null);
   }, [
     activeLibraryItem,
     defaultEditorMode,
     pendingSkillId,
-    pushViewModeIntent,
+    setViewMode,
     saveAllFiles,
     setActiveSkillId,
     setDraftsByFile,
@@ -79,14 +98,14 @@ export function useUnsavedLibraryItemNavigation({
     if (activeLibraryItem) {
       setDraftsByFile((drafts) => clearDraftsForLibraryItem(activeLibraryItem.item.id, drafts));
     }
-    pushViewModeIntent(defaultEditorMode);
+    setViewMode(defaultEditorMode);
     setActiveSkillId(pendingSkillId);
     setPendingSkillId(null);
   }, [
     activeLibraryItem,
     defaultEditorMode,
     pendingSkillId,
-    pushViewModeIntent,
+    setViewMode,
     setActiveSkillId,
     setDraftsByFile,
   ]);

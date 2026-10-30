@@ -1,6 +1,7 @@
 import { markdown } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import type { Compartment, Extension } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 
@@ -94,7 +95,10 @@ const lightTheme = EditorView.theme(
 
 const warmDarkModeHighlight = HighlightStyle.define([
   { tag: [tags.heading, tags.keyword], color: "#cc7832" },
-  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#cc7832" },
+  {
+    tag: [tags.atom, tags.bool, tags.special(tags.variableName)],
+    color: "#cc7832",
+  },
   { tag: [tags.string, tags.special(tags.string)], color: "#6a8759" },
   { tag: [tags.comment, tags.quote], color: "#808080", fontStyle: "italic" },
   { tag: [tags.number, tags.integer, tags.float], color: "#6897bb" },
@@ -107,7 +111,10 @@ const warmDarkModeHighlight = HighlightStyle.define([
 
 const warmLightHighlight = HighlightStyle.define([
   { tag: [tags.heading, tags.keyword], color: "#7c3aed" },
-  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#7c3aed" },
+  {
+    tag: [tags.atom, tags.bool, tags.special(tags.variableName)],
+    color: "#7c3aed",
+  },
   { tag: [tags.string, tags.special(tags.string)], color: "#16a34a" },
   { tag: [tags.comment, tags.quote], color: "#9ca3af", fontStyle: "italic" },
   { tag: [tags.number, tags.integer, tags.float], color: "#2563eb" },
@@ -134,7 +141,8 @@ export function buildEditorExtensions(
   filePath: string,
   colorScheme: EditorColorScheme,
   onSave: () => void,
-  themeCompartment: Compartment
+  themeCompartment: Compartment,
+  readOnly = false
 ) {
   const extensions: Extension[] = [
     EditorView.lineWrapping,
@@ -142,6 +150,7 @@ export function buildEditorExtensions(
       {
         key: "Mod-s",
         run: () => {
+          if (readOnly) return true;
           onSave();
           return true;
         },
@@ -149,6 +158,10 @@ export function buildEditorExtensions(
     ]),
     themeCompartment.of(editorThemeExtension(colorScheme)),
   ];
+
+  if (readOnly) {
+    extensions.push(EditorState.readOnly.of(true), EditorView.editable.of(false));
+  }
 
   if (isMarkdownFile(filePath)) {
     extensions.unshift(markdown());

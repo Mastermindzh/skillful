@@ -26,7 +26,6 @@ import {
 } from "../editor/drafts";
 import { notify } from "../notifications/notify";
 import { type LibraryItemListSource, useLibraryIndexes } from "./useLibraryIndexes";
-import { useLibraryItemViewModeIntent } from "./useLibraryItemViewModeIntent";
 import { useUnsavedLibraryItemNavigation } from "./useUnsavedLibraryItemNavigation";
 
 function upsertLibraryItemSummary(items: LibraryItemSummary[], nextItem: LibraryItemSummary) {
@@ -83,7 +82,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     itemId: string;
     mode: EditorViewMode;
   } | null>(null);
-  const { pushViewModeIntent, viewModeIntent } = useLibraryItemViewModeIntent();
+  const [viewMode, setViewMode] = useState<EditorViewMode>("preview");
 
   /**
    * Wraps a backend mutation with the hook's standard status/error bookkeeping and returns
@@ -238,7 +237,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
         if (nextLoadedDocumentViewModeRef.current?.itemId === id) {
           nextLoadedDocumentViewModeRef.current = null;
         }
-        if (nextViewMode) pushViewModeIntent(nextViewMode);
+        if (nextViewMode) setViewMode(nextViewMode);
       } catch (nextError) {
         if (
           activeSkillIdRef.current !== id ||
@@ -252,7 +251,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
         notify.error(message, { title: t("library.notification.openItem") });
       }
     },
-    [defaultEditorMode, pushViewModeIntent, setSkillList, t]
+    [defaultEditorMode, setSkillList, t]
   );
 
   const refreshLibraryItems = useCallback(() => {
@@ -510,7 +509,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
           itemId: activeLibraryItem.item.id,
           mode: "edit",
         };
-        pushViewModeIntent("edit");
+        setViewMode("edit");
         const nextDocument = await appRpc.request.createLibraryItemFile({
           id: activeLibraryItem.item.id,
           name,
@@ -522,11 +521,11 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
           (file) => file.relativePath === name.trim() || file.relativePath === `${name.trim()}.md`
         );
         setActiveFilePath(createdFile?.relativePath ?? nextDocument.files[0]?.relativePath ?? null);
-        pushViewModeIntent("edit");
+        setViewMode("edit");
         return nextDocument;
       });
     },
-    [activeLibraryItem, pushViewModeIntent, runThrowingMutation, setSkillList, t]
+    [activeLibraryItem, runThrowingMutation, setSkillList, t]
   );
 
   const renameLibraryItemFile = useCallback(
@@ -681,12 +680,13 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     setActiveFilePath(null);
   }, []);
 
+  /** Resolves false when the save failed, so navigation can keep the drafts instead of dropping them. */
   const saveCurrentFile = useCallback(async () => {
     const currentFile =
       activeLibraryItem?.files.find((file) => file.relativePath === activeFilePath) ??
       activeLibraryItem?.files[0] ??
       null;
-    if (!activeLibraryItem || !currentFile) return;
+    if (!activeLibraryItem || !currentFile) return false;
 
     const activeDrafts = draftsForDocument(activeLibraryItem, draftsByFile);
     setStatus("saving");
@@ -704,17 +704,19 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
       }
       setError(null);
       setStatus("idle");
+      return true;
     } catch (nextError) {
       setStatus("error");
       setError(nextError instanceof Error ? nextError.message : t("details.error.save"));
+      return false;
     }
   }, [activeFilePath, activeLibraryItem, draftsByFile, setSkillList, t]);
 
   const saveAllFiles = useCallback(async () => {
-    if (!activeLibraryItem) return;
+    if (!activeLibraryItem) return false;
 
     const changedFiles = dirtyFilesForDocument(activeLibraryItem, draftsByFile);
-    if (changedFiles.length === 0) return;
+    if (changedFiles.length === 0) return true;
 
     const activeDrafts = draftsForDocument(activeLibraryItem, draftsByFile);
     setStatus("saving");
@@ -734,9 +736,11 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
       }
       setError(null);
       setStatus("idle");
+      return true;
     } catch (nextError) {
       setStatus("error");
       setError(nextError instanceof Error ? nextError.message : t("details.error.saveAll"));
+      return false;
     }
   }, [activeLibraryItem, draftsByFile, setSkillList, t]);
 
@@ -745,7 +749,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     activeLibraryItemId,
     defaultEditorMode,
     draftsByFile,
-    pushViewModeIntent,
+    setViewMode,
     saveAllFiles,
     setActiveSkillId,
     setDraftsByFile,
@@ -766,12 +770,14 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
   }, [activeLibraryItemId]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- initial library load from the main process
     void loadSkillList();
   }, [loadSkillList]);
 
   useEffect(() => {
     if (!activeLibraryItemId) {
       loadedSkillIdRef.current = null;
+      // oxlint-disable-next-line react/set-state-in-effect -- clearing the editor when the selection empties; selection is cleared from many places (delete, rescan, scope change)
       setActiveSkill(null);
       setDraftsByFile({});
       setActiveFilePath(null);
@@ -873,6 +879,7 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     unsavedDialogOpen: navigation.unsavedDialogOpen,
     uploadLibraryItemFiles,
     updateDraft,
-    viewModeIntent,
+    setViewMode,
+    viewMode,
   };
 }

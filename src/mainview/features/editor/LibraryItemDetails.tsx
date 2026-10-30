@@ -1,6 +1,6 @@
-import { Tabs } from "@mantine/core";
+import { Alert, Tabs } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { frontmatterMetadataWarningsForFiles } from "../../../shared/frontmatter";
 import type { EditorViewMode } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
@@ -8,8 +8,8 @@ import { useAppTranslation } from "../../i18n/i18n";
 import { countToolStatuses } from "../tools/status";
 import { ToolStatusPanel } from "../tools/ToolStatusPanel";
 import { AdditionalFilesPanel } from "./AdditionalFilesPanel";
-import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
 import { ADDITIONAL_FILES_TAB } from "./constants";
+import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
 import { DeleteLibraryItemFileDialog } from "./DeleteLibraryItemFileDialog";
 import { LibraryItemDetailsHeader } from "./LibraryItemDetailsHeader";
 import { LibraryItemFooter } from "./LibraryItemFooter";
@@ -28,11 +28,13 @@ const LibraryItemCodeEditor = lazy(async () => {
 export function LibraryItemDetails({
   document,
   collectionTitle,
+  readOnly,
   activeRelativePath,
   onActiveRelativePathChange,
   drafts,
   onDraftChange,
-  viewModeIntent,
+  viewMode,
+  onViewModeChange,
   saveState,
   tooling,
   fileActions,
@@ -40,7 +42,7 @@ export function LibraryItemDetails({
 }: LibraryItemDetailsProps) {
   const { t } = useAppTranslation();
   const compactActions = useMediaQuery("(max-width: 1280px)");
-  const [viewMode, setViewMode] = useState<EditorViewMode>("preview");
+  const effectiveViewMode: EditorViewMode = readOnly ? "preview" : viewMode;
   const activeFile =
     document?.files.find((file) => file.relativePath === activeRelativePath) ??
     (activeRelativePath ? null : (document?.files[0] ?? null));
@@ -79,13 +81,8 @@ export function LibraryItemDetails({
     fileActions,
     onActiveRelativePathChange,
     saving: saveState.saving,
+    readOnly,
   });
-
-  useEffect(() => {
-    const { mode, token } = viewModeIntent;
-    void token;
-    setViewMode(mode);
-  }, [viewModeIntent]);
 
   return (
     <section className="split-pane detail-pane" data-tour="details-pane">
@@ -97,8 +94,9 @@ export function LibraryItemDetails({
                 libraryItem={document.item}
                 collectionTitle={collectionTitle}
                 activeFile={activeFile}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
+                readOnly={readOnly}
+                viewMode={effectiveViewMode}
+                onViewModeChange={onViewModeChange}
                 compactActions={compactActions}
                 saving={saveState.saving}
                 canSaveCurrent={saveState.canSaveCurrent}
@@ -120,6 +118,12 @@ export function LibraryItemDetails({
               />
 
               <MetadataWarningPanel warnings={metadataWarnings} />
+
+              {saveState.errorMessage ? (
+                <Alert color="red" variant="light" mt="xs" role="alert">
+                  {saveState.errorMessage}
+                </Alert>
+              ) : null}
 
               <div className="detail-pane-content">
                 <Tabs
@@ -143,7 +147,7 @@ export function LibraryItemDetails({
                       className="editor-panel"
                     >
                       <div className="editor-panel-body">
-                        {viewMode === "preview" ? (
+                        {effectiveViewMode === "preview" ? (
                           <MarkdownPreview
                             value={drafts[activeFile.relativePath] ?? activeFile.content}
                           />

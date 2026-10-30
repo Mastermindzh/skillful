@@ -11,7 +11,8 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { AppError } from "../shared/errors";
-import { caseFoldedPath, isAbsolutePathString } from "./paths";
+import { isAbsolutePath, isHomePath } from "../shared/paths";
+import { caseFoldedPath, isNativeAbsolutePath, resolveUserPath } from "./paths";
 
 const MAX_DIRECTORY_DEPTH = 12;
 
@@ -47,13 +48,17 @@ export function cleanPathList(paths: string[]) {
   return out;
 }
 
-/** Resolves a path list after applying the standard list cleanup rules. */
+/**
+ * Resolves a path list after applying the standard list cleanup rules. `~` paths and paths this
+ * OS cannot use are kept verbatim so they keep working when the settings sync to another machine.
+ */
 export function resolvePathList(paths: string[]) {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const entry of cleanPathList(paths)) {
-    const resolved = path.resolve(entry);
-    const key = caseFoldedPath(resolved);
+    const native = isNativeAbsolutePath(entry);
+    const resolved = native && !isHomePath(entry) ? path.resolve(entry) : entry;
+    const key = caseFoldedPath(native ? resolveUserPath(entry) : entry);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(resolved);
@@ -64,7 +69,7 @@ export function resolvePathList(paths: string[]) {
 /** Normalizes a list of paths that must already be absolute. */
 export function normalizeAbsolutePathList(paths: string[], label: string) {
   const cleanedPaths = cleanPathList(paths);
-  const invalidPath = cleanedPaths.find((entry) => !isAbsolutePathString(entry));
+  const invalidPath = cleanedPaths.find((entry) => !isAbsolutePath(entry));
   if (invalidPath) {
     throw new AppError("invalid-path", `${label} must use absolute paths: ${invalidPath}`, {
       path: invalidPath,
@@ -155,6 +160,18 @@ export async function listRelativeFiles(
     files.push(path.relative(root, absolutePath));
   }
   return files.sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * True when `candidate` is `directory` itself or sits underneath it. Compares resolved paths
+ * textually, so it answers "which configured root owns this path" rather than following symlinks.
+ */
+export function isInsideDirectory(directory: string, candidate: string) {
+  const root = path.resolve(directory);
+  const target = path.resolve(candidate);
+  if (target === root) return true;
+  const rootWithSep = root.endsWith(path.sep) ? root : root + path.sep;
+  return target.startsWith(rootWithSep);
 }
 
 /**

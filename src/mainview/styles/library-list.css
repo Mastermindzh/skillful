@@ -1,109 +1,128 @@
 .item-list-scroll {
-	flex: 1;
-	min-height: 0;
-	min-block-size: 0;
+  flex: 1;
+  min-height: 0;
+  min-block-size: 0;
 }
 
 .item-list-virtual {
-	position: relative;
-	width: 100%;
+  position: relative;
+  width: 100%;
 }
 
 .item-list-virtual-row {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	padding-bottom: 6px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: 6px;
 }
 
 .item-list-empty,
 .editor-empty-state {
-	display: grid;
-	gap: 4px;
-	padding: 14px 12px;
-	color: var(--app-panel-muted);
+  display: grid;
+  gap: 4px;
+  padding: 14px 12px;
+  color: var(--app-panel-muted);
 }
 
 .item-list-empty .mantine-Text-root:last-child,
 .editor-empty-state .mantine-Text-root:last-child {
-	color: var(--app-panel-muted-strong);
+  color: var(--app-panel-muted-strong);
 }
 
 .item-list-scrollable {
-	overflow: auto;
-	overscroll-behavior: contain;
-	padding-right: 15px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 15px;
 }
 
 .item-list-scrollable:focus,
 .item-list-scrollable:focus-visible {
-	outline: none;
-	box-shadow: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .item-list-row {
-	display: block;
-	width: 100%;
-	padding: 12px;
-	border-radius: 8px;
-	transition: background-color 140ms ease, box-shadow 140ms ease;
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .item-list-row:hover,
 .item-list-row:focus-visible {
-	background: var(--skill-row-hover);
+  background: var(--skill-row-hover);
 }
 
 .item-list-row:focus-visible {
-	outline: none;
-	box-shadow: inset 0 0 0 1px var(--focus-ring-row);
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--focus-ring-row);
 }
 
 .item-list-row.selected {
-	background: var(--skill-row-selected-bg);
+  background: var(--skill-row-selected-bg);
 }
 
 .item-list-row-content {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) max-content;
-	gap: 10px;
-	align-items: start;
-	width: 100%;
-	min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 10px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Keeps the kind badge pinned top-right and the git origin marker bottom-right. */
+.item-list-row-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 100%;
+}
+
+.library-git-origin {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--mantine-color-dimmed);
+  flex-shrink: 0;
 }
 
 .library-item-copy {
-	min-width: 0;
+  min-width: 0;
 }
 
 .library-item-collection {
-	letter-spacing: 0.02em;
-	line-height: 1.2;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .library-kind-badge {
-	flex-shrink: 0;
-	border: 0;
+  flex-shrink: 0;
+  border: 0;
 }
 
 .library-kind-badge-skill {
-	background: color-mix(in srgb, var(--mantine-primary-color-filled) 14%, transparent);
-	color: color-mix(in srgb, var(--mantine-primary-color-filled) 86%, var(--mantine-color-text));
+  background: color-mix(in srgb, var(--mantine-primary-color-filled) 14%, transparent);
+  color: color-mix(in srgb, var(--mantine-primary-color-filled) 86%, var(--mantine-color-text));
 }
 
 .library-kind-badge-agent {
-	background: color-mix(in srgb, var(--mantine-color-teal-filled) 12%, transparent);
-	color: color-mix(in srgb, var(--mantine-color-teal-filled) 82%, var(--mantine-color-text));
+  background: color-mix(in srgb, var(--mantine-color-teal-filled) 12%, transparent);
+  color: color-mix(in srgb, var(--mantine-color-teal-filled) 82%, var(--mantine-color-text));
 }
 
 [data-mantine-color-scheme="dark"] .library-kind-badge-skill {
-	background: color-mix(in srgb, var(--mantine-primary-color-filled) 18%, transparent);
-	color: color-mix(in srgb, var(--mantine-primary-color-filled) 92%, white 8%);
+  background: color-mix(in srgb, var(--mantine-primary-color-filled) 18%, transparent);
+  color: color-mix(in srgb, var(--mantine-primary-color-filled) 92%, white 8%);
 }
 
 [data-mantine-color-scheme="dark"] .library-kind-badge-agent {
-	background: color-mix(in srgb, var(--mantine-color-teal-filled) 18%, transparent);
-	color: color-mix(in srgb, var(--mantine-color-teal-filled) 88%, white 12%);
+  background: color-mix(in srgb, var(--mantine-color-teal-filled) 18%, transparent);
+  color: color-mix(in srgb, var(--mantine-color-teal-filled) 88%, white 12%);
 }
-

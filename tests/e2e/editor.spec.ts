@@ -25,9 +25,8 @@ test("opens a new markdown file in edit mode", async ({ page }) => {
   await page.getByLabel("File name").fill("retrospective");
   await page.getByRole("button", { name: "Create file" }).click();
 
-  // Wait for the new tab to attach first; the edit-mode flip happens via a
-  // `viewModeIntent` effect that runs after the new document becomes active, so
-  // polling for the tab avoids racing that transition.
+  // Wait for the new tab to attach first; the edit-mode flip is applied once the new document
+  // is loaded, so polling for the tab avoids racing that transition.
   await expect(page.getByRole("tab", { name: /retrospective\.md/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "Preview" })).toBeVisible();
 });

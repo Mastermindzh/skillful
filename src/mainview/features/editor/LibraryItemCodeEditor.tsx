@@ -12,6 +12,7 @@ type LibraryItemCodeEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onSave: () => void;
+  readOnly?: boolean;
   editorRef: RefObject<EditorHandle | null>;
 };
 
@@ -21,18 +22,19 @@ export function LibraryItemCodeEditor({
   value,
   onChange,
   onSave,
+  readOnly = false,
   editorRef,
 }: LibraryItemCodeEditorProps) {
   const computedColorScheme = useComputedColorScheme("dark");
   // A fresh compartment per mount (document/file combo) keeps theme swaps tied to the current
   // EditorView instance dispatching a reconfigure against a disposed view would throw.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: recreate compartment when the editor remounts (document/file change), not on theme flips.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- recreate compartment when the editor remounts (document/file change), not on theme flips.
   const themeCompartment = useMemo(() => new Compartment(), [documentId, filePath]);
   const viewRef = useRef<EditorView | null>(null);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: excludes computedColorScheme on purpose, theme is reconfigured through the compartment so EditorState (cursor/selection) stays intact across light/dark flips.
   const extensions = useMemo(
-    () => buildEditorExtensions(filePath, computedColorScheme, onSave, themeCompartment),
-    [filePath, onSave, themeCompartment]
+    () => buildEditorExtensions(filePath, computedColorScheme, onSave, themeCompartment, readOnly),
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- excludes computedColorScheme on purpose, theme is reconfigured through the compartment so EditorState (cursor/selection) stays intact across light/dark flips.
+    [filePath, onSave, readOnly, themeCompartment]
   );
 
   useEffect(() => {

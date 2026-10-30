@@ -1,6 +1,7 @@
 import { Accordion, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { Plus } from "lucide-react";
 import type { ToolPreset } from "../../../../shared/toolPresets";
+import type { Platform } from "../../../../shared/types";
 import { useAppTranslation } from "../../../i18n/i18n";
 import { toolIcon } from "../../tools/presentation";
 import type { ToolRow, ToolRowIssue } from "../model/tools";
@@ -8,6 +9,7 @@ import { ToolSettingsItem } from "./ToolSettingsItem";
 
 export type ToolSettingsPanelProps = {
   activeRowId: string | null;
+  platform?: Platform;
   tools: ToolRow[];
   availablePresets: ToolPreset[];
   validationById: Record<string, ToolRowIssue | null>;
@@ -29,6 +31,7 @@ export type ToolSettingsPanelProps = {
 
 export function ToolSettingsPanel({
   activeRowId,
+  platform,
   tools,
   availablePresets,
   validationById,
@@ -91,6 +94,7 @@ export function ToolSettingsPanel({
                 tool={tool}
                 label={label}
                 issue={issue}
+                platform={platform}
                 onChange={onToolChange}
                 onPickInstallFolder={onPickInstallFolder}
                 onRemove={onRemoveTool}

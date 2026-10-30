@@ -1,125 +1,124 @@
 .workspace-frame {
-	display: grid;
-	grid-template-columns: minmax(320px, 640px) 8px minmax(0, 1fr);
-	height: 100%;
-	min-height: 0;
-	width: 100%;
-	background: var(--app-panel-bg);
-	backdrop-filter: blur(10px);
-	border: 1px solid var(--app-panel-border);
-	border-radius: 14px;
-	overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(320px, 640px) 8px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  background: var(--app-panel-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--app-panel-border);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .split-pane {
-	min-width: 0;
-	min-height: 0;
-	padding: 16px;
-	overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  overflow: hidden;
 }
 
 .column-stack,
 .editor-panel {
-	height: 100%;
-	min-height: 0;
+  height: 100%;
+  min-height: 0;
 }
 
 .editor-panel {
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .editor-panel > .column-stack {
-	flex: 1;
-	min-height: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .list-pane,
 .detail-pane {
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
 }
 
 .list-pane {
-	border-right: 0;
+  border-right: 0;
 }
 
 .list-pane-header {
-	min-width: 0;
+  min-width: 0;
 }
 
 .platform-mac .list-pane-header {
-	-webkit-app-region: drag;
+  -webkit-app-region: drag;
 }
 
 .list-pane-heading-copy {
-	flex: 1 1 auto;
-	min-width: 0;
-	overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .list-pane-heading-copy .mantine-Title-root {
-	overflow-wrap: anywhere;
-	line-height: 1.15;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
 }
 
 .list-pane-header-actions {
-	flex: 0 0 auto;
-	position: relative;
-	z-index: 1;
-	-webkit-app-region: no-drag;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+  -webkit-app-region: no-drag;
 }
 
 .list-pane-count-badge {
-	min-width: 24px;
-	justify-content: center;
+  min-width: 24px;
+  justify-content: center;
 }
 
 .detail-pane {
-	padding-bottom: 0;
+  padding-bottom: 0;
 }
 
 .workspace-frame.resizing {
-	cursor: col-resize;
+  cursor: col-resize;
 }
 
 .pane-separator {
-	display: flex;
-	align-items: stretch;
-	justify-content: center;
-	width: 8px;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	cursor: col-resize;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
 }
 
 .pane-separator:focus-visible {
-	outline: none;
+  outline: none;
 }
 
 .pane-separator-handle {
-	width: 1px;
-	height: 100%;
-	background: var(--app-panel-border);
-	transition: background-color 140ms ease;
+  width: 1px;
+  height: 100%;
+  background: var(--app-panel-border);
+  transition: background-color 140ms ease;
 }
 
 .pane-separator:hover .pane-separator-handle,
 .pane-separator:focus-visible .pane-separator-handle,
 .workspace-frame.resizing .pane-separator-handle {
-	background: var(--mantine-primary-color-filled);
+  background: var(--mantine-primary-color-filled);
 }
 
 .split-resizing,
 .split-resizing * {
-	cursor: col-resize !important;
-	user-select: none !important;
+  cursor: col-resize !important;
+  user-select: none !important;
 }
-
 
 .list-pane .mantine-SegmentedControl-root,
 .list-pane .mantine-SegmentedControl-control,
@@ -130,7 +129,7 @@
 .list-pane .mantine-Button-root,
 .editor-toolbar .mantine-ActionIcon-root,
 .editor-toolbar .mantine-Button-root {
-	outline: none;
+  outline: none;
 }
 
 .list-pane .mantine-SegmentedControl-root:focus,
@@ -142,8 +141,8 @@
 .list-pane .mantine-Button-root:focus,
 .editor-toolbar .mantine-ActionIcon-root:focus,
 .editor-toolbar .mantine-Button-root:focus {
-	outline: none;
-	box-shadow: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .list-pane .mantine-SegmentedControl-root:focus-visible,
@@ -179,21 +178,21 @@
 .list-pane .mantine-Button-root:focus-within,
 .editor-toolbar .mantine-ActionIcon-root:focus-within,
 .editor-toolbar .mantine-Button-root:focus-within {
-	outline: none !important;
-	box-shadow: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .import-advanced-fields {
-	display: grid;
-	gap: 0.75rem;
-	padding-top: 0.25rem;
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
 }
 
 .settings-modal .mantine-Tabs-tab:focus,
 .settings-modal .mantine-Button-root:focus,
 .settings-modal .mantine-ActionIcon-root:focus {
-	outline: none;
-	box-shadow: none;
+  outline: none;
+  box-shadow: none;
 }
 
 /*
@@ -203,5 +202,5 @@
  */
 .settings-row-pending-removal .mantine-TextInput-input,
 .settings-row-pending-removal .mantine-Input-input {
-	text-decoration: line-through;
+  text-decoration: line-through;
 }

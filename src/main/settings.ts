@@ -3,22 +3,26 @@ import path from "node:path";
 import type { Options as ElectronStoreOptions } from "electron-store";
 import { AppError } from "../shared/errors";
 import { LIBRARY_ITEM_KINDS } from "../shared/library";
+import { isAbsolutePath, isHomePath } from "../shared/paths";
 import { AppConfigSchema } from "../shared/schemas";
 import { presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
 import type {
   AppConfig,
   AppSettings,
   GitBackupConfig,
+  GitLibraryConfig,
   LibraryItemKind,
   LibraryItemToolMapping,
   ToolConfig,
 } from "../shared/types";
 import { normalizeAbsolutePathList, pathExists, resolvePathList } from "./fs";
+import { filterUsablePaths, isNativeAbsolutePath, resolveUserPath } from "./paths";
 
 const SETTINGS_FILE_NAME = "settings.json";
 const SETTINGS_STORE_NAME = "settings";
 const SETTINGS_STORE_VERSION = "1.0.0";
 const DEFAULT_SETTINGS_DIRECTORY_NAME = "skillful";
+const GIT_LIBRARIES_DIRECTORY_NAME = "libraries";
 
 type SettingsStoreData = AppConfig;
 type SettingsStoreOptions = ElectronStoreOptions<SettingsStoreData> & {
@@ -63,9 +67,55 @@ export function defaultSkillRoot() {
   return settingsDirectory();
 }
 
-/** Combines the default skill library with user-configured extra scan roots. */
-export function effectiveScanRoots(customRoots: string[]) {
-  return Array.from(new Set([defaultSkillRoot(), ...customRoots]));
+/** Root that holds clones of git libraries that did not get an explicit path override. */
+export function defaultGitLibraryRoot() {
+  return path.join(settingsDirectory(), GIT_LIBRARIES_DIRECTORY_NAME);
+}
+
+/** Resolves where a git library is (or will be) cloned, honouring a per-library override. */
+export function gitLibraryPath(library: GitLibraryConfig) {
+  const override = library.path.trim();
+  if (override) return isNativeAbsolutePath(override) ? resolveUserPath(override) : override;
+  return path.join(defaultGitLibraryRoot(), library.id);
+}
+
+/** False when the folder override is another OS's path, so the clone cannot live here. */
+export function gitLibraryAvailable(library: GitLibraryConfig) {
+  const override = library.path.trim();
+  return !override || isNativeAbsolutePath(override);
+}
+
+export function gitLibraryPathsById(gitLibraries: GitLibraryConfig[]) {
+  const paths: Record<string, string> = {};
+  for (const library of gitLibraries) {
+    paths[library.id] = gitLibraryPath(library);
+  }
+  return paths;
+}
+
+/** Inverse of {@link gitLibraryPathsById}, used to tag scanned items with their origin. */
+export function gitLibraryIdsByPath(gitLibraries: GitLibraryConfig[]) {
+  const ids: Record<string, string> = {};
+  for (const library of gitLibraries) {
+    ids[gitLibraryPath(library)] = library.id;
+  }
+  return ids;
+}
+
+/** Combines the default skill library with user-configured extra scan roots this OS can use. */
+export function effectiveScanRoots(customRoots: string[], gitLibraries: GitLibraryConfig[] = []) {
+  return Array.from(
+    new Set([
+      defaultSkillRoot(),
+      ...filterUsablePaths(customRoots),
+      ...gitLibraries.filter(gitLibraryAvailable).map(gitLibraryPath),
+    ])
+  );
+}
+
+/** Scan roots for a full config, including every configured git library clone. */
+export function configScanRoots(config: AppConfig) {
+  return effectiveScanRoots(config.scanRoots, config.gitLibraries);
 }
 
 export function defaultAppConfig(scanRoots: string[] = []): AppConfig {
@@ -79,6 +129,8 @@ export function defaultAppConfig(scanRoots: string[] = []): AppConfig {
     defaultEditorMode: "preview",
     onboardingTourCompleted: false,
     gitBackup: defaultGitBackupConfig(),
+    gitLibraries: [],
+    gitLibrarySyncedAt: {},
   };
 }
 
@@ -171,14 +223,80 @@ export function normalizeToolMappings(mappings: LibraryItemToolMapping[], tools:
     .filter((mapping) => mapping.itemId && mapping.toolIds.length > 0);
 }
 
+/**
+ * Normalizes persisted git libraries and enforces the invariants the sync layer depends on:
+ * stable ids, a usable remote and branch, and one clone directory per library so two libraries
+ * can never fight over the same working tree.
+ */
+export function normalizeGitLibraries(gitLibraries: GitLibraryConfig[]) {
+  const libraryIds = new Set<string>();
+  const clonePaths = new Set<string>();
+
+  return gitLibraries
+    .map((library) => ({
+      id: library.id.trim(),
+      name: library.name.trim(),
+      remoteUrl: library.remoteUrl.trim(),
+      branch: library.branch.trim(),
+      path: library.path.trim(),
+      syncMode: library.syncMode,
+      autoSync: library.autoSync,
+      syncIntervalMinutes: Math.max(1, Math.trunc(library.syncIntervalMinutes)),
+      readOnly: library.readOnly ?? false,
+    }))
+    .filter((library) => library.id && library.remoteUrl)
+    .map((library) => {
+      if (libraryIds.has(library.id)) {
+        throw new AppError("invalid-name", `Duplicate git library id: ${library.id}`);
+      }
+      libraryIds.add(library.id);
+
+      if (!library.name) {
+        throw new AppError("invalid-name", "Git library name cannot be empty.");
+      }
+      if (!library.branch || /\s/.test(library.branch)) {
+        throw new AppError(
+          "invalid-name",
+          `Git library branch cannot be empty or contain whitespace: ${library.name}`
+        );
+      }
+      // Resolving a relative path here would silently anchor the clone to the process working
+      // directory, so an explicit override has to already be absolute.
+      if (library.path && !isAbsolutePath(library.path)) {
+        throw new AppError("invalid-path", `Git library folder must be absolute: ${library.name}`);
+      }
+
+      const nativePath = isNativeAbsolutePath(library.path) && !isHomePath(library.path);
+      const normalized = {
+        ...library,
+        path: nativePath ? path.normalize(library.path) : library.path,
+      };
+
+      const clonePath = gitLibraryPath(normalized);
+      if (clonePaths.has(clonePath)) {
+        throw new AppError("invalid-path", `Two git libraries cannot share a folder: ${clonePath}`);
+      }
+      clonePaths.add(clonePath);
+
+      return normalized;
+    });
+}
+
 export function normalizeAppConfig(config: AppConfig): AppConfig {
   const scanRoots = normalizeConfiguredScanRoots(config.scanRoots);
   const tools = normalizeToolConfigs(config.tools);
+  const gitLibraries = normalizeGitLibraries(config.gitLibraries ?? []);
+  const libraryIds = new Set(gitLibraries.map((library) => library.id));
   return {
     ...config,
     scanRoots,
     tools,
     toolMappings: normalizeToolMappings(config.toolMappings, tools),
+    gitLibraries,
+    // Timestamps for removed libraries would otherwise accumulate forever.
+    gitLibrarySyncedAt: Object.fromEntries(
+      Object.entries(config.gitLibrarySyncedAt ?? {}).filter(([id]) => libraryIds.has(id))
+    ),
   };
 }
 
@@ -197,6 +315,8 @@ function serializedSettings(config: AppConfig): SettingsStoreData {
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
     gitBackup: config.gitBackup,
+    gitLibraries: config.gitLibraries,
+    gitLibrarySyncedAt: config.gitLibrarySyncedAt ?? {},
   };
 }
 
@@ -282,6 +402,7 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     defaultEditorMode: validated.data.defaultEditorMode,
     onboardingTourCompleted: validated.data.onboardingTourCompleted,
     gitBackup: validated.data.gitBackup,
+    gitLibraries: normalizeGitLibraries(validated.data.gitLibraries),
   };
 }
 
@@ -306,7 +427,7 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
   return {
     scanRoots: [...config.scanRoots],
     defaultScanRoot: defaultSkillRoot(),
-    effectiveScanRoots: effectiveScanRoots(config.scanRoots),
+    effectiveScanRoots: configScanRoots(config),
     homeDirectory: homedir(),
     platform: process.platform,
     tools: [...config.tools],
@@ -317,5 +438,9 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     defaultEditorMode: config.defaultEditorMode,
     onboardingTourCompleted: config.onboardingTourCompleted,
     gitBackup: { ...config.gitBackup },
+    gitLibraries: config.gitLibraries.map((library) => ({ ...library })),
+    gitLibraryPaths: gitLibraryPathsById(config.gitLibraries),
+    defaultGitLibraryRoot: defaultGitLibraryRoot(),
+    gitLibrarySyncedAt: { ...config.gitLibrarySyncedAt },
   };
 }

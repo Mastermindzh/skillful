@@ -2,7 +2,7 @@ import { appRpc, onAppMessage } from "@mainview-bridge";
 import { useMediaQuery } from "@mantine/hooks";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { toolPresetById } from "../shared/toolPresets";
-import type { AppLanguage, LibraryItemSummary } from "../shared/types";
+import type { AppLanguage, GitLibraryConfig, LibraryItemSummary } from "../shared/types";
 import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
 import { LibraryItemDetails } from "./features/editor/LibraryItemDetails";
 import type {
@@ -61,16 +61,27 @@ function App() {
     setError: library.setError,
   });
 
+  const { loadSettings } = settings;
+  const { setLanguage: setGeneralLanguage } = settings.general;
+  const { open: openSettingsModal } = settings.modal;
+  const { clearActiveSkill, setActiveSkillId } = library;
+  const { runToolAction } = skillTools;
+
   useEffect(() => {
-    void settings.loadSettings();
-  }, [settings.loadSettings]);
+    void loadSettings();
+  }, [loadSettings]);
 
   useEffect(() => {
     return onAppMessage("autoGitBackupCompleted", (result) => {
       if (result.changed && result.pushed) {
-        notify.info(t("settings.backup.notification.synced.message", { branch: result.branch }), {
-          title: t("settings.backup.notification.synced.title"),
-        });
+        notify.info(
+          t("settings.backup.notification.synced.message", {
+            branch: result.branch,
+          }),
+          {
+            title: t("settings.backup.notification.synced.title"),
+          }
+        );
         return;
       }
 
@@ -79,6 +90,24 @@ function App() {
       });
     });
   }, [t]);
+
+  const gitLibraryNames = settings.appSettings?.gitLibraries;
+  useEffect(() => {
+    return onAppMessage("gitLibrarySynced", (result) => {
+      const name =
+        gitLibraryNames?.find((entry) => entry.id === result.libraryId)?.name || result.remoteUrl;
+      if (result.state === "updated") {
+        notify.info(t("settings.gitLibrary.notification.synced.message", { name }), {
+          title: t("settings.gitLibrary.notification.synced.title"),
+        });
+        return;
+      }
+
+      notify.error(result.message || t("settings.gitLibrary.state.error"), {
+        title: t("settings.gitLibrary.notification.failed.title"),
+      });
+    });
+  }, [gitLibraryNames, t]);
 
   useEffect(() => {
     void applyAppLanguage(
@@ -90,10 +119,10 @@ function App() {
 
   const handleSettingsLanguageChange = useCallback(
     (nextLanguage: AppLanguage) => {
-      settings.general.setLanguage(nextLanguage);
+      setGeneralLanguage(nextLanguage);
       void applyAppLanguage(nextLanguage);
     },
-    [settings.general.setLanguage]
+    [setGeneralLanguage]
   );
 
   const collections = useMemo(
@@ -138,11 +167,15 @@ function App() {
     ? (tools.find((tool) => tool.id === activeScope.replace("tool:", "")) ?? null)
     : null;
 
-  const scopedSkills = activeScope.startsWith("tool:")
-    ? (activeTool?.items ?? [])
-    : activeScope.startsWith("collection:")
-      ? (activeCollection?.items ?? [])
-      : library.libraryItemList;
+  const scopedSkills = useMemo(
+    () =>
+      activeScope.startsWith("tool:")
+        ? (activeTool?.items ?? [])
+        : activeScope.startsWith("collection:")
+          ? (activeCollection?.items ?? [])
+          : library.libraryItemList,
+    [activeCollection, activeScope, activeTool, library.libraryItemList]
+  );
   const collectionTitleById = useMemo(() => {
     const map = new Map<string, string>();
     for (const collection of collections) {
@@ -150,6 +183,28 @@ function App() {
     }
     return map;
   }, [collections]);
+  const gitLibraryById = useMemo(() => {
+    const map = new Map<string, GitLibraryConfig>();
+    for (const library of settings.appSettings?.gitLibraries ?? []) {
+      map.set(library.id, library);
+    }
+    return map;
+  }, [settings.appSettings?.gitLibraries]);
+  const readOnlyCollectionIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const collection of collections) {
+      const libraryId = collection.sourceLibraryId;
+      if (libraryId && gitLibraryById.get(libraryId)?.readOnly) ids.add(collection.id);
+    }
+    return ids;
+  }, [collections, gitLibraryById]);
+  const writableCollections = useMemo(
+    () => collections.filter((collection) => !readOnlyCollectionIds.has(collection.id)),
+    [collections, readOnlyCollectionIds]
+  );
+  const activeCollectionReadOnly = Boolean(
+    activeCollection && readOnlyCollectionIds.has(activeCollection.id)
+  );
   /**
    * Show per-row collection labels only when the current scope can span more
    * than one collection. Within a single collection scope the sidebar already
@@ -217,7 +272,7 @@ function App() {
 
   useEffect(() => {
     if (shownSkills.length === 0) {
-      library.clearActiveSkill();
+      clearActiveSkill();
       return;
     }
     if (
@@ -226,13 +281,8 @@ function App() {
     ) {
       return;
     }
-    library.setActiveSkillId(shownSkills[0]?.id ?? null);
-  }, [
-    library.activeLibraryItemId,
-    library.clearActiveSkill,
-    library.setActiveSkillId,
-    shownSkills,
-  ]);
+    setActiveSkillId(shownSkills[0]?.id ?? null);
+  }, [clearActiveSkill, library.activeLibraryItemId, setActiveSkillId, shownSkills]);
 
   const collectionDialogs = useCollectionDialogs({
     library,
@@ -240,6 +290,7 @@ function App() {
     setActiveScope,
     setQuery,
   });
+  const { onExport: exportCollection } = collectionDialogs;
   const skillDialogs = useLibraryItemDialogs({
     library,
     collections,
@@ -254,40 +305,49 @@ function App() {
     void appRpc.request.revealPath({ path: item.rootPath });
   }, []);
   const handleInstallTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "install"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "install"),
+    [runToolAction]
   );
   const handleRemoveTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "remove"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "remove"),
+    [runToolAction]
   );
   const handleRepairTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "repair"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "repair"),
+    [runToolAction]
   );
   const handleExportCollection = useCallback(
-    (collection: { id: string; title: string }) => void collectionDialogs.onExport(collection),
-    [collectionDialogs.onExport]
+    (collection: { id: string; title: string }) => void exportCollection(collection),
+    [exportCollection]
   );
-  const handleOpenUpdates = useCallback(
-    () => settings.modal.open("updates"),
-    [settings.modal.open]
-  );
+  const handleOpenUpdates = useCallback(() => openSettingsModal("updates"), [openSettingsModal]);
   const handleOpenShortcuts = useCallback(() => setShortcutsModalOpen(true), []);
 
   const activeItemKind = library.activeLibraryItem?.item.kind ?? "skill";
   const libraryItemSupportsTools = Boolean(library.activeLibraryItem);
-  const canSaveCurrent = library.currentFileHasChanges && Boolean(library.currentFile);
-  const canSaveAll = library.changedFiles.length > 0;
+  const activeItemReadOnly = useMemo(() => {
+    const sourceLibraryId = library.activeLibraryItem?.item.sourceLibraryId;
+    if (!sourceLibraryId) return false;
+    return Boolean(gitLibraryById.get(sourceLibraryId)?.readOnly);
+  }, [gitLibraryById, library.activeLibraryItem?.item.sourceLibraryId]);
+  const canSaveCurrent =
+    !activeItemReadOnly && library.currentFileHasChanges && Boolean(library.currentFile);
+  const canSaveAll = !activeItemReadOnly && library.changedFiles.length > 0;
   const listPermissions = useMemo(
     () => ({
-      canCreate: collections.length > 0,
-      canRename: Boolean(library.activeLibraryItem),
-      canDelete: Boolean(library.activeLibraryItem),
+      canCreate: writableCollections.length > 0 && !activeCollectionReadOnly,
+      canRename: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
+      canDelete: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
       canReveal: Boolean(library.activeLibraryItem),
-      canMove: collections.length > 1 && Boolean(library.activeLibraryItem),
+      canMove:
+        writableCollections.length > 1 && Boolean(library.activeLibraryItem) && !activeItemReadOnly,
     }),
-    [collections.length, library.activeLibraryItem]
+    [
+      activeCollectionReadOnly,
+      activeItemReadOnly,
+      library.activeLibraryItem,
+      writableCollections.length,
+    ]
   );
   const detailsSaveState = useMemo<LibraryItemDetailsSaveState>(
     () => ({
@@ -381,7 +441,7 @@ function App() {
 
   useAppShortcuts({
     enabled: !shortcutsDisabled,
-    canCreateItem: collections.length > 0,
+    canCreateItem: writableCollections.length > 0 && !activeCollectionReadOnly,
     canDeleteItem: Boolean(library.activeLibraryItem),
     canRenameItem: Boolean(library.activeLibraryItem),
     onCreateItem: skillDialogs.create.open,
@@ -407,6 +467,9 @@ function App() {
           refreshing={library.refreshingSkills}
           onSelectScope={setActiveScope}
           onRefresh={library.refreshLibraryItems}
+          gitLibraryCount={settings.appSettings?.gitLibraries.length ?? 0}
+          syncingGitLibraries={settings.gitLibraries.syncingAll}
+          onSyncGitLibraries={settings.gitLibraries.syncAll}
           onCreateCollection={collectionDialogs.create.open}
           onImportCollection={collectionDialogs.import.open}
           onRenameCollection={collectionDialogs.rename.request}
@@ -442,6 +505,8 @@ function App() {
               permissions={listPermissions}
               showItemCollections={showItemCollections}
               collectionTitleById={collectionTitleById}
+              gitLibraryById={gitLibraryById}
+              gitLibrarySyncedAt={settings.appSettings?.gitLibrarySyncedAt ?? {}}
               onCreateSkill={skillDialogs.create.open}
               onRenameSkill={skillDialogs.rename.request}
               onMoveSkill={skillDialogs.move.request}
@@ -464,11 +529,13 @@ function App() {
             <LibraryItemDetails
               document={library.activeLibraryItem}
               collectionTitle={activeDocumentCollectionTitle}
+              readOnly={activeItemReadOnly}
               activeRelativePath={library.activeFilePath}
               onActiveRelativePathChange={library.setActiveFilePath}
               drafts={library.activeDrafts}
               onDraftChange={library.updateDraft}
-              viewModeIntent={library.viewModeIntent}
+              viewMode={library.viewMode}
+              onViewModeChange={library.setViewMode}
               saveState={detailsSaveState}
               tooling={detailsTooling}
               fileActions={detailsFileActions}
@@ -494,14 +561,38 @@ function App() {
         library={{
           scanRoots: settings.library.rows,
           defaultScanRoot: settings.appSettings?.defaultScanRoot ?? "",
+          platform: settings.appSettings?.platform,
           validationById: settings.library.validation.byId,
           onScanRootChange: settings.library.updateRow,
           onAddScanRoot: settings.library.addRow,
           onRemoveScanRoot: settings.library.removeRow,
           onRestoreScanRoot: settings.library.restoreRow,
         }}
+        gitLibraries={{
+          rows: settings.gitLibraries.rows,
+          platform: settings.appSettings?.platform,
+          issueById: settings.gitLibraries.validation.issueById,
+          statusById: settings.gitLibraries.statusById,
+          libraryPaths: settings.appSettings?.gitLibraryPaths ?? {},
+          defaultRoot: settings.appSettings?.defaultGitLibraryRoot ?? "",
+          busyIds: settings.gitLibraries.busyIds,
+          errorMessage: settings.gitLibraries.errorMessage,
+          hostPrompt: settings.gitLibraries.hostPrompt,
+          expandedById: settings.gitLibraries.expandedById,
+          onToggleExpanded: settings.gitLibraries.toggleExpanded,
+          onAddRow: settings.gitLibraries.addRow,
+          onUpdateRow: settings.gitLibraries.updateRow,
+          onRemoveRow: settings.gitLibraries.removeRow,
+          onRestoreRow: settings.gitLibraries.restoreRow,
+          onSync: settings.gitLibraries.sync,
+          onPush: settings.gitLibraries.push,
+          onDiscard: settings.gitLibraries.discard,
+          onTrustHost: settings.gitLibraries.trustHost,
+          onDismissHostPrompt: settings.gitLibraries.dismissHostPrompt,
+        }}
         tools={{
           tools: settings.tools.rows,
+          platform: settings.appSettings?.platform,
           validationById: settings.tools.validation.byId,
           availablePresets: settings.tools.availablePresets,
           onToolChange: settings.tools.updateRow,
@@ -603,7 +694,7 @@ function App() {
         opened={skillDialogs.create.opened}
         saving={skillDialogs.create.saving}
         errorMessage={skillDialogs.create.errorMessage}
-        collections={collections}
+        collections={writableCollections}
         defaultCollectionId={skillDialogs.create.defaultCollectionId}
         onClose={skillDialogs.create.close}
         onCreate={skillDialogs.create.onCreate}
@@ -624,7 +715,7 @@ function App() {
         itemKind={skillDialogs.move.target?.kind ?? activeItemKind}
         itemTitle={skillDialogs.move.target?.title ?? ""}
         currentCollectionId={skillDialogs.move.target?.collectionId ?? ""}
-        collections={collections}
+        collections={writableCollections}
         saving={skillDialogs.move.moving}
         errorMessage={skillDialogs.move.errorMessage}
         onClose={skillDialogs.move.close}
