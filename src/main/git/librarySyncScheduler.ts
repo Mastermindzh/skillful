@@ -52,7 +52,7 @@ export class GitLibrarySyncScheduler {
 
   configure(gitLibraries: GitLibraryConfig[]) {
     const nextIds = new Set(gitLibraries.map((library) => library.id));
-    for (const id of [...this.timers.keys()]) {
+    for (const id of this.timers.keys()) {
       if (!nextIds.has(id)) this.stopLibrary(id);
     }
 
@@ -75,9 +75,12 @@ export class GitLibrarySyncScheduler {
       this.stopTimer(library.id);
       this.timers.set(
         library.id,
-        setInterval(() => {
-          void this.runNow(library.id);
-        }, Math.trunc(library.syncIntervalMinutes) * MINUTE_MS)
+        setInterval(
+          () => {
+            void this.runNow(library.id);
+          },
+          Math.trunc(library.syncIntervalMinutes) * MINUTE_MS
+        )
       );
     }
   }
@@ -95,7 +98,7 @@ export class GitLibrarySyncScheduler {
   }
 
   dispose() {
-    for (const id of [...this.timers.keys()]) this.stopTimer(id);
+    for (const id of this.timers.keys()) this.stopTimer(id);
     this.libraries.clear();
   }
 

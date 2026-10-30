@@ -1,18 +1,23 @@
 {
-    "cSpell.words": [
-        "bunx",
-        "dirents",
-        "fflate",
-        "junie",
-        "mainview",
-        "mantine",
-        "metainfo",
-        "overscan",
-        "pacman",
-        "Rescan",
-        "TOCTOU"
-    ],
-    "chat.tools.terminal.autoApprove": {
-        "bunx": true
-    }
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  "cSpell.words": [
+    "bunx",
+    "dirents",
+    "fflate",
+    "junie",
+    "mainview",
+    "mantine",
+    "metainfo",
+    "overscan",
+    "pacman",
+    "Rescan",
+    "TOCTOU"
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "bunx": true
+  }
 }

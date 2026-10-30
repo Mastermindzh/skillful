@@ -174,8 +174,8 @@ const handlers: DesktopRequestHandlers = {
 In `src/mainview/bridge.ts`, `appRpc.request` is a dynamic proxy that automatically infers types from `AppRPC["bun"]["requests"]`. Import it in your React component or hook:
 
 ```tsx
-import { Button } from "@mantine/core";
 import { appRpc } from "@mainview-bridge";
+import { Button } from "@mantine/core";
 
 export function TriggerBackendButton() {
   const handleClick = async () => {
@@ -199,14 +199,14 @@ export function TriggerBackendButton() {
 
 Most users do not need these. They are useful for development and diagnostics.
 
-| Variable | Effect |
-| --- | --- |
-| `SKILLFUL_PERF=1` | Emits `[skillful:perf] <label> <ms>` lines for scans, RPC calls, and key renderer derivations. |
-| `SKILLFUL_CONFIG_NAME` | Overrides the settings/library directory name. The dev scripts set this to `skillful-dev` so local development uses `~/.config/skillful-dev` on Linux instead of your real `~/.config/skillful` library. |
-| `SKILLFUL_ELECTRON_DEVTOOLS=1` | Opens Electron DevTools in development. |
-| `SKILLFUL_ELECTRON_LOAD_FILE=1` | Loads the built renderer from disk for Electron dev runs. |
-| `XDG_CONFIG_HOME` | Linux only. Overrides the default `~/.config` location for Skillful's settings/library directory. |
-| `APPDATA` | Windows only. Overrides the default `%APPDATA%` location for Skillful's settings/library directory. |
-| `HOME` | Used as the fallback home directory when computing default paths. |
+| Variable                        | Effect                                                                                                                                                                                                   |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SKILLFUL_PERF=1`               | Emits `[skillful:perf] <label> <ms>` lines for scans, RPC calls, and key renderer derivations.                                                                                                           |
+| `SKILLFUL_CONFIG_NAME`          | Overrides the settings/library directory name. The dev scripts set this to `skillful-dev` so local development uses `~/.config/skillful-dev` on Linux instead of your real `~/.config/skillful` library. |
+| `SKILLFUL_ELECTRON_DEVTOOLS=1`  | Opens Electron DevTools in development.                                                                                                                                                                  |
+| `SKILLFUL_ELECTRON_LOAD_FILE=1` | Loads the built renderer from disk for Electron dev runs.                                                                                                                                                |
+| `XDG_CONFIG_HOME`               | Linux only. Overrides the default `~/.config` location for Skillful's settings/library directory.                                                                                                        |
+| `APPDATA`                       | Windows only. Overrides the default `%APPDATA%` location for Skillful's settings/library directory.                                                                                                      |
+| `HOME`                          | Used as the fallback home directory when computing default paths.                                                                                                                                        |
 
 Debug and diagnostic logs should stay in English. User-facing renderer copy should go through the i18n layer.

@@ -50,6 +50,7 @@ export function AdditionalFileRow({
       <Menu.Target>
         <contextMenu.Anchor x={contextMenu.position.x} y={contextMenu.position.y} />
       </Menu.Target>
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- right-click menu is a mouse shortcut for the row's action buttons */}
       <fieldset
         className="additional-file-row"
         aria-label={t("file.actions", { name: label })}

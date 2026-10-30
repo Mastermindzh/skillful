@@ -441,6 +441,6 @@ export function settingsFromConfig(config: AppConfig): AppSettings {
     gitLibraries: config.gitLibraries.map((library) => ({ ...library })),
     gitLibraryPaths: gitLibraryPathsById(config.gitLibraries),
     defaultGitLibraryRoot: defaultGitLibraryRoot(),
-    gitLibrarySyncedAt: { ...(config.gitLibrarySyncedAt ?? {}) },
+    gitLibrarySyncedAt: { ...config.gitLibrarySyncedAt },
   };
 }

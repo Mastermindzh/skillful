@@ -92,7 +92,7 @@ export function LibrarySettingsPanel({
               {issue && !pending ? (
                 <Text size="xs" c="red.6">
                   {t(issue.messageKey ?? "settings.error.absolutePath", {
-                    ...(issue.values ?? {}),
+                    ...issue.values,
                   })}
                 </Text>
               ) : null}

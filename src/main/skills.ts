@@ -224,7 +224,7 @@ export class LibraryItemStore {
         this.config = {
           ...this.config,
           gitLibrarySyncedAt: {
-            ...(this.config.gitLibrarySyncedAt ?? {}),
+            ...this.config.gitLibrarySyncedAt,
             [libraryId]: result.syncedAt,
           },
         };

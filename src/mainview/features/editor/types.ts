@@ -56,10 +56,8 @@ export type LibraryItemDetailsProps = {
   onActiveRelativePathChange: (value: string | null) => void;
   drafts: DraftMap;
   onDraftChange: (relativePath: string, value: string) => void;
-  viewModeIntent: {
-    mode: EditorViewMode;
-    token: number;
-  };
+  viewMode: EditorViewMode;
+  onViewModeChange: (mode: EditorViewMode) => void;
   saveState: LibraryItemDetailsSaveState;
   tooling: LibraryItemDetailsTooling;
   fileActions: LibraryItemDetailsFileActions;
