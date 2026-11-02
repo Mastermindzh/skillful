@@ -1,6 +1,6 @@
 import { Alert, Tabs } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { lazy, Suspense, useMemo } from "react";
+import { useMemo } from "react";
 import { frontmatterMetadataWarningsForFiles } from "../../../shared/frontmatter";
 import type { EditorViewMode } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
@@ -9,21 +9,16 @@ import { countToolStatuses } from "../tools/status";
 import { ToolStatusPanel } from "../tools/ToolStatusPanel";
 import { AdditionalFilesPanel } from "./AdditionalFilesPanel";
 import { ADDITIONAL_FILES_TAB } from "./constants";
-import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
+import { CreateMarkdownFileModal } from "./CreateMarkdownFileModal";
 import { DeleteLibraryItemFileDialog } from "./DeleteLibraryItemFileDialog";
+import { EditorFooter } from "./EditorFooter";
+import { FileContentPanel } from "./FileContentPanel";
 import { LibraryItemDetailsHeader } from "./LibraryItemDetailsHeader";
-import { LibraryItemFooter } from "./LibraryItemFooter";
 import { LibraryItemTabsBar } from "./LibraryItemTabsBar";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { MetadataWarningPanel } from "./MetadataWarningPanel";
 import { RenameLibraryItemFileModal } from "./RenameLibraryItemFileModal";
 import type { LibraryItemDetailsProps } from "./types";
 import { useLibraryItemFileActions } from "./useLibraryItemFileActions";
-
-const LibraryItemCodeEditor = lazy(async () => {
-  const module = await import("./LibraryItemCodeEditor");
-  return { default: module.LibraryItemCodeEditor };
-});
 
 export function LibraryItemDetails({
   document,
@@ -140,37 +135,16 @@ export function LibraryItemDetails({
                   />
 
                   {activeFile ? (
-                    <Tabs.Panel
+                    <FileContentPanel
                       key={activeFile.relativePath}
-                      value={activeFile.relativePath}
-                      pt="sm"
-                      className="editor-panel"
-                    >
-                      <div className="editor-panel-body">
-                        {effectiveViewMode === "preview" ? (
-                          <MarkdownPreview
-                            value={drafts[activeFile.relativePath] ?? activeFile.content}
-                          />
-                        ) : (
-                          <Suspense
-                            fallback={
-                              <div className="editor-field editor-loading" aria-live="polite">
-                                {t("details.loadingEditor")}
-                              </div>
-                            }
-                          >
-                            <LibraryItemCodeEditor
-                              documentId={document.item.id}
-                              filePath={activeFile.relativePath}
-                              value={drafts[activeFile.relativePath] ?? activeFile.content}
-                              onChange={(value) => onDraftChange(activeFile.relativePath, value)}
-                              onSave={saveState.onSaveCurrent}
-                              editorRef={editorRef}
-                            />
-                          </Suspense>
-                        )}
-                      </div>
-                    </Tabs.Panel>
+                      documentId={document.item.id}
+                      filePath={activeFile.relativePath}
+                      value={drafts[activeFile.relativePath] ?? activeFile.content}
+                      viewMode={effectiveViewMode}
+                      onChange={(value) => onDraftChange(activeFile.relativePath, value)}
+                      onSave={saveState.onSaveCurrent}
+                      editorRef={editorRef}
+                    />
                   ) : null}
                   <Tabs.Panel
                     value={ADDITIONAL_FILES_TAB}
@@ -187,7 +161,7 @@ export function LibraryItemDetails({
               </div>
             </div>
             {activeFile ? (
-              <LibraryItemFooter
+              <EditorFooter
                 absolutePath={activeFile.absolutePath}
                 dirtyCount={dirtyFiles.length}
                 installedToolCount={toolStatusCounts.installed}
@@ -199,7 +173,7 @@ export function LibraryItemDetails({
               />
             ) : null}
           </div>
-          <CreateLibraryItemFileModal
+          <CreateMarkdownFileModal
             opened={fileUi.createFileDialog.opened}
             saving={saveState.saving}
             errorMessage={fileUi.createFileDialog.errorMessage}

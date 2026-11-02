@@ -325,6 +325,8 @@ export const nlMessages = {
   "settings.gitLibrary.error.syncInterval": "Gebruik een interval van minstens 1 minuut.",
   "settings.gitLibrary.notification.synced.title": "Git-bibliotheek gesynchroniseerd",
   "settings.gitLibrary.notification.synced.message": "{name} is bijgewerkt vanaf de remote.",
+  "settings.gitLibrary.notification.cloned.message":
+    "{name} is gekloond en aan je bibliotheek toegevoegd.",
   "settings.gitLibrary.notification.failed.title": "Synchroniseren van git-bibliotheek mislukt",
   "sidebar.syncGitLibraries": "Git-bibliotheken synchroniseren",
   "library.gitOrigin.ariaLabel": "Uit git-bibliotheek {name}",
@@ -379,7 +381,7 @@ export const nlMessages = {
   "settings.backup.error.branchWhitespace": "Branch mag geen witruimte bevatten.",
   "settings.backup.error.autoBackupInterval": "Gebruik een interval van minimaal 1 minuut.",
   "settings.backup.error.localContent":
-    "Er bestaan al lokale skills of agents. Klik op vervangen om vanuit git te herstellen en de lokale bibliotheek te overschrijven.",
+    "Er bestaan al lokale skills, agents of tool-instructies. Klik op vervangen om vanuit git te herstellen en ze te overschrijven.",
   "settings.backup.error.restore": "Backup herstellen is mislukt.",
   "settings.backup.error.run": "Backup uitvoeren is mislukt.",
   "settings.backup.notification.synced.title": "Backup gesynchroniseerd",
@@ -463,4 +465,35 @@ export const nlMessages = {
   "onboarding.done": "Klaar",
   "onboarding.next": "Volgende",
   "onboarding.skip": "Tour overslaan",
+  "instructions.open": "Instructies van {tool} bewerken",
+  "instructions.title": "Instructies van {tool}",
+  "instructions.description":
+    "{tool} laadt deze bestanden aan het begin van elke sessie. Wijzigingen worden direct in de bestanden van {tool} opgeslagen.",
+  "instructions.close": "Instructies sluiten",
+  "instructions.overrideActive":
+    "{override} bestaat, dus {main} wordt genegeerd. Bewerk {override}, of verwijder het om {main} weer te gebruiken.",
+  "instructions.empty":
+    "Dit bestand is leeg. Schakel over naar bewerken om instructies toe te voegen.",
+  "instructions.notCreated": "Bestaat nog niet, opslaan zal het aanmaken.",
+  "instructions.loading": "Instructies laden",
+  "instructions.error.open": "De instructies konden niet worden geopend.",
+  "instructions.error.save": "De instructies konden niet worden opgeslagen.",
+  "instructions.error.createRule": "Het regelbestand kon niet worden aangemaakt.",
+  "instructions.notification.openTitle": "Instructies openen",
+  "instructions.rule.create.title": "Nieuw regelbestand",
+  "instructions.rule.create.description":
+    "Regelbestanden worden in elke sessie samen met de hoofdinstructies geladen.",
+  "instructions.rule.create.placeholder": "testen",
+  "instructions.changed.title": "Buiten Skillful gewijzigd",
+  "instructions.changed.description":
+    "Deze bestanden zijn op schijf gewijzigd nadat je ze opende, mogelijk door de tool zelf:",
+  "instructions.changed.overwrite": "Overschrijven",
+  "instructions.changed.reload": "Hun versie gebruiken",
+  "settings.tools.instructionsFile": "Instructiebestand",
+  "settings.tools.instructionsFileDescription":
+    "Wordt in elke sessie door de tool geladen. Laat leeg als de tool er geen heeft.",
+  "settings.tools.instructionsFilePlaceholder": "~/.tool/AGENTS.md",
+  "settings.tools.editInstructions": "Instructies bewerken",
+  "settings.backup.includeToolInstructions": "Tool-instructies (CLAUDE.md, AGENTS.md, ...)",
+  "settings.tools.error.instructionsMarkdown": "Gebruik een .md-bestand.",
 } satisfies Record<keyof typeof enMessages, string>;

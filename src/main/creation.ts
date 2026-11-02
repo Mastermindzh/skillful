@@ -90,7 +90,7 @@ function normalizeFileName(
   return fileName;
 }
 
-function normalizeMarkdownFileName(name: string) {
+export function normalizeMarkdownFileName(name: string) {
   return normalizeFileName(name, {
     defaultExtension: ".md",
     allowedExtensions: new Set([".md"]),

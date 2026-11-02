@@ -1,23 +1,27 @@
 import { Anchor, Group, Text } from "@mantine/core";
+import type { ReactNode } from "react";
 import { useAppTranslation } from "../../i18n/i18n";
 
-type LibraryItemFooterProps = {
+type EditorFooterProps = {
   absolutePath: string;
   dirtyCount: number;
-  installedToolCount: number;
-  repairToolCount: number;
-  blockedToolCount: number;
+  installedToolCount?: number;
+  repairToolCount?: number;
+  blockedToolCount?: number;
   onRevealPath: (absolutePath: string) => void;
+  /** Extra status shown right after the path. */
+  children?: ReactNode;
 };
 
-export function LibraryItemFooter({
+export function EditorFooter({
   absolutePath,
   dirtyCount,
-  installedToolCount,
-  repairToolCount,
-  blockedToolCount,
+  installedToolCount = 0,
+  repairToolCount = 0,
+  blockedToolCount = 0,
   onRevealPath,
-}: LibraryItemFooterProps) {
+  children,
+}: EditorFooterProps) {
   const { t } = useAppTranslation();
   return (
     <div className="detail-pane-footer">
@@ -33,6 +37,7 @@ export function LibraryItemFooter({
         >
           {absolutePath}
         </Anchor>
+        {children}
         {dirtyCount > 0 ? (
           <Text size="xs" c="ember.4">
             {t("footer.unsaved", { count: dirtyCount })}

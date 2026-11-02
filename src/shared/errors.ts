@@ -23,6 +23,7 @@ export type AppErrorCode =
   | "git-library-read-only"
   | "tool-install-conflict"
   | "tool-install-missing-root"
+  | "tool-instructions-changed"
   | "rename-relink-failed"
   | "unsaved-changes"
   | "internal";

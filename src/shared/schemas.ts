@@ -13,6 +13,8 @@ export const ToolConfigSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   installRoots: ToolInstallRootsSchema,
+  // Absent in settings written before instruction files existed; filled from the preset on load.
+  instructionsPath: z.string().optional(),
 });
 
 export const LibraryItemToolMappingSchema = z.object({
@@ -26,6 +28,8 @@ export const GitBackupConfigSchema = z.object({
   branch: z.string().default("main"),
   includeSettings: z.boolean().default(true),
   includeDefaultLibrary: z.boolean().default(true),
+  // Absent for backups configured before this option existed; resolved on load so those stay off.
+  includeToolInstructions: z.boolean().optional(),
   autoBackup: z.boolean().default(false),
   autoBackupIntervalMinutes: z.number().int().min(1).default(10),
 });
@@ -59,6 +63,7 @@ export const AppConfigSchema = z.object({
     branch: "main",
     includeSettings: true,
     includeDefaultLibrary: true,
+    includeToolInstructions: true,
     autoBackup: false,
     autoBackupIntervalMinutes: 10,
   }),

@@ -198,6 +198,9 @@ jobs:
       - build-macos
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download built artifacts
         uses: actions/download-artifact@v8
         with:
@@ -226,9 +229,13 @@ jobs:
           }
           NODE
 
+      - name: Extract release notes from CHANGELOG.md
+        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
+
       - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release-notes.md
           files: release-artifacts/*
 
   publish-aur:

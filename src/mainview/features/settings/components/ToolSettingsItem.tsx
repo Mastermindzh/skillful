@@ -1,5 +1,5 @@
 import { Accordion, Button, Group, Stack, Text, TextInput } from "@mantine/core";
-import { Minus, Undo2 } from "lucide-react";
+import { Minus, ScrollText, Undo2 } from "lucide-react";
 import type { Platform } from "../../../../shared/types";
 import { useAppTranslation } from "../../../i18n/i18n";
 import type { ToolRow, ToolRowIssue } from "../model/tools";
@@ -14,7 +14,7 @@ type ToolSettingsItemProps = {
   platform?: Platform;
   onChange: (
     id: string,
-    field: "name" | "skillInstallRoot" | "agentInstallRoot",
+    field: "name" | "skillInstallRoot" | "agentInstallRoot" | "instructionsPath",
     value: string
   ) => void;
   onPickInstallFolder: (
@@ -23,6 +23,7 @@ type ToolSettingsItemProps = {
   ) => Promise<string | null>;
   onRemove: (id: string) => void;
   onRestore: (id: string) => void;
+  onEditInstructions: (id: string) => void;
   tool: ToolRow;
 };
 
@@ -34,6 +35,7 @@ export function ToolSettingsItem({
   onPickInstallFolder,
   onRemove,
   onRestore,
+  onEditInstructions,
   tool,
 }: ToolSettingsItemProps) {
   const { t } = useAppTranslation();
@@ -90,6 +92,34 @@ export function ToolSettingsItem({
           />
           {issue?.agentInstallRoot || pending ? null : (
             <OtherPlatformPathNotice path={tool.agentInstallRoot} platform={platform} />
+          )}
+          <Group gap="xs" align="flex-end" wrap="nowrap">
+            <TextInput
+              className="tool-instructions-path-input"
+              style={{ flex: 1 }}
+              label={t("settings.tools.instructionsFile")}
+              description={t("settings.tools.instructionsFileDescription")}
+              placeholder={t("settings.tools.instructionsFilePlaceholder")}
+              value={tool.instructionsPath}
+              error={issue?.instructionsPath ? t(issue.instructionsPath) : undefined}
+              disabled={pending}
+              onDragOver={preventFileUriDrop}
+              onDrop={preventFileUriDrop}
+              onChange={(event) => onChange(tool.id, "instructionsPath", event.currentTarget.value)}
+            />
+            <Button
+              variant="light"
+              leftSection={<ScrollText size={16} />}
+              disabled={
+                pending || !tool.instructionsPath.trim() || Boolean(issue?.instructionsPath)
+              }
+              onClick={() => onEditInstructions(tool.id)}
+            >
+              {t("settings.tools.editInstructions")}
+            </Button>
+          </Group>
+          {issue?.instructionsPath || pending ? null : (
+            <OtherPlatformPathNotice path={tool.instructionsPath} platform={platform} />
           )}
           {issue?.installRoots && !pending ? (
             <Text size="sm" c="red.7">

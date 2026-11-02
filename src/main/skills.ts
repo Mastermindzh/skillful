@@ -5,6 +5,8 @@ import { AppError } from "../shared/errors";
 import { frontmatterMetadataWarningsForFiles } from "../shared/frontmatter";
 import type { ImportCollectionFromGitHubInput } from "../shared/githubImport";
 import { LIBRARY_ITEM_KINDS } from "../shared/library";
+import { AppConfigSchema } from "../shared/schemas";
+import { findToolOrThrow } from "../shared/tools";
 import type {
   AppConfig,
   CreateLibraryItemInput,
@@ -20,6 +22,7 @@ import type {
   LibraryItemSummary,
   LibraryItemToolMapping,
   MoveLibraryItemInput,
+  SaveToolInstructionsFileInput,
 } from "../shared/types";
 import {
   exportLibraryCollectionArchive,
@@ -48,6 +51,7 @@ import {
   initializeGitBackup,
   restoreGitBackup as restoreGitBackupFromGit,
   runGitBackup,
+  toolInstructionsSnapshotPath,
 } from "./git/backup";
 import { scanGitLibraryHostKey, trustGitLibraryHost } from "./git/hostKeys";
 import {
@@ -88,9 +92,18 @@ import {
   gitLibraryPath,
   loadSettingsOrDefaults,
   normalizeAppConfig,
+  normalizeToolConfigs,
   persistSettings,
   settingsFromConfig,
 } from "./settings";
+import {
+  applyToolInstructionsSnapshot,
+  createToolInstructionsRule,
+  readToolInstructions,
+  readToolInstructionsSnapshot,
+  saveToolInstructions,
+  toolInstructionsConflicts,
+} from "./toolInstructions";
 
 /**
  * Watcher events that arrive within this window after a local mutation completed
@@ -179,7 +192,10 @@ export class LibraryItemStore {
       ...this.config,
       gitBackup: gitBackupConfig,
     });
-    const result = await restoreGitBackupFromGit(config.gitBackup, mode);
+    const result = await restoreGitBackupFromGit(config.gitBackup, mode, {
+      toolInstructionConflicts: async ({ entries, remoteSettings }) =>
+        toolInstructionsConflicts(this.toolsForRestore(remoteSettings), entries),
+    });
     if (!result.restored) {
       throw new AppError("internal", result.message || "Backup restore failed.");
     }
@@ -193,7 +209,22 @@ export class LibraryItemStore {
           }
     );
     await this.persistConfig();
+    await applyToolInstructionsSnapshot(
+      this.config.tools,
+      await readToolInstructionsSnapshot(toolInstructionsSnapshotPath())
+    );
     return settingsFromConfig(this.config);
+  }
+
+  /** Tools from the backup's settings when it has them, so custom tools resolve before restore. */
+  private toolsForRestore(remoteSettings: string | null) {
+    if (!remoteSettings) return this.config.tools;
+    try {
+      const parsed = AppConfigSchema.safeParse(JSON.parse(remoteSettings));
+      return parsed.success ? normalizeToolConfigs(parsed.data.tools) : this.config.tools;
+    } catch {
+      return this.config.tools;
+    }
   }
 
   private async gitLibraryById(libraryId: string) {
@@ -420,8 +451,7 @@ export class LibraryItemStore {
   async installLibraryItemTool(itemId: string, toolId: string) {
     await this.ensureConfigLoaded();
     const libraryItem = this.getLibraryItemOrThrow(itemId);
-    const tool = this.config.tools.find((entry) => entry.id === toolId);
-    if (!tool) throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
+    const tool = findToolOrThrow(this.config.tools, toolId);
     if (installRootsForSkill(tool, libraryItem).length === 0) {
       throw new AppError(
         "tool-install-missing-root",
@@ -448,8 +478,7 @@ export class LibraryItemStore {
       await this.ensureConfigLoaded();
       const libraryItem = this.getLibraryItemOrThrow(itemId);
 
-      const tool = this.config.tools.find((entry) => entry.id === toolId);
-      if (!tool) throw new AppError("tool-not-found", `Tool not found: ${toolId}`);
+      const tool = findToolOrThrow(this.config.tools, toolId);
 
       const mappedToolIds =
         this.config.toolMappings.find((mapping) => mapping.itemId === itemId)?.toolIds ?? [];
@@ -468,6 +497,25 @@ export class LibraryItemStore {
       if (result !== null) return result;
       return this.installLibraryItemTool(itemId, toolId);
     });
+  }
+
+  async readToolInstructions(toolId: string) {
+    await this.ensureConfigLoaded();
+    return readToolInstructions(findToolOrThrow(this.config.tools, toolId));
+  }
+
+  async saveToolInstructions(
+    toolId: string,
+    files: SaveToolInstructionsFileInput[],
+    overwrite = false
+  ) {
+    await this.ensureConfigLoaded();
+    return saveToolInstructions(findToolOrThrow(this.config.tools, toolId), files, { overwrite });
+  }
+
+  async createToolInstructionsRule(toolId: string, name: string) {
+    await this.ensureConfigLoaded();
+    return createToolInstructionsRule(findToolOrThrow(this.config.tools, toolId), name);
   }
 
   /** Every scan root for the current config, including git library clones. */

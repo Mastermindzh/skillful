@@ -51,6 +51,7 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
       branch: "main",
       includeSettings: true,
       includeDefaultLibrary: true,
+      includeToolInstructions: true,
       autoBackup: false,
       autoBackupIntervalMinutes: 10,
     },
@@ -157,6 +158,7 @@ export function defaultFixture(): MockFixture {
             skill: ["/mock/home/.codex/skills"],
             agent: [],
           },
+          instructionsPath: "~/.codex/AGENTS.md",
         },
       ],
       toolMappings: [{ itemId: "skill-review-pr", toolIds: ["codex"] }],
@@ -229,5 +231,6 @@ export function createInitialState(): MockState {
     collections: normalizeCollections(fixture.collections ?? [], documents),
     documents,
     updateState: normalizeUpdateState(fixture.updateState),
+    toolInstructions: clone(fixture.toolInstructions ?? {}),
   };
 }

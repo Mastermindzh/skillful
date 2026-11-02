@@ -1,10 +1,11 @@
 import { ActionIcon, Badge, Group, Menu, Text, Title, Tooltip } from "@mantine/core";
-import { ChevronDown, Eye, Lock, Pencil, Save } from "lucide-react";
+import { ChevronDown, Lock, Save } from "lucide-react";
 import type { ReactNode } from "react";
 import type { EditorViewMode, LibraryItemFile, LibraryItemSummary } from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
 import { LibraryKindBadge } from "../library/LibraryKindBadge";
 import { visibleFileLabel } from "../skills/libraryItems";
+import { ViewModeToggle } from "./ViewModeToggle";
 
 type LibraryItemDetailsHeaderProps = {
   libraryItem: LibraryItemSummary;
@@ -38,7 +39,6 @@ export function LibraryItemDetailsHeader({
   actionsSlot,
 }: LibraryItemDetailsHeaderProps) {
   const { t } = useAppTranslation();
-  const toggleLabel = viewMode === "preview" ? t("details.edit") : t("details.preview");
   const saveCurrentLabel = t("details.saveFile", {
     file: activeFile ? visibleFileLabel(activeFile) : t("details.fileFallback"),
   });
@@ -79,18 +79,7 @@ export function LibraryItemDetailsHeader({
           </Tooltip>
         ) : null}
         {activeFile && !readOnly ? (
-          <Tooltip label={toggleLabel} withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="lg"
-              className="editor-view-toggle"
-              aria-label={toggleLabel}
-              onClick={() => onViewModeChange(viewMode === "preview" ? "edit" : "preview")}
-            >
-              {viewMode === "preview" ? <Pencil size={16} /> : <Eye size={16} />}
-            </ActionIcon>
-          </Tooltip>
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
         ) : null}
         {readOnly ? null : (
           <Group gap={0} wrap="nowrap" className="editor-save-split">

@@ -1,4 +1,4 @@
-import { isAbsolutePath } from "../../../../shared/paths";
+import { isAbsolutePath, isMarkdownPath } from "../../../../shared/paths";
 import { TOOL_PRESETS, type ToolPreset } from "../../../../shared/toolPresets";
 import type { ToolConfig } from "../../../../shared/types";
 import type { TranslationKey } from "../../../i18n/messages";
@@ -9,6 +9,7 @@ export type ToolRow = {
   name: string;
   skillInstallRoot: string;
   agentInstallRoot: string;
+  instructionsPath: string;
   /**
    * When true, the row is visibly marked for removal in the UI but still in the
    * editable list. The row is excluded from validation and from the saved tool
@@ -23,6 +24,7 @@ export type ToolRowIssue = {
   skillInstallRoot?: TranslationKey;
   agentInstallRoot?: TranslationKey;
   installRoots?: TranslationKey;
+  instructionsPath?: TranslationKey;
 };
 
 type ToolValidation = {
@@ -41,6 +43,7 @@ export function createToolRow(): ToolRow {
     name: "",
     skillInstallRoot: "",
     agentInstallRoot: "",
+    instructionsPath: "",
   };
 }
 
@@ -66,6 +69,7 @@ export function toolRowFromPreset(
     name: preset.name,
     skillInstallRoot: installRoots.skill,
     agentInstallRoot: installRoots.agent,
+    instructionsPath: preset.instructions?.file ?? "",
   };
 }
 
@@ -75,6 +79,7 @@ export function buildToolRows(tools: ToolConfig[]): ToolRow[] {
     name: tool.name,
     skillInstallRoot: tool.installRoots.skill[0] ?? "",
     agentInstallRoot: tool.installRoots.agent[0] ?? "",
+    instructionsPath: tool.instructionsPath,
   }));
 }
 
@@ -95,6 +100,7 @@ export function validateToolRows(rows: ToolRow[]): ToolValidation {
     const name = cleanedName(row.name);
     const skillInstallRoot = cleanPath(row.skillInstallRoot);
     const agentInstallRoot = cleanPath(row.agentInstallRoot);
+    const instructionsPath = cleanPath(row.instructionsPath);
     const hasInstallRoot = Boolean(skillInstallRoot || agentInstallRoot);
     const issue: ToolRowIssue = {};
 
@@ -119,6 +125,12 @@ export function validateToolRows(rows: ToolRow[]): ToolValidation {
       issue.agentInstallRoot = "settings.error.absolutePath";
     }
 
+    if (instructionsPath && !isAbsolutePath(instructionsPath)) {
+      issue.instructionsPath = "settings.error.absolutePath";
+    } else if (instructionsPath && !isMarkdownPath(instructionsPath)) {
+      issue.instructionsPath = "settings.tools.error.instructionsMarkdown";
+    }
+
     if (name) {
       const normalizedName = name.toLowerCase();
       if (seenNames.has(normalizedName)) {
@@ -127,7 +139,13 @@ export function validateToolRows(rows: ToolRow[]): ToolValidation {
       seenNames.add(normalizedName);
     }
 
-    if (issue.name || issue.installRoots || issue.skillInstallRoot || issue.agentInstallRoot) {
+    if (
+      issue.name ||
+      issue.installRoots ||
+      issue.skillInstallRoot ||
+      issue.agentInstallRoot ||
+      issue.instructionsPath
+    ) {
       byId[row.id] = issue;
       hasErrors = true;
       continue;
@@ -140,6 +158,7 @@ export function validateToolRows(rows: ToolRow[]): ToolValidation {
         skill: skillInstallRoot ? [skillInstallRoot] : [],
         agent: agentInstallRoot ? [agentInstallRoot] : [],
       },
+      instructionsPath,
     });
     byId[row.id] = null;
   }
@@ -156,6 +175,7 @@ export function sameTools(left: ToolConfig[], right: ToolConfig[]) {
     return (
       tool.id === other.id &&
       tool.name === other.name &&
+      tool.instructionsPath === other.instructionsPath &&
       tool.installRoots.skill.length === other.installRoots.skill.length &&
       tool.installRoots.agent.length === other.installRoots.agent.length &&
       tool.installRoots.skill.every(

@@ -9,6 +9,7 @@ describe("validateToolRows", () => {
         name: "opencode",
         skillInstallRoot: "/home/test/.config/opencode/skills",
         agentInstallRoot: "/home/test/.config/opencode/skills",
+        instructionsPath: "~/.config/opencode/AGENTS.md",
       },
     ]);
 
@@ -22,6 +23,7 @@ describe("validateToolRows", () => {
           skill: ["/home/test/.config/opencode/skills"],
           agent: ["/home/test/.config/opencode/skills"],
         },
+        instructionsPath: "~/.config/opencode/AGENTS.md",
       },
     ]);
   });
@@ -33,6 +35,7 @@ describe("validateToolRows", () => {
         name: "saved",
         skillInstallRoot: "/abs/skills",
         agentInstallRoot: "",
+        instructionsPath: "",
       },
       {
         // Pending row missing required fields would normally fail validation.
@@ -40,6 +43,7 @@ describe("validateToolRows", () => {
         name: "",
         skillInstallRoot: "",
         agentInstallRoot: "",
+        instructionsPath: "",
         pendingRemoval: true,
       },
     ]);
@@ -47,6 +51,39 @@ describe("validateToolRows", () => {
     expect(validation.hasErrors).toBe(false);
     expect(validation.byId.pending).toBeNull();
     expect(validation.tools.map((tool) => tool.id)).toEqual(["saved"]);
+  });
+
+  it("rejects a relative instructions file but allows none", () => {
+    const validation = validateToolRows([
+      {
+        id: "relative",
+        name: "relative",
+        skillInstallRoot: "/abs/skills",
+        agentInstallRoot: "",
+        instructionsPath: "CLAUDE.md",
+      },
+      {
+        id: "none",
+        name: "none",
+        skillInstallRoot: "/abs/other",
+        agentInstallRoot: "",
+        instructionsPath: "  ",
+      },
+    ]);
+
+    expect(validation.byId.relative?.instructionsPath).toBe("settings.error.absolutePath");
+    expect(
+      validateToolRows([
+        {
+          id: "shell",
+          name: "shell",
+          skillInstallRoot: "/abs/skills",
+          agentInstallRoot: "",
+          instructionsPath: "~/.bashrc",
+        },
+      ]).byId.shell?.instructionsPath
+    ).toBe("settings.tools.error.instructionsMarkdown");
+    expect(validation.byId.none).toBeNull();
   });
 });
 
@@ -58,6 +95,7 @@ describe("availableToolPresets", () => {
         name: "Claude Code",
         skillInstallRoot: "/abs/skills",
         agentInstallRoot: "",
+        instructionsPath: "",
         pendingRemoval: true,
       },
     ]).map((preset) => preset.id);

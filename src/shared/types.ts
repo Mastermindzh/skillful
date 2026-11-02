@@ -112,6 +112,37 @@ export interface ToolConfig {
   id: string;
   name: string;
   installRoots: Record<LibraryItemKind, string[]>;
+  /** Always-loaded user instructions file (CLAUDE.md, AGENTS.md, ...); "" when the tool has none. */
+  instructionsPath: string;
+}
+
+export type ToolInstructionsFileRole = "main" | "override" | "rule";
+
+export interface ToolInstructionsFile {
+  /** Relative to `ToolInstructionsDocument.directory`, e.g. `CLAUDE.md` or `rules/git.md`. */
+  relativePath: string;
+  absolutePath: string;
+  role: ToolInstructionsFileRole;
+  /** False for the main file until its first save. */
+  exists: boolean;
+  content: string;
+}
+
+export interface ToolInstructionsDocument {
+  toolId: string;
+  toolName: string;
+  /** Folder that holds the main instructions file. */
+  directory: string;
+  files: ToolInstructionsFile[];
+  /** Where new rule files go, relative to `directory`; null when the tool has no rules folder. */
+  rulesDirectory: string | null;
+}
+
+export interface SaveToolInstructionsFileInput {
+  relativePath: string;
+  content: string;
+  /** What the edit started from (null when the file did not exist yet), to detect outside edits. */
+  baseContent: string | null;
 }
 
 export type ToolInstallState = "not-installed" | "installed" | "unmanaged" | "broken" | "conflict";
@@ -138,6 +169,8 @@ export interface GitBackupConfig {
   branch: string;
   includeSettings: boolean;
   includeDefaultLibrary: boolean;
+  /** Snapshots each tool's instructions files into the backup and writes them back on restore. */
+  includeToolInstructions: boolean;
   autoBackup: boolean;
   autoBackupIntervalMinutes: number;
 }

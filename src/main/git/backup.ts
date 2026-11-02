@@ -13,6 +13,10 @@ import type {
 import { ensureDirectory, pathExists } from "../fs";
 import { settingsDirectory } from "../settings";
 import {
+  type ToolInstructionsSnapshotEntry,
+  writeToolInstructionsSnapshot,
+} from "../toolInstructions";
+import {
   classifyGitFailure,
   cleanBranch,
   GitCommandError,
@@ -24,7 +28,30 @@ import {
 
 const SETTINGS_GIT_PATH = "settings.json";
 const DEFAULT_LIBRARY_GIT_PATHS = ["skills", "agents"];
-const MANAGED_GIT_PATHS = [".gitignore", SETTINGS_GIT_PATH, ...DEFAULT_LIBRARY_GIT_PATHS];
+/** Copies of each tool's instruction files, which live outside the backup repository. */
+const TOOL_INSTRUCTIONS_GIT_PATH = "tool-instructions";
+const DIRECTORY_GIT_PATHS = [...DEFAULT_LIBRARY_GIT_PATHS, TOOL_INSTRUCTIONS_GIT_PATH];
+const MANAGED_GIT_PATHS = [
+  ".gitignore",
+  SETTINGS_GIT_PATH,
+  ...DEFAULT_LIBRARY_GIT_PATHS,
+  TOOL_INSTRUCTIONS_GIT_PATH,
+];
+
+export function toolInstructionsSnapshotPath() {
+  return path.join(settingsDirectory(), TOOL_INSTRUCTIONS_GIT_PATH);
+}
+
+export type RestoreGitBackupOptions = {
+  /**
+   * Returns local files that restoring `entries` would overwrite with different content. Runs
+   * after fetching and before anything is replaced, so a safe restore can still back out.
+   */
+  toolInstructionConflicts?: (input: {
+    entries: ToolInstructionsSnapshotEntry[];
+    remoteSettings: string | null;
+  }) => Promise<string[]>;
+};
 
 function disabledStatus(config: GitBackupConfig): GitBackupStatus {
   return {
@@ -82,6 +109,7 @@ function includedManagedGitPaths(config: GitBackupConfig) {
     ".gitignore",
     ...(config.includeSettings ? [SETTINGS_GIT_PATH] : []),
     ...(config.includeDefaultLibrary ? DEFAULT_LIBRARY_GIT_PATHS : []),
+    ...(config.includeToolInstructions ? [TOOL_INSTRUCTIONS_GIT_PATH] : []),
   ];
 }
 
@@ -89,11 +117,12 @@ function excludedManagedGitPaths(config: GitBackupConfig) {
   return [
     ...(!config.includeSettings ? [SETTINGS_GIT_PATH] : []),
     ...(!config.includeDefaultLibrary ? DEFAULT_LIBRARY_GIT_PATHS : []),
+    ...(!config.includeToolInstructions ? [TOOL_INSTRUCTIONS_GIT_PATH] : []),
   ];
 }
 
 function gitIgnoreUnignorePatterns(managedPath: string) {
-  if (DEFAULT_LIBRARY_GIT_PATHS.includes(managedPath)) {
+  if (DIRECTORY_GIT_PATHS.includes(managedPath)) {
     return [`!/${managedPath}/`, `!/${managedPath}/**`];
   }
   return [`!/${managedPath}`];
@@ -110,6 +139,11 @@ async function writeGitIgnore(config: GitBackupConfig) {
 
 async function writeBackupSnapshot(config: AppConfig) {
   await writeGitIgnore(config.gitBackup);
+  if (config.gitBackup.includeToolInstructions) {
+    await writeToolInstructionsSnapshot(config.tools, toolInstructionsSnapshotPath());
+  } else {
+    await rm(toolInstructionsSnapshotPath(), { recursive: true, force: true });
+  }
 }
 
 async function managedGitPathspecs(config: GitBackupConfig) {
@@ -224,6 +258,25 @@ async function remoteManagedPaths(branch: string) {
     .filter(Boolean);
 }
 
+async function remoteFile(branch: string, relativePath: string) {
+  const result = await runGit(["show", `origin/${branch}:${relativePath}`], settingsDirectory());
+  return result.stdout;
+}
+
+async function remoteToolInstructionEntries(branch: string, restoredPaths: string[]) {
+  const entries: ToolInstructionsSnapshotEntry[] = [];
+  for (const restoredPath of restoredPaths) {
+    const [root, toolId, ...rest] = restoredPath.split("/");
+    if (root !== TOOL_INSTRUCTIONS_GIT_PATH || !toolId || rest.length === 0) continue;
+    entries.push({
+      toolId,
+      relativePath: rest.join("/"),
+      content: await remoteFile(branch, restoredPath),
+    });
+  }
+  return entries;
+}
+
 function managedRestorePaths(restoredPaths: string[]) {
   return MANAGED_GIT_PATHS.filter((managedPath) =>
     restoredPaths.some((entry) => entry === managedPath || entry.startsWith(`${managedPath}/`))
@@ -286,7 +339,8 @@ export async function initializeGitBackup(config: GitBackupConfig): Promise<GitB
 
 export async function restoreGitBackup(
   config: GitBackupConfig,
-  mode: GitBackupRestoreMode
+  mode: GitBackupRestoreMode,
+  options: RestoreGitBackupOptions = {}
 ): Promise<GitBackupRestoreResult> {
   const invalid = validateConfiguredBackup(config);
   if (invalid) {
@@ -333,6 +387,22 @@ export async function restoreGitBackup(
         "git-restore-invalid-remote",
         "The selected branch does not look like a Skillful backup."
       );
+    }
+
+    if (mode !== "replace" && options.toolInstructionConflicts) {
+      const conflicts = await options.toolInstructionConflicts({
+        entries: await remoteToolInstructionEntries(branch, restoredPaths),
+        remoteSettings: restoredPaths.includes(SETTINGS_GIT_PATH)
+          ? await remoteFile(branch, SETTINGS_GIT_PATH)
+          : null,
+      });
+      if (conflicts.length > 0) {
+        throw new AppError(
+          "git-restore-local-content",
+          "Local tool instructions differ from the backup. Confirm before replacing them.",
+          { paths: conflicts }
+        );
+      }
     }
 
     await removeManagedRestoreTargets();

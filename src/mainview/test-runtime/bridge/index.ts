@@ -8,6 +8,7 @@ import { collectionRequests } from "./requests/collections";
 import { fileRequests } from "./requests/files";
 import { itemRequests } from "./requests/items";
 import { settingsRequests } from "./requests/settings";
+import { toolInstructionRequests } from "./requests/toolInstructions";
 import { toolRequests } from "./requests/tools";
 import { updateRequests } from "./requests/updates";
 
@@ -18,6 +19,7 @@ export const appRpc = {
     ...collectionRequests,
     ...fileRequests,
     ...toolRequests,
+    ...toolInstructionRequests,
     ...updateRequests,
   },
 };

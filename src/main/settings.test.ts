@@ -11,6 +11,7 @@ import {
   gitLibraryAvailable,
   gitLibraryPath,
   loadSavedSettings,
+  normalizeGitBackupConfig,
   normalizeGitLibraries,
   normalizeToolConfigs,
   persistSettings,
@@ -122,6 +123,7 @@ describe("loadSavedSettings", () => {
             skill: [codexRoot],
             agent: [],
           },
+          instructionsPath: "~/.codex/AGENTS.md",
         },
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
@@ -148,6 +150,7 @@ describe("loadSavedSettings", () => {
             skill: [codexRoot],
             agent: [],
           },
+          instructionsPath: "~/.codex/AGENTS.md",
         },
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
@@ -209,8 +212,82 @@ describe("normalizeToolConfigs", () => {
           skill: ["/home/test/.config/opencode/skills"],
           agent: ["/home/test/.config/opencode/skills"],
         },
+        instructionsPath: "~/.config/opencode/AGENTS.md",
       },
     ]);
+  });
+
+  it("fills a preset's instructions file only when the setting is absent", () => {
+    const installRoots = { skill: ["/abs/skills"], agent: [] };
+    const [legacyPreset, clearedPreset, custom] = normalizeToolConfigs([
+      { id: "claude-code", name: "Claude Code", installRoots },
+      { id: "codex", name: "Codex", installRoots, instructionsPath: "" },
+      { id: "custom", name: "Custom", installRoots },
+    ]);
+
+    expect(legacyPreset.instructionsPath).toBe("~/.claude/CLAUDE.md");
+    expect(clearedPreset.instructionsPath).toBe("");
+    expect(custom.instructionsPath).toBe("");
+  });
+
+  it("rejects an instructions file that is not markdown", () => {
+    expect(() =>
+      normalizeToolConfigs([
+        {
+          id: "claude-code",
+          name: "Claude Code",
+          installRoots: { skill: ["/abs/skills"], agent: [] },
+          instructionsPath: "~/.bashrc",
+        },
+      ])
+    ).toThrow(AppError);
+  });
+
+  it("rejects a relative instructions file", () => {
+    expect(() =>
+      normalizeToolConfigs([
+        {
+          id: "custom",
+          name: "Custom",
+          installRoots: { skill: ["/abs/skills"], agent: [] },
+          instructionsPath: "CLAUDE.md",
+        },
+      ])
+    ).toThrow(AppError);
+  });
+});
+
+describe("normalizeGitBackupConfig", () => {
+  const backup = defaultGitBackupConfig();
+
+  it("keeps tool instructions out of backups configured before the option existed", () => {
+    const { includeToolInstructions: _omitted, ...stored } = {
+      ...backup,
+      enabled: true,
+      remoteUrl: "git@example.com:me/backup.git",
+    };
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(false);
+  });
+
+  it("keeps tool instructions out of a paused backup that already has a remote", () => {
+    const { includeToolInstructions: _omitted, ...stored } = {
+      ...backup,
+      enabled: false,
+      remoteUrl: "git@example.com:me/backup.git",
+    };
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(false);
+  });
+
+  it("includes tool instructions for backups that are not set up yet", () => {
+    const { includeToolInstructions: _omitted, ...stored } = backup;
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(true);
+  });
+
+  it("respects an explicit choice", () => {
+    expect(
+      normalizeGitBackupConfig({ ...backup, includeToolInstructions: false })
+        .includeToolInstructions
+    ).toBe(false);
   });
 });
 

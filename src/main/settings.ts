@@ -1,11 +1,16 @@
 import { homedir } from "node:os";
 import path from "node:path";
 import type { Options as ElectronStoreOptions } from "electron-store";
+import type { z } from "zod";
 import { AppError } from "../shared/errors";
 import { LIBRARY_ITEM_KINDS } from "../shared/library";
-import { isAbsolutePath, isHomePath } from "../shared/paths";
-import { AppConfigSchema } from "../shared/schemas";
-import { presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
+import { isAbsolutePath, isHomePath, isMarkdownPath } from "../shared/paths";
+import {
+  AppConfigSchema,
+  type GitBackupConfigSchema,
+  type ToolConfigSchema,
+} from "../shared/schemas";
+import { presetInstructionsPath, presetToolConfig, TOOL_PRESETS } from "../shared/toolPresets";
 import type {
   AppConfig,
   AppSettings,
@@ -40,6 +45,7 @@ export function defaultGitBackupConfig(): GitBackupConfig {
     branch: "main",
     includeSettings: true,
     includeDefaultLibrary: true,
+    includeToolInstructions: true,
     autoBackup: false,
     autoBackupIntervalMinutes: 10,
   };
@@ -175,12 +181,26 @@ function flatInstallRoots(tool: ToolConfig) {
   return [...tool.installRoots.skill, ...tool.installRoots.agent];
 }
 
+/** Tool config as read from disk, before defaults are filled in. */
+type StoredToolConfig = z.infer<typeof ToolConfigSchema>;
+
+function normalizeInstructionsPath(tool: StoredToolConfig, name: string) {
+  const instructionsPath = (tool.instructionsPath ?? presetInstructionsPath(tool.id.trim())).trim();
+  if (instructionsPath && !isAbsolutePath(instructionsPath)) {
+    throw new AppError("invalid-path", `Instructions file must be absolute: ${name}`);
+  }
+  if (instructionsPath && !isMarkdownPath(instructionsPath)) {
+    throw new AppError("invalid-path", `Instructions file must be a .md file: ${name}`);
+  }
+  return instructionsPath;
+}
+
 /**
  * Normalizes persisted tool config and enforces the invariants the install layer depends on:
  * stable ids and unique names. Install folders may overlap because some tools intentionally
  * use the same destination for skills and agents.
  */
-export function normalizeToolConfigs(tools: ToolConfig[]) {
+export function normalizeToolConfigs(tools: StoredToolConfig[]): ToolConfig[] {
   const toolIds = new Set<string>();
   const toolNames = new Set<string>();
 
@@ -189,6 +209,7 @@ export function normalizeToolConfigs(tools: ToolConfig[]) {
       id: tool.id.trim(),
       name: normalizeToolName(tool.name),
       installRoots: normalizeToolInstallRoots(tool),
+      instructionsPath: normalizeInstructionsPath(tool, tool.name),
     }))
     .filter((tool) => tool.id && tool.name && flatInstallRoots(tool).length > 0)
     .map((tool) => {
@@ -282,6 +303,20 @@ export function normalizeGitLibraries(gitLibraries: GitLibraryConfig[]) {
     });
 }
 
+/** Backup config as read from disk, before defaults are filled in. */
+type StoredGitBackupConfig = z.infer<typeof GitBackupConfigSchema>;
+
+/**
+ * Backups that already have a remote (even a paused one) keep tool instructions out, so an upgrade
+ * never starts pushing personal instruction files to a remote set up before the option existed.
+ */
+export function normalizeGitBackupConfig(config: StoredGitBackupConfig): GitBackupConfig {
+  return {
+    ...config,
+    includeToolInstructions: config.includeToolInstructions ?? !config.remoteUrl.trim(),
+  };
+}
+
 export function normalizeAppConfig(config: AppConfig): AppConfig {
   const scanRoots = normalizeConfiguredScanRoots(config.scanRoots);
   const tools = normalizeToolConfigs(config.tools);
@@ -292,6 +327,7 @@ export function normalizeAppConfig(config: AppConfig): AppConfig {
     scanRoots,
     tools,
     toolMappings: normalizeToolMappings(config.toolMappings, tools),
+    gitBackup: normalizeGitBackupConfig(config.gitBackup),
     gitLibraries,
     // Timestamps for removed libraries would otherwise accumulate forever.
     gitLibrarySyncedAt: Object.fromEntries(
@@ -401,7 +437,7 @@ export async function loadSavedSettings(): Promise<AppConfig | null> {
     language: validated.data.language,
     defaultEditorMode: validated.data.defaultEditorMode,
     onboardingTourCompleted: validated.data.onboardingTourCompleted,
-    gitBackup: validated.data.gitBackup,
+    gitBackup: normalizeGitBackupConfig(validated.data.gitBackup),
     gitLibraries: normalizeGitLibraries(validated.data.gitLibraries),
   };
 }
