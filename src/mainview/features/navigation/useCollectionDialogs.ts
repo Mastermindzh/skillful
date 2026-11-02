@@ -1,5 +1,5 @@
-import { appRpc } from "@mainview-bridge";
-import { useCallback, useState } from "react";
+import { appRpc, onAppMessage } from "@mainview-bridge";
+import { useCallback, useEffect, useState } from "react";
 import type { GitHubImportDraft } from "../../../shared/githubImport";
 import type { LibraryItemCollectionSummary } from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
@@ -66,6 +66,9 @@ export function useCollectionDialogs({
     setImportCollectionDraft(isGitHubImportDraft(draft) ? draft : null);
     setImportCollectionModalOpen(true);
   }, []);
+
+  // `skillful://import` deep links open the import dialog prefilled with the GitHub source.
+  useEffect(() => onAppMessage("githubImportRequested", openImportModal), [openImportModal]);
 
   const requestRename = useCallback((collection: CollectionTarget) => {
     setRenameCollectionError(null);

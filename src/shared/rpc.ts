@@ -9,6 +9,8 @@ import type {
   GitBackupConfig,
   GitBackupRestoreMode,
   GitBackupResult,
+  GitLibraryHostKey,
+  GitLibrarySyncResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemCollectionSummary,
@@ -16,6 +18,8 @@ import type {
   LibraryItemSummary,
   LibraryItemToolStatus,
   MoveLibraryItemInput,
+  SaveToolInstructionsFileInput,
+  ToolInstructionsDocument,
 } from "./types";
 import type { AppUpdateState, UpdateStatusEntry } from "./updates";
 
@@ -75,6 +79,34 @@ export type AppRPC = {
       restoreGitBackup: {
         params: { gitBackup: GitBackupConfig; mode: GitBackupRestoreMode };
         response: AppSettings;
+      };
+      getGitLibraryStatuses: {
+        params: undefined;
+        response: GitLibrarySyncResult[];
+      };
+      syncGitLibrary: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      syncAllGitLibraries: {
+        params: undefined;
+        response: GitLibrarySyncResult[];
+      };
+      pushGitLibraryChanges: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      discardGitLibraryChanges: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      scanGitLibraryHostKey: {
+        params: { host: string };
+        response: GitLibraryHostKey | null;
+      };
+      trustGitLibraryHost: {
+        params: { hostKey: GitLibraryHostKey };
+        response: undefined;
       };
       importCollection: {
         params: ImportCollectionFromPathInput;
@@ -190,6 +222,23 @@ export type AppRPC = {
         params: { itemId: string; toolId: string };
         response: AppSettings;
       };
+      readToolInstructions: {
+        params: { toolId: string };
+        response: ToolInstructionsDocument;
+      };
+      saveToolInstructions: {
+        params: {
+          toolId: string;
+          files: SaveToolInstructionsFileInput[];
+          /** Skips the changed-on-disk check after the user chose to overwrite. */
+          overwrite?: boolean;
+        };
+        response: ToolInstructionsDocument;
+      };
+      createToolInstructionsRule: {
+        params: { toolId: string; name: string };
+        response: { document: ToolInstructionsDocument; relativePath: string };
+      };
       getUpdateState: {
         params: undefined;
         response: AppUpdateState;
@@ -215,6 +264,7 @@ export type AppRPC = {
       githubImportRequested: GitHubImportDraft;
       updateStatusChanged: UpdateStatusEntry;
       autoGitBackupCompleted: GitBackupResult;
+      gitLibrarySynced: GitLibrarySyncResult;
     };
   };
   webview: {

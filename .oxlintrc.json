@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "jsx-a11y", "oxc", "import", "unicorn"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error",
+    "react/no-array-index-key": "error",
+    "react/jsx-curly-brace-presence": "error",
+    "react/rules-of-hooks": "error",
+    "react/preserve-manual-memoization": "off",
+    "react/incompatible-library": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
+  }
+}

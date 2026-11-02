@@ -32,7 +32,8 @@ truth. Keep changes small and aligned with the existing architecture.
 
 ## Tool installs
 
-- All tool install destinations are defined in `src/shared/toolPresets.ts`.
+- All tool install destinations and default instruction files (`CLAUDE.md`,
+  `AGENTS.md`, ...) are defined in `src/shared/toolPresets.ts`.
   Add new tools there with a preset; do not add `if (tool === "...")`
   branches scattered through install code.
 - Installs must not duplicate the source library — they reference or link
@@ -52,6 +53,7 @@ Skillful is intentionally narrow:
 
 - folder-based skills (`SKILL.md`) and agents (`AGENT.md`)
 - collections as content groups, tools as install destinations
+- a tool's own instruction files, edited in place (never copied or linked)
 - offline, no account, no cloud storage, no proprietary database
 
 Do NOT add: cloud sync, accounts, telemetry, a built-in chat UI, or features
@@ -60,7 +62,8 @@ duplicates functionality of the AI tools Skillful installs into.
 
 ## Code standards
 
-- Indent with 2 spaces. Biome is the formatter/linter; respect `biome.json`.
+- Indent with 2 spaces. oxfmt is the formatter and oxlint the linter; respect
+  `.oxfmtrc.json` and `.oxlintrc.json`.
 - Prefer Mantine components over rebuilding primitives.
 - Keep filesystem helpers in `src/main/`, not in UI components.
 - Add or update tests for user-facing behavior changes

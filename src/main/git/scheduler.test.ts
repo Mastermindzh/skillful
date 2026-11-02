@@ -9,6 +9,7 @@ function config(overrides: Partial<GitBackupConfig> = {}): GitBackupConfig {
     branch: "main",
     includeSettings: true,
     includeDefaultLibrary: true,
+    includeToolInstructions: true,
     autoBackup: true,
     autoBackupIntervalMinutes: 10,
     ...overrides,

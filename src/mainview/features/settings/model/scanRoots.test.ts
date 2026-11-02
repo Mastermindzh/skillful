@@ -13,4 +13,11 @@ describe("validateScanRootRows", () => {
     expect(validation.byId.pending).toBeNull();
     expect(validation.cleanedRoots).toEqual(["/abs/saved"]);
   });
+
+  it("accepts home paths", () => {
+    const validation = validateScanRootRows([{ id: "home", path: "~/skills/" }]);
+
+    expect(validation.hasErrors).toBe(false);
+    expect(validation.cleanedRoots).toEqual(["~/skills"]);
+  });
 });

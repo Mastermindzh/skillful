@@ -134,7 +134,7 @@ jobs:
           snapcraft upload --release=stable release/*.snap
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-${{ matrix.artifact_name }}
           path: release/*
@@ -159,7 +159,7 @@ jobs:
         run: bun run dist:win
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-windows
           path: release/*
@@ -184,7 +184,7 @@ jobs:
         run: bun run dist:mac
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skillful-macos
           path: release/*
@@ -198,8 +198,11 @@ jobs:
       - build-macos
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download built artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-artifacts
           merge-multiple: true
@@ -226,9 +229,13 @@ jobs:
           }
           NODE
 
+      - name: Extract release notes from CHANGELOG.md
+        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
+
       - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release-notes.md
           files: release-artifacts/*
 
   publish-aur:

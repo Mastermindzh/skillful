@@ -1,6 +1,6 @@
-import { Tabs } from "@mantine/core";
+import { Alert, Tabs } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { frontmatterMetadataWarningsForFiles } from "../../../shared/frontmatter";
 import type { EditorViewMode } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
@@ -8,31 +8,28 @@ import { useAppTranslation } from "../../i18n/i18n";
 import { countToolStatuses } from "../tools/status";
 import { ToolStatusPanel } from "../tools/ToolStatusPanel";
 import { AdditionalFilesPanel } from "./AdditionalFilesPanel";
-import { CreateLibraryItemFileModal } from "./CreateLibraryItemFileModal";
 import { ADDITIONAL_FILES_TAB } from "./constants";
+import { CreateMarkdownFileModal } from "./CreateMarkdownFileModal";
 import { DeleteLibraryItemFileDialog } from "./DeleteLibraryItemFileDialog";
+import { EditorFooter } from "./EditorFooter";
+import { FileContentPanel } from "./FileContentPanel";
 import { LibraryItemDetailsHeader } from "./LibraryItemDetailsHeader";
-import { LibraryItemFooter } from "./LibraryItemFooter";
 import { LibraryItemTabsBar } from "./LibraryItemTabsBar";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { MetadataWarningPanel } from "./MetadataWarningPanel";
 import { RenameLibraryItemFileModal } from "./RenameLibraryItemFileModal";
 import type { LibraryItemDetailsProps } from "./types";
 import { useLibraryItemFileActions } from "./useLibraryItemFileActions";
 
-const LibraryItemCodeEditor = lazy(async () => {
-  const module = await import("./LibraryItemCodeEditor");
-  return { default: module.LibraryItemCodeEditor };
-});
-
 export function LibraryItemDetails({
   document,
   collectionTitle,
+  readOnly,
   activeRelativePath,
   onActiveRelativePathChange,
   drafts,
   onDraftChange,
-  viewModeIntent,
+  viewMode,
+  onViewModeChange,
   saveState,
   tooling,
   fileActions,
@@ -40,7 +37,7 @@ export function LibraryItemDetails({
 }: LibraryItemDetailsProps) {
   const { t } = useAppTranslation();
   const compactActions = useMediaQuery("(max-width: 1280px)");
-  const [viewMode, setViewMode] = useState<EditorViewMode>("preview");
+  const effectiveViewMode: EditorViewMode = readOnly ? "preview" : viewMode;
   const activeFile =
     document?.files.find((file) => file.relativePath === activeRelativePath) ??
     (activeRelativePath ? null : (document?.files[0] ?? null));
@@ -79,13 +76,8 @@ export function LibraryItemDetails({
     fileActions,
     onActiveRelativePathChange,
     saving: saveState.saving,
+    readOnly,
   });
-
-  useEffect(() => {
-    const { mode, token } = viewModeIntent;
-    void token;
-    setViewMode(mode);
-  }, [viewModeIntent]);
 
   return (
     <section className="split-pane detail-pane" data-tour="details-pane">
@@ -97,8 +89,9 @@ export function LibraryItemDetails({
                 libraryItem={document.item}
                 collectionTitle={collectionTitle}
                 activeFile={activeFile}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
+                readOnly={readOnly}
+                viewMode={effectiveViewMode}
+                onViewModeChange={onViewModeChange}
                 compactActions={compactActions}
                 saving={saveState.saving}
                 canSaveCurrent={saveState.canSaveCurrent}
@@ -121,6 +114,12 @@ export function LibraryItemDetails({
 
               <MetadataWarningPanel warnings={metadataWarnings} />
 
+              {saveState.errorMessage ? (
+                <Alert color="red" variant="light" mt="xs" role="alert">
+                  {saveState.errorMessage}
+                </Alert>
+              ) : null}
+
               <div className="detail-pane-content">
                 <Tabs
                   value={activeRelativePath}
@@ -136,37 +135,16 @@ export function LibraryItemDetails({
                   />
 
                   {activeFile ? (
-                    <Tabs.Panel
+                    <FileContentPanel
                       key={activeFile.relativePath}
-                      value={activeFile.relativePath}
-                      pt="sm"
-                      className="editor-panel"
-                    >
-                      <div className="editor-panel-body">
-                        {viewMode === "preview" ? (
-                          <MarkdownPreview
-                            value={drafts[activeFile.relativePath] ?? activeFile.content}
-                          />
-                        ) : (
-                          <Suspense
-                            fallback={
-                              <div className="editor-field editor-loading" aria-live="polite">
-                                {t("details.loadingEditor")}
-                              </div>
-                            }
-                          >
-                            <LibraryItemCodeEditor
-                              documentId={document.item.id}
-                              filePath={activeFile.relativePath}
-                              value={drafts[activeFile.relativePath] ?? activeFile.content}
-                              onChange={(value) => onDraftChange(activeFile.relativePath, value)}
-                              onSave={saveState.onSaveCurrent}
-                              editorRef={editorRef}
-                            />
-                          </Suspense>
-                        )}
-                      </div>
-                    </Tabs.Panel>
+                      documentId={document.item.id}
+                      filePath={activeFile.relativePath}
+                      value={drafts[activeFile.relativePath] ?? activeFile.content}
+                      viewMode={effectiveViewMode}
+                      onChange={(value) => onDraftChange(activeFile.relativePath, value)}
+                      onSave={saveState.onSaveCurrent}
+                      editorRef={editorRef}
+                    />
                   ) : null}
                   <Tabs.Panel
                     value={ADDITIONAL_FILES_TAB}
@@ -183,7 +161,7 @@ export function LibraryItemDetails({
               </div>
             </div>
             {activeFile ? (
-              <LibraryItemFooter
+              <EditorFooter
                 absolutePath={activeFile.absolutePath}
                 dirtyCount={dirtyFiles.length}
                 installedToolCount={toolStatusCounts.installed}
@@ -195,7 +173,7 @@ export function LibraryItemDetails({
               />
             ) : null}
           </div>
-          <CreateLibraryItemFileModal
+          <CreateMarkdownFileModal
             opened={fileUi.createFileDialog.opened}
             saving={saveState.saving}
             errorMessage={fileUi.createFileDialog.errorMessage}

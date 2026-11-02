@@ -90,7 +90,7 @@ function normalizeFileName(
   return fileName;
 }
 
-function normalizeMarkdownFileName(name: string) {
+export function normalizeMarkdownFileName(name: string) {
   return normalizeFileName(name, {
     defaultExtension: ".md",
     allowedExtensions: new Set([".md"]),
@@ -116,7 +116,7 @@ function normalizeAdditionalFileName(relativePath: string, name: string) {
   );
 }
 
-async function resolveWritableCollectionPath(
+export async function resolveWritableCollectionPath(
   scanRoots: string[],
   kind: LibraryItemKind,
   collectionId: string

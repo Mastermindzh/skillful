@@ -4,8 +4,10 @@ import type { LibraryItemAdditionalFile, LibraryItemFile } from "../../../shared
 import { useAppTranslation } from "../../i18n/i18n";
 import { visibleFileLabel } from "../skills/libraryItems";
 import { ADDITIONAL_FILES_TAB } from "./constants";
+import { FileTab } from "./FileTab";
 
 type CurrentFileActions = {
+  canCreate: boolean;
   canManage: boolean;
   onCreate: () => void;
   onRename: () => void;
@@ -32,18 +34,12 @@ export function LibraryItemTabsBar({
       <Tabs.List>
         <Scroller className="file-tabs-scroller">
           {files.map((file) => (
-            <Tabs.Tab
+            <FileTab
               key={file.relativePath}
               value={file.relativePath}
-              className="file-tab"
-              classNames={{ tabLabel: "file-tab-label-slot", tabSection: "file-tab-section" }}
-              title={visibleFileLabel(file)}
-              rightSection={
-                dirtyRelativePaths.has(file.relativePath) ? <span className="dirty-dot" /> : null
-              }
-            >
-              <span className="file-tab-label">{visibleFileLabel(file)}</span>
-            </Tabs.Tab>
+              label={visibleFileLabel(file)}
+              dirty={dirtyRelativePaths.has(file.relativePath)}
+            />
           ))}
           <Tabs.Tab
             value={ADDITIONAL_FILES_TAB}
@@ -63,6 +59,7 @@ export function LibraryItemTabsBar({
         variant="subtle"
         size="sm"
         aria-label={t("file.create.ariaLabel")}
+        disabled={!currentFileActions.canCreate}
         onClick={currentFileActions.onCreate}
       >
         <Plus size={15} />

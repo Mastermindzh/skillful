@@ -19,6 +19,8 @@ export type Platform =
 export interface LibraryItemCollectionSummary {
   id: string;
   title: string;
+  /** Set when the folder a new item would land in sits inside a git library clone. */
+  sourceLibraryId?: string;
 }
 
 export interface DeleteCollectionResult {
@@ -78,6 +80,8 @@ export interface LibraryItemSummary {
   rootPath: string;
   entryPath: string;
   supportingFiles: string[];
+  /** Set when the item was discovered inside a git library clone. */
+  sourceLibraryId?: string;
 }
 
 export interface LibraryItemFile {
@@ -108,6 +112,37 @@ export interface ToolConfig {
   id: string;
   name: string;
   installRoots: Record<LibraryItemKind, string[]>;
+  /** Always-loaded user instructions file (CLAUDE.md, AGENTS.md, ...); "" when the tool has none. */
+  instructionsPath: string;
+}
+
+export type ToolInstructionsFileRole = "main" | "override" | "rule";
+
+export interface ToolInstructionsFile {
+  /** Relative to `ToolInstructionsDocument.directory`, e.g. `CLAUDE.md` or `rules/git.md`. */
+  relativePath: string;
+  absolutePath: string;
+  role: ToolInstructionsFileRole;
+  /** False for the main file until its first save. */
+  exists: boolean;
+  content: string;
+}
+
+export interface ToolInstructionsDocument {
+  toolId: string;
+  toolName: string;
+  /** Folder that holds the main instructions file. */
+  directory: string;
+  files: ToolInstructionsFile[];
+  /** Where new rule files go, relative to `directory`; null when the tool has no rules folder. */
+  rulesDirectory: string | null;
+}
+
+export interface SaveToolInstructionsFileInput {
+  relativePath: string;
+  content: string;
+  /** What the edit started from (null when the file did not exist yet), to detect outside edits. */
+  baseContent: string | null;
 }
 
 export type ToolInstallState = "not-installed" | "installed" | "unmanaged" | "broken" | "conflict";
@@ -134,6 +169,8 @@ export interface GitBackupConfig {
   branch: string;
   includeSettings: boolean;
   includeDefaultLibrary: boolean;
+  /** Snapshots each tool's instructions files into the backup and writes them back on restore. */
+  includeToolInstructions: boolean;
   autoBackup: boolean;
   autoBackupIntervalMinutes: number;
 }
@@ -171,6 +208,68 @@ export interface GitBackupRestoreResult extends GitBackupStatus {
   restoredPaths: string[];
 }
 
+/**
+ * `pull` fast-forwards from the remote and never pushes on its own; local edits are kept and
+ * surfaced so the user can push them deliberately. `two-way` commits and pushes local edits as
+ * part of every sync.
+ */
+export type GitLibrarySyncMode = "pull" | "two-way";
+
+export interface GitLibraryConfig {
+  id: string;
+  name: string;
+  remoteUrl: string;
+  branch: string;
+  /** Absolute clone destination, or empty to use the managed default location. */
+  path: string;
+  syncMode: GitLibrarySyncMode;
+  autoSync: boolean;
+  syncIntervalMinutes: number;
+  /** Blocks Skillful's own writes into this clone so the remote stays the only author. */
+  readOnly: boolean;
+}
+
+export type GitLibrarySyncState =
+  | "not-cloned"
+  | "up-to-date"
+  | "updated"
+  | "local-changes"
+  | "diverged"
+  | "missing-git"
+  | "not-configured"
+  | "auth-failed"
+  | "host-key-unverified"
+  | "remote-unreachable"
+  | "error";
+
+export interface GitLibraryChange {
+  relativePath: string;
+  status: string;
+}
+
+export interface GitLibrarySyncResult {
+  libraryId: string;
+  state: GitLibrarySyncState;
+  path: string;
+  remoteUrl: string;
+  branch: string;
+  cloned: boolean;
+  pulled: boolean;
+  pushed: boolean;
+  localChanges: GitLibraryChange[];
+  /** Set when `state` is `host-key-unverified` so the UI can offer to trust the host. */
+  host?: string;
+  lastCommit?: string;
+  syncedAt?: string;
+  message?: string;
+}
+
+export interface GitLibraryHostKey {
+  host: string;
+  keyType: string;
+  fingerprint: string;
+}
+
 export interface AppConfig {
   scanRoots: string[];
   tools: ToolConfig[];
@@ -181,6 +280,9 @@ export interface AppConfig {
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;
   gitBackup: GitBackupConfig;
+  gitLibraries: GitLibraryConfig[];
+  /** Written by the sync layer, not the settings form; keyed by git library id. */
+  gitLibrarySyncedAt?: Record<string, string>;
 }
 
 export interface AppSettings {
@@ -197,4 +299,10 @@ export interface AppSettings {
   defaultEditorMode: EditorViewMode;
   onboardingTourCompleted: boolean;
   gitBackup: GitBackupConfig;
+  gitLibraries: GitLibraryConfig[];
+  /** Effective clone path per git library id, with the managed default already applied. */
+  gitLibraryPaths: Record<string, string>;
+  defaultGitLibraryRoot: string;
+  /** ISO timestamp of the last successful sync, keyed by git library id. */
+  gitLibrarySyncedAt: Record<string, string>;
 }

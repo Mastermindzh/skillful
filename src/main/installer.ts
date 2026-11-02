@@ -9,6 +9,7 @@ import type {
 } from "../shared/types";
 import { ensureDirectoryWithExistingParent, pathExists, realpathOrNull } from "./fs";
 import { logger } from "./logger";
+import { filterUsablePaths } from "./paths";
 
 /** Returns the filesystem path that should be linked into a tool install folder. */
 function skillSourcePath(libraryItem: LibraryItemSummary) {
@@ -23,8 +24,9 @@ function installPath(root: string, libraryItem: LibraryItemSummary) {
   return path.join(root, installName(libraryItem));
 }
 
-function installRootsForSkill(tool: ToolConfig, libraryItem: LibraryItemSummary) {
-  return tool.installRoots[libraryItem.kind] ?? [];
+/** Install roots for the item's kind that this OS can use, with `~` expanded. */
+export function installRootsForSkill(tool: ToolConfig, libraryItem: LibraryItemSummary) {
+  return filterUsablePaths(tool.installRoots[libraryItem.kind] ?? []);
 }
 
 async function ensureSkillLink(root: string, libraryItem: LibraryItemSummary) {

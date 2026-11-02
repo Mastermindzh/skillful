@@ -1,15 +1,17 @@
-import { ActionIcon, Group, Menu, Text, Title, Tooltip } from "@mantine/core";
-import { ChevronDown, Eye, Pencil, Save } from "lucide-react";
+import { ActionIcon, Badge, Group, Menu, Text, Title, Tooltip } from "@mantine/core";
+import { ChevronDown, Lock, Save } from "lucide-react";
 import type { ReactNode } from "react";
 import type { EditorViewMode, LibraryItemFile, LibraryItemSummary } from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
 import { LibraryKindBadge } from "../library/LibraryKindBadge";
 import { visibleFileLabel } from "../skills/libraryItems";
+import { ViewModeToggle } from "./ViewModeToggle";
 
 type LibraryItemDetailsHeaderProps = {
   libraryItem: LibraryItemSummary;
   collectionTitle: string | null;
   activeFile: LibraryItemFile | null;
+  readOnly: boolean;
   viewMode: EditorViewMode;
   onViewModeChange: (value: EditorViewMode) => void;
   compactActions: boolean | undefined;
@@ -25,6 +27,7 @@ export function LibraryItemDetailsHeader({
   libraryItem,
   collectionTitle,
   activeFile,
+  readOnly,
   viewMode,
   onViewModeChange,
   compactActions: _compactActions,
@@ -36,7 +39,6 @@ export function LibraryItemDetailsHeader({
   actionsSlot,
 }: LibraryItemDetailsHeaderProps) {
   const { t } = useAppTranslation();
-  const toggleLabel = viewMode === "preview" ? t("details.edit") : t("details.preview");
   const saveCurrentLabel = t("details.saveFile", {
     file: activeFile ? visibleFileLabel(activeFile) : t("details.fileFallback"),
   });
@@ -64,63 +66,66 @@ export function LibraryItemDetailsHeader({
       </div>
       <Group gap="xs" wrap="nowrap" className="editor-actions">
         {actionsSlot}
-        {activeFile ? (
-          <Tooltip label={toggleLabel} withArrow>
-            <ActionIcon
-              variant="subtle"
+        {readOnly ? (
+          <Tooltip label={t("details.readOnly.tooltip")} withArrow>
+            <Badge
               color="gray"
-              size="lg"
-              className="editor-view-toggle"
-              aria-label={toggleLabel}
-              onClick={() => onViewModeChange(viewMode === "preview" ? "edit" : "preview")}
+              variant="light"
+              leftSection={<Lock size={12} />}
+              style={{ textTransform: "none" }}
             >
-              {viewMode === "preview" ? <Pencil size={16} /> : <Eye size={16} />}
-            </ActionIcon>
+              {t("details.readOnly.badge")}
+            </Badge>
           </Tooltip>
         ) : null}
-        <Group gap={0} wrap="nowrap" className="editor-save-split">
-          <ActionIcon
-            variant="filled"
-            size="lg"
-            loading={saving}
-            disabled={!canSaveAll && !canSaveCurrent}
-            onClick={onSaveAll}
-            aria-label={t("details.saveAll")}
-            title={t("details.saveAll")}
-            className="editor-save-split-main"
-          >
-            <Save size={16} />
-          </ActionIcon>
-          <Menu position="bottom-end" withinPortal>
-            <Menu.Target>
-              <ActionIcon
-                variant="filled"
-                size="lg"
-                aria-label={t("details.saveOptions")}
-                disabled={!canSaveAll && !canSaveCurrent}
-                className="editor-save-split-chevron"
-              >
-                <ChevronDown size={14} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<Save size={14} />}
-                onClick={onSaveAll}
-                disabled={!canSaveAll}
-              >
-                {t("details.saveAll")}
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<Save size={14} />}
-                onClick={onSaveCurrent}
-                disabled={!canSaveCurrent}
-              >
-                {saveCurrentLabel}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
+        {activeFile && !readOnly ? (
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
+        ) : null}
+        {readOnly ? null : (
+          <Group gap={0} wrap="nowrap" className="editor-save-split">
+            <ActionIcon
+              variant="filled"
+              size="lg"
+              loading={saving}
+              disabled={!canSaveAll && !canSaveCurrent}
+              onClick={onSaveAll}
+              aria-label={t("details.saveAll")}
+              title={t("details.saveAll")}
+              className="editor-save-split-main"
+            >
+              <Save size={16} />
+            </ActionIcon>
+            <Menu position="bottom-end" withinPortal>
+              <Menu.Target>
+                <ActionIcon
+                  variant="filled"
+                  size="lg"
+                  aria-label={t("details.saveOptions")}
+                  disabled={!canSaveAll && !canSaveCurrent}
+                  className="editor-save-split-chevron"
+                >
+                  <ChevronDown size={14} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<Save size={14} />}
+                  onClick={onSaveAll}
+                  disabled={!canSaveAll}
+                >
+                  {t("details.saveAll")}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<Save size={14} />}
+                  onClick={onSaveCurrent}
+                  disabled={!canSaveCurrent}
+                >
+                  {saveCurrentLabel}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
+        )}
       </Group>
     </div>
   );

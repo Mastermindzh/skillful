@@ -74,7 +74,7 @@ export function ImportCollectionModal({
           {state.isGitHubMode ? (
             <GitHubImportFields
               repo={state.repo}
-              ref={state.ref}
+              gitRef={state.gitRef}
               path={state.gitPath}
               repoError={state.errors.repo}
               refError={state.errors.ref}

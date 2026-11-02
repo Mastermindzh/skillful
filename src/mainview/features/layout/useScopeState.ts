@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { LibraryItemSummary } from "../../../shared/types";
 import type { LibraryKindFilter } from "../skills/libraryItems";
 
@@ -13,21 +13,16 @@ type ToolOption = { id: string };
  */
 export function useScopeState(collections: CollectionOption[], tools: ToolOption[]) {
   const [query, setQuery] = useState("");
-  const [activeScope, setActiveScope] = useState("all");
+  const [selectedScope, setActiveScope] = useState("all");
   const [kindFilter, setKindFilter] = useState<LibraryKindFilter>("all");
   const [focusSearchToken, setFocusSearchToken] = useState(0);
 
-  useEffect(() => {
-    if (activeScope === "all") return;
-    if (
-      (activeScope.startsWith("collection:") &&
-        collections.some((collection) => `collection:${collection.id}` === activeScope)) ||
-      (activeScope.startsWith("tool:") && tools.some((tool) => `tool:${tool.id}` === activeScope))
-    ) {
-      return;
-    }
-    setActiveScope("all");
-  }, [activeScope, collections, tools]);
+  const selectedScopeExists =
+    (selectedScope.startsWith("collection:") &&
+      collections.some((collection) => `collection:${collection.id}` === selectedScope)) ||
+    (selectedScope.startsWith("tool:") &&
+      tools.some((tool) => `tool:${tool.id}` === selectedScope));
+  const activeScope = selectedScopeExists ? selectedScope : "all";
 
   const handleFocusSearch = useCallback(() => {
     setFocusSearchToken((token) => token + 1);

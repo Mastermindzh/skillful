@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { AppError } from "../../shared/errors";
@@ -13,30 +12,46 @@ import type {
 } from "../../shared/types";
 import { ensureDirectory, pathExists } from "../fs";
 import { settingsDirectory } from "../settings";
+import {
+  type ToolInstructionsSnapshotEntry,
+  writeToolInstructionsSnapshot,
+} from "../toolInstructions";
+import {
+  classifyGitFailure,
+  cleanBranch,
+  GitCommandError,
+  gitAvailable,
+  gitErrorMessage,
+  runGit,
+  validateRemoteUrlTransport,
+} from "./command";
 
-const GIT_TIMEOUT_MS = 120_000;
 const SETTINGS_GIT_PATH = "settings.json";
 const DEFAULT_LIBRARY_GIT_PATHS = ["skills", "agents"];
-const MANAGED_GIT_PATHS = [".gitignore", SETTINGS_GIT_PATH, ...DEFAULT_LIBRARY_GIT_PATHS];
+/** Copies of each tool's instruction files, which live outside the backup repository. */
+const TOOL_INSTRUCTIONS_GIT_PATH = "tool-instructions";
+const DIRECTORY_GIT_PATHS = [...DEFAULT_LIBRARY_GIT_PATHS, TOOL_INSTRUCTIONS_GIT_PATH];
+const MANAGED_GIT_PATHS = [
+  ".gitignore",
+  SETTINGS_GIT_PATH,
+  ...DEFAULT_LIBRARY_GIT_PATHS,
+  TOOL_INSTRUCTIONS_GIT_PATH,
+];
 
-type GitCommandResult = {
-  stdout: string;
-  stderr: string;
-};
-
-class GitCommandError extends Error {
-  readonly code: number | null;
-  readonly stdout: string;
-  readonly stderr: string;
-
-  constructor(message: string, code: number | null, stdout: string, stderr: string) {
-    super(message);
-    this.name = "GitCommandError";
-    this.code = code;
-    this.stdout = stdout;
-    this.stderr = stderr;
-  }
+export function toolInstructionsSnapshotPath() {
+  return path.join(settingsDirectory(), TOOL_INSTRUCTIONS_GIT_PATH);
 }
+
+export type RestoreGitBackupOptions = {
+  /**
+   * Returns local files that restoring `entries` would overwrite with different content. Runs
+   * after fetching and before anything is replaced, so a safe restore can still back out.
+   */
+  toolInstructionConflicts?: (input: {
+    entries: ToolInstructionsSnapshotEntry[];
+    remoteSettings: string | null;
+  }) => Promise<string[]>;
+};
 
 function disabledStatus(config: GitBackupConfig): GitBackupStatus {
   return {
@@ -56,10 +71,6 @@ function notConfiguredStatus(config: GitBackupConfig, message = "Git backup is n
   };
 }
 
-function cleanBranch(value: string) {
-  return value.trim();
-}
-
 function validateConfiguredBackup(config: GitBackupConfig) {
   if (!config.enabled) return disabledStatus(config);
 
@@ -74,113 +85,16 @@ function validateConfiguredBackup(config: GitBackupConfig) {
     throw new AppError("invalid-name", "Backup branch cannot contain whitespace.");
   }
 
+  validateRemoteUrlTransport(remoteUrl);
+
   return null;
 }
 
-function gitEnv() {
-  return {
-    ...process.env,
-    GCM_INTERACTIVE: "never",
-    GIT_TERMINAL_PROMPT: "0",
-  };
-}
-
-function sanitizedGitMessage(message: string, remoteUrl: string) {
-  return message
-    .split(remoteUrl)
-    .join("[remote]")
-    .replace(/https:\/\/[^/@\s]+@/g, "https://[credentials]@")
-    .trim();
-}
-
-function runCommand(command: string, args: string[], cwd?: string): Promise<GitCommandResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      env: gitEnv(),
-      shell: false,
-      windowsHide: true,
-    });
-    let stdout = "";
-    let stderr = "";
-    let settled = false;
-    const timer = setTimeout(() => {
-      settled = true;
-      child.kill("SIGTERM");
-      reject(new GitCommandError(`${command} timed out.`, null, stdout, stderr));
-    }, GIT_TIMEOUT_MS);
-
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-    child.stdout?.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr?.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", (error) => {
-      clearTimeout(timer);
-      if (settled) return;
-      settled = true;
-      reject(error);
-    });
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      if (settled) return;
-      settled = true;
-      if (code === 0) {
-        resolve({ stdout, stderr });
-        return;
-      }
-      reject(new GitCommandError(`${command} exited with code ${code}.`, code, stdout, stderr));
-    });
-  });
-}
-
-async function runGit(args: string[], cwd?: string) {
-  return runCommand("git", args, cwd);
-}
-
-async function gitAvailable() {
-  try {
-    await runGit(["--version"]);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function mapGitFailure(error: unknown, config: GitBackupConfig): GitBackupStatus {
-  const remoteUrl = config.remoteUrl.trim();
-  const rawMessage =
-    error instanceof GitCommandError
-      ? `${error.stderr || error.stdout || error.message}`
-      : error instanceof Error
-        ? error.message
-        : String(error);
-  const message = sanitizedGitMessage(rawMessage, remoteUrl);
-  const lower = message.toLowerCase();
-  let state: GitBackupState = "error";
-
-  if (
-    lower.includes("permission denied") ||
-    lower.includes("authentication failed") ||
-    lower.includes("publickey") ||
-    lower.includes("could not read username") ||
-    lower.includes("could not read password") ||
-    lower.includes("interactivity has been disabled") ||
-    lower.includes("terminal prompts disabled")
-  ) {
-    state = "auth-failed";
-  } else if (
-    lower.includes("could not resolve hostname") ||
-    lower.includes("could not read from remote repository") ||
-    lower.includes("repository not found") ||
-    lower.includes("failed to connect") ||
-    lower.includes("unable to access")
-  ) {
-    state = "remote-unreachable";
-  }
+  const message = gitErrorMessage(error, config.remoteUrl);
+  const kind = classifyGitFailure(message);
+  // Backups have no host-trust prompt, so an unverified host reads as an auth problem.
+  const state: GitBackupState = kind === "host-key-unverified" ? "auth-failed" : kind;
 
   return {
     state,
@@ -195,6 +109,7 @@ function includedManagedGitPaths(config: GitBackupConfig) {
     ".gitignore",
     ...(config.includeSettings ? [SETTINGS_GIT_PATH] : []),
     ...(config.includeDefaultLibrary ? DEFAULT_LIBRARY_GIT_PATHS : []),
+    ...(config.includeToolInstructions ? [TOOL_INSTRUCTIONS_GIT_PATH] : []),
   ];
 }
 
@@ -202,11 +117,12 @@ function excludedManagedGitPaths(config: GitBackupConfig) {
   return [
     ...(!config.includeSettings ? [SETTINGS_GIT_PATH] : []),
     ...(!config.includeDefaultLibrary ? DEFAULT_LIBRARY_GIT_PATHS : []),
+    ...(!config.includeToolInstructions ? [TOOL_INSTRUCTIONS_GIT_PATH] : []),
   ];
 }
 
 function gitIgnoreUnignorePatterns(managedPath: string) {
-  if (DEFAULT_LIBRARY_GIT_PATHS.includes(managedPath)) {
+  if (DIRECTORY_GIT_PATHS.includes(managedPath)) {
     return [`!/${managedPath}/`, `!/${managedPath}/**`];
   }
   return [`!/${managedPath}`];
@@ -223,6 +139,11 @@ async function writeGitIgnore(config: GitBackupConfig) {
 
 async function writeBackupSnapshot(config: AppConfig) {
   await writeGitIgnore(config.gitBackup);
+  if (config.gitBackup.includeToolInstructions) {
+    await writeToolInstructionsSnapshot(config.tools, toolInstructionsSnapshotPath());
+  } else {
+    await rm(toolInstructionsSnapshotPath(), { recursive: true, force: true });
+  }
 }
 
 async function managedGitPathspecs(config: GitBackupConfig) {
@@ -337,6 +258,25 @@ async function remoteManagedPaths(branch: string) {
     .filter(Boolean);
 }
 
+async function remoteFile(branch: string, relativePath: string) {
+  const result = await runGit(["show", `origin/${branch}:${relativePath}`], settingsDirectory());
+  return result.stdout;
+}
+
+async function remoteToolInstructionEntries(branch: string, restoredPaths: string[]) {
+  const entries: ToolInstructionsSnapshotEntry[] = [];
+  for (const restoredPath of restoredPaths) {
+    const [root, toolId, ...rest] = restoredPath.split("/");
+    if (root !== TOOL_INSTRUCTIONS_GIT_PATH || !toolId || rest.length === 0) continue;
+    entries.push({
+      toolId,
+      relativePath: rest.join("/"),
+      content: await remoteFile(branch, restoredPath),
+    });
+  }
+  return entries;
+}
+
 function managedRestorePaths(restoredPaths: string[]) {
   return MANAGED_GIT_PATHS.filter((managedPath) =>
     restoredPaths.some((entry) => entry === managedPath || entry.startsWith(`${managedPath}/`))
@@ -399,7 +339,8 @@ export async function initializeGitBackup(config: GitBackupConfig): Promise<GitB
 
 export async function restoreGitBackup(
   config: GitBackupConfig,
-  mode: GitBackupRestoreMode
+  mode: GitBackupRestoreMode,
+  options: RestoreGitBackupOptions = {}
 ): Promise<GitBackupRestoreResult> {
   const invalid = validateConfiguredBackup(config);
   if (invalid) {
@@ -446,6 +387,22 @@ export async function restoreGitBackup(
         "git-restore-invalid-remote",
         "The selected branch does not look like a Skillful backup."
       );
+    }
+
+    if (mode !== "replace" && options.toolInstructionConflicts) {
+      const conflicts = await options.toolInstructionConflicts({
+        entries: await remoteToolInstructionEntries(branch, restoredPaths),
+        remoteSettings: restoredPaths.includes(SETTINGS_GIT_PATH)
+          ? await remoteFile(branch, SETTINGS_GIT_PATH)
+          : null,
+      });
+      if (conflicts.length > 0) {
+        throw new AppError(
+          "git-restore-local-content",
+          "Local tool instructions differ from the backup. Confirm before replacing them.",
+          { paths: conflicts }
+        );
+      }
     }
 
     await removeManagedRestoreTargets();

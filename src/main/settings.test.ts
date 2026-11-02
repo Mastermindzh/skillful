@@ -1,11 +1,18 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "../shared/errors";
+import type { GitLibraryConfig } from "../shared/types";
 import {
   defaultGitBackupConfig,
+  defaultGitLibraryRoot,
+  effectiveScanRoots,
+  gitLibraryAvailable,
+  gitLibraryPath,
   loadSavedSettings,
+  normalizeGitBackupConfig,
+  normalizeGitLibraries,
   normalizeToolConfigs,
   persistSettings,
   settingsDirectory,
@@ -19,6 +26,8 @@ import {
 
 let tmpRoot: string;
 let originalXdg: string | undefined;
+
+const otherOsPath = process.platform === "win32" ? "/srv/other-os" : "C:\\Users\\me\\skills";
 let originalHome: string | undefined;
 let originalAppData: string | undefined;
 let originalConfigName: string | undefined;
@@ -96,6 +105,7 @@ describe("loadSavedSettings", () => {
       defaultEditorMode: "preview",
       onboardingTourCompleted: false,
       gitBackup: defaultGitBackupConfig(),
+      gitLibraries: [],
     });
   });
 
@@ -113,6 +123,7 @@ describe("loadSavedSettings", () => {
             skill: [codexRoot],
             agent: [],
           },
+          instructionsPath: "~/.codex/AGENTS.md",
         },
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
@@ -126,6 +137,7 @@ describe("loadSavedSettings", () => {
         enabled: true,
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
+      gitLibraries: [],
     });
 
     await expect(loadSavedSettings()).resolves.toEqual({
@@ -138,6 +150,7 @@ describe("loadSavedSettings", () => {
             skill: [codexRoot],
             agent: [],
           },
+          instructionsPath: "~/.codex/AGENTS.md",
         },
       ],
       toolMappings: [{ itemId: "review-pr", toolIds: ["codex"] }],
@@ -151,6 +164,7 @@ describe("loadSavedSettings", () => {
         enabled: true,
         remoteUrl: "git@example.com:me/skillful-backup.git",
       },
+      gitLibraries: [],
     });
   });
 
@@ -198,7 +212,209 @@ describe("normalizeToolConfigs", () => {
           skill: ["/home/test/.config/opencode/skills"],
           agent: ["/home/test/.config/opencode/skills"],
         },
+        instructionsPath: "~/.config/opencode/AGENTS.md",
       },
     ]);
+  });
+
+  it("fills a preset's instructions file only when the setting is absent", () => {
+    const installRoots = { skill: ["/abs/skills"], agent: [] };
+    const [legacyPreset, clearedPreset, custom] = normalizeToolConfigs([
+      { id: "claude-code", name: "Claude Code", installRoots },
+      { id: "codex", name: "Codex", installRoots, instructionsPath: "" },
+      { id: "custom", name: "Custom", installRoots },
+    ]);
+
+    expect(legacyPreset.instructionsPath).toBe("~/.claude/CLAUDE.md");
+    expect(clearedPreset.instructionsPath).toBe("");
+    expect(custom.instructionsPath).toBe("");
+  });
+
+  it("rejects an instructions file that is not markdown", () => {
+    expect(() =>
+      normalizeToolConfigs([
+        {
+          id: "claude-code",
+          name: "Claude Code",
+          installRoots: { skill: ["/abs/skills"], agent: [] },
+          instructionsPath: "~/.bashrc",
+        },
+      ])
+    ).toThrow(AppError);
+  });
+
+  it("rejects a relative instructions file", () => {
+    expect(() =>
+      normalizeToolConfigs([
+        {
+          id: "custom",
+          name: "Custom",
+          installRoots: { skill: ["/abs/skills"], agent: [] },
+          instructionsPath: "CLAUDE.md",
+        },
+      ])
+    ).toThrow(AppError);
+  });
+});
+
+describe("normalizeGitBackupConfig", () => {
+  const backup = defaultGitBackupConfig();
+
+  it("keeps tool instructions out of backups configured before the option existed", () => {
+    const { includeToolInstructions: _omitted, ...stored } = {
+      ...backup,
+      enabled: true,
+      remoteUrl: "git@example.com:me/backup.git",
+    };
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(false);
+  });
+
+  it("keeps tool instructions out of a paused backup that already has a remote", () => {
+    const { includeToolInstructions: _omitted, ...stored } = {
+      ...backup,
+      enabled: false,
+      remoteUrl: "git@example.com:me/backup.git",
+    };
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(false);
+  });
+
+  it("includes tool instructions for backups that are not set up yet", () => {
+    const { includeToolInstructions: _omitted, ...stored } = backup;
+    expect(normalizeGitBackupConfig(stored).includeToolInstructions).toBe(true);
+  });
+
+  it("respects an explicit choice", () => {
+    expect(
+      normalizeGitBackupConfig({ ...backup, includeToolInstructions: false })
+        .includeToolInstructions
+    ).toBe(false);
+  });
+});
+
+describe("git libraries", () => {
+  function library(overrides: Partial<GitLibraryConfig> = {}): GitLibraryConfig {
+    return {
+      id: "library-1",
+      name: "Team skills",
+      remoteUrl: "git@example.com:me/skills.git",
+      branch: "main",
+      path: "",
+      syncMode: "pull",
+      autoSync: true,
+      syncIntervalMinutes: 60,
+      readOnly: false,
+      ...overrides,
+    };
+  }
+
+  it("clones into a managed folder keyed by library id when no path is set", () => {
+    expect(gitLibraryPath(library())).toBe(path.join(defaultGitLibraryRoot(), "library-1"));
+  });
+
+  it("honours an explicit clone folder", () => {
+    expect(gitLibraryPath(library({ path: "/srv/skills" }))).toBe("/srv/skills");
+  });
+
+  it("adds every git library clone to the effective scan roots", () => {
+    const roots = effectiveScanRoots([], [library({ path: "/srv/skills" })]);
+
+    expect(roots).toContain("/srv/skills");
+    expect(roots).toContain(settingsDirectory());
+  });
+
+  it("drops libraries without a remote", () => {
+    expect(normalizeGitLibraries([library({ remoteUrl: "  " })])).toEqual([]);
+  });
+
+  it("clamps the sync interval to at least one minute", () => {
+    expect(
+      normalizeGitLibraries([library({ syncIntervalMinutes: 0 })])[0]?.syncIntervalMinutes
+    ).toBe(1);
+  });
+
+  it("rejects duplicate library ids", () => {
+    expect(() => normalizeGitLibraries([library(), library()])).toThrow(AppError);
+  });
+
+  it("rejects two libraries sharing a clone folder", () => {
+    expect(() =>
+      normalizeGitLibraries([
+        library({ id: "a", path: "/srv/skills" }),
+        library({ id: "b", path: "/srv/skills" }),
+      ])
+    ).toThrow(AppError);
+  });
+
+  it("rejects a relative clone folder", () => {
+    expect(() => normalizeGitLibraries([library({ path: "relative/path" })])).toThrow(AppError);
+  });
+
+  it("rejects a branch with whitespace", () => {
+    expect(() => normalizeGitLibraries([library({ branch: "my branch" })])).toThrow(AppError);
+  });
+
+  it("keeps another OS's clone folder verbatim and leaves it out of the scan roots", () => {
+    const [normalized] = normalizeGitLibraries([library({ path: otherOsPath })]);
+
+    expect(normalized?.path).toBe(otherOsPath);
+    expect(gitLibraryAvailable(library({ path: otherOsPath }))).toBe(false);
+    expect(effectiveScanRoots([], [library({ path: otherOsPath })])).toEqual([settingsDirectory()]);
+  });
+});
+
+describe("paths from another OS", () => {
+  it("survive a load and are skipped as scan roots", async () => {
+    await writeFile(
+      settingsFile(),
+      JSON.stringify({ scanRoots: [otherOsPath], tools: [], toolMappings: [] }),
+      "utf8"
+    );
+
+    const loaded = await loadSavedSettings();
+
+    expect(loaded?.scanRoots).toEqual([otherOsPath]);
+    expect(effectiveScanRoots(loaded?.scanRoots ?? [])).toEqual([settingsDirectory()]);
+  });
+});
+
+describe("home paths", () => {
+  it("are stored verbatim and expanded for scanning", async () => {
+    await writeFile(
+      settingsFile(),
+      JSON.stringify({
+        scanRoots: ["~/skills", "~\\more"],
+        tools: [],
+        toolMappings: [],
+      }),
+      "utf8"
+    );
+
+    const loaded = await loadSavedSettings();
+
+    expect(loaded?.scanRoots).toEqual(["~/skills", "~\\more"]);
+    expect(effectiveScanRoots(loaded?.scanRoots ?? [])).toEqual([
+      settingsDirectory(),
+      path.join(homedir(), "skills"),
+      path.join(homedir(), "more"),
+    ]);
+  });
+
+  it("work as a git library clone folder", () => {
+    const [normalized] = normalizeGitLibraries([
+      {
+        id: "library-1",
+        name: "Team skills",
+        remoteUrl: "git@example.com:me/skills.git",
+        branch: "main",
+        path: "~/git/skills",
+        syncMode: "pull",
+        autoSync: true,
+        syncIntervalMinutes: 60,
+        readOnly: false,
+      },
+    ]);
+
+    expect(normalized?.path).toBe("~/git/skills");
+    expect(normalized && gitLibraryPath(normalized)).toBe(path.join(homedir(), "git", "skills"));
   });
 });

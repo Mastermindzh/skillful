@@ -12,6 +12,7 @@ type UseLibraryItemFileActionsOptions = {
   fileActions: LibraryItemDetailsFileActions;
   onActiveRelativePathChange: (value: string | null) => void;
   saving: boolean;
+  readOnly: boolean;
 };
 
 export function useLibraryItemFileActions({
@@ -20,6 +21,7 @@ export function useLibraryItemFileActions({
   fileActions,
   onActiveRelativePathChange,
   saving,
+  readOnly,
 }: UseLibraryItemFileActionsOptions) {
   const { t } = useAppTranslation();
   const [createFileOpen, setCreateFileOpen] = useState(false);
@@ -195,12 +197,13 @@ export function useLibraryItemFileActions({
 
   const currentFileActions = useMemo(
     () => ({
-      canManage: Boolean(activeFile && !activeFile.isEntry),
+      canCreate: !readOnly,
+      canManage: Boolean(activeFile && !activeFile.isEntry) && !readOnly,
       onCreate: () => setCreateFileOpen(true),
       onRename: renameCurrentFile,
       onDelete: deleteCurrentFile,
     }),
-    [activeFile, deleteCurrentFile, renameCurrentFile]
+    [activeFile, deleteCurrentFile, readOnly, renameCurrentFile]
   );
 
   const additionalFilesState = useMemo(
@@ -208,8 +211,9 @@ export function useLibraryItemFileActions({
       saving,
       uploadError,
       actionPath: fileActionPath,
+      readOnly,
     }),
-    [fileActionPath, saving, uploadError]
+    [fileActionPath, readOnly, saving, uploadError]
   );
 
   const additionalFilesActions = useMemo(

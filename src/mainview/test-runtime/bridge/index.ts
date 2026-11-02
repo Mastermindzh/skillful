@@ -1,12 +1,14 @@
 import {
   emitAutoGitBackupCompleted,
   emitGitHubImportRequested,
+  emitGitLibrarySynced,
   emitLibraryItemsUpdated,
 } from "./events";
 import { collectionRequests } from "./requests/collections";
 import { fileRequests } from "./requests/files";
 import { itemRequests } from "./requests/items";
 import { settingsRequests } from "./requests/settings";
+import { toolInstructionRequests } from "./requests/toolInstructions";
 import { toolRequests } from "./requests/tools";
 import { updateRequests } from "./requests/updates";
 
@@ -17,6 +19,7 @@ export const appRpc = {
     ...collectionRequests,
     ...fileRequests,
     ...toolRequests,
+    ...toolInstructionRequests,
     ...updateRequests,
   },
 };
@@ -32,6 +35,7 @@ declare global {
     __SKILLFUL_E2E_EVENTS__?: {
       emitAutoGitBackupCompleted: typeof emitAutoGitBackupCompleted;
       emitGitHubImportRequested: typeof emitGitHubImportRequested;
+      emitGitLibrarySynced: typeof emitGitLibrarySynced;
       emitLibraryItemsUpdated: typeof emitLibraryItemsUpdated;
     };
   }
@@ -42,6 +46,7 @@ if (typeof window !== "undefined") {
   window.__SKILLFUL_E2E_EVENTS__ = {
     emitAutoGitBackupCompleted,
     emitGitHubImportRequested,
+    emitGitLibrarySynced,
     emitLibraryItemsUpdated,
   };
 }

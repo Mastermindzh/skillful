@@ -1,7 +1,8 @@
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LibraryItemDocument, LibraryItemKind } from "../../../shared/types";
 import { TextEntryDialog } from "../../components/dialogs/TextEntryDialog";
+import { useOnDialogOpen } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 
 type RenameLibraryItemModalProps = {
@@ -28,10 +29,7 @@ export function RenameLibraryItemModal({
   const kindTitle = t(itemKind === "agent" ? "item.kind.agent" : "item.kind.skill");
   const label = kindTitle.toLowerCase();
 
-  useEffect(() => {
-    if (!opened) return;
-    setName(currentName);
-  }, [currentName, opened]);
+  useOnDialogOpen(opened, () => setName(currentName));
 
   const handleSubmit: ComponentPropsWithoutRef<"form">["onSubmit"] = async (event) => {
     event.preventDefault();

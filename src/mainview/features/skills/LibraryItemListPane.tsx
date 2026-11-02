@@ -12,13 +12,24 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Ellipsis, FolderInput, FolderOpen, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import {
+  Ellipsis,
+  FolderInput,
+  FolderOpen,
+  Pencil,
+  Plus,
+  ScrollText,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import type { LibraryItemSummary } from "../../../shared/types";
+import type { GitLibraryConfig, LibraryItemSummary } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
 import { useContextMenuPosition } from "../../components/useContextMenuPosition";
 import { useAppTranslation } from "../../i18n/i18n";
 import { logRendererPerf } from "../../performance";
+import { GitLibraryOriginBadge } from "../library/GitLibraryOriginBadge";
 import { LibraryKindBadge } from "../library/LibraryKindBadge";
 import type { LibraryKindFilter } from "./libraryItems";
 
@@ -55,6 +66,9 @@ type LibraryItemListPaneProps = {
   showItemCollections: boolean;
   /** Lookup of collection id -> display title, used when {@link showItemCollections} is true. */
   collectionTitleById: ReadonlyMap<string, string>;
+  /** Lookup of git library id -> config, used to mark items that came from a synced clone. */
+  gitLibraryById: ReadonlyMap<string, GitLibraryConfig>;
+  gitLibrarySyncedAt: Record<string, string>;
   onKindFilterChange: (value: LibraryKindFilter) => void;
   onCreateSkill: () => void;
   onRenameSkill: (item: LibraryItemSummary) => void;
@@ -64,6 +78,8 @@ type LibraryItemListPaneProps = {
   onQueryChange: (value: string) => void;
   onSelectSkill: (id: string | null) => void;
   onFocusEditor: () => void;
+  /** Shown while a tool scope is active and that tool has an instructions file. */
+  instructionsAction?: { label: string; active: boolean; onOpen: () => void } | null;
 };
 
 export function LibraryItemListPane({
@@ -76,6 +92,8 @@ export function LibraryItemListPane({
   permissions,
   showItemCollections,
   collectionTitleById,
+  gitLibraryById,
+  gitLibrarySyncedAt,
   onKindFilterChange,
   onCreateSkill,
   onRenameSkill,
@@ -85,6 +103,7 @@ export function LibraryItemListPane({
   onQueryChange,
   onSelectSkill,
   onFocusEditor,
+  instructionsAction,
 }: LibraryItemListPaneProps) {
   const { t } = useAppTranslation();
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -189,6 +208,19 @@ export function LibraryItemListPane({
             <Badge color="gray" variant="light" className="list-pane-count-badge">
               {libraryItems.length}
             </Badge>
+            {instructionsAction ? (
+              <Tooltip label={instructionsAction.label} openDelay={500}>
+                <ActionIcon
+                  variant={instructionsAction.active ? "light" : "subtle"}
+                  size="sm"
+                  aria-label={instructionsAction.label}
+                  aria-pressed={instructionsAction.active}
+                  onClick={instructionsAction.onOpen}
+                >
+                  <ScrollText size={15} />
+                </ActionIcon>
+              </Tooltip>
+            ) : null}
             <Tooltip
               label={canCreate ? t("library.createItem") : t("library.createCollectionFirst")}
               openDelay={500}
@@ -328,6 +360,14 @@ export function LibraryItemListPane({
                           ? (collectionTitleById.get(item.collectionId) ?? null)
                           : null
                       }
+                      sourceLibrary={
+                        item.sourceLibraryId
+                          ? (gitLibraryById.get(item.sourceLibraryId) ?? null)
+                          : null
+                      }
+                      sourceLibrarySyncedAt={
+                        item.sourceLibraryId ? gitLibrarySyncedAt[item.sourceLibraryId] : undefined
+                      }
                       onRevealSkill={onRevealSkill}
                       onRenameSkill={onRenameSkill}
                       onMoveSkill={onMoveSkill}
@@ -363,6 +403,8 @@ const LibraryItemRow = memo(function LibraryItemRow({
   onRenameSkill,
   onRevealSkill,
   selected,
+  sourceLibrary,
+  sourceLibrarySyncedAt,
   onSelectSkill,
 }: {
   canDelete: boolean;
@@ -376,6 +418,8 @@ const LibraryItemRow = memo(function LibraryItemRow({
   onRenameSkill: (item: LibraryItemSummary) => void;
   onRevealSkill: (item: LibraryItemSummary) => void;
   selected: boolean;
+  sourceLibrary: GitLibraryConfig | null;
+  sourceLibrarySyncedAt?: string;
   onSelectSkill: (id: string) => void;
 }) {
   const { t } = useAppTranslation();
@@ -442,7 +486,12 @@ const LibraryItemRow = memo(function LibraryItemRow({
               </Text>
             ) : null}
           </div>
-          <LibraryKindBadge kind={item.kind} size="xs" />
+          <div className="item-list-row-meta">
+            <LibraryKindBadge kind={item.kind} size="xs" />
+            {sourceLibrary ? (
+              <GitLibraryOriginBadge library={sourceLibrary} syncedAt={sourceLibrarySyncedAt} />
+            ) : null}
+          </div>
         </div>
       </UnstyledButton>
       {contextMenuOpen ? (

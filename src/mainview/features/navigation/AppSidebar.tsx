@@ -14,6 +14,7 @@ import {
   Download,
   Ellipsis,
   FileArchive,
+  GitBranch,
   Keyboard,
   Moon,
   Pencil,
@@ -53,6 +54,9 @@ type AppSidebarProps = {
   refreshing: boolean;
   onSelectScope: (scope: string) => void;
   onRefresh: () => void;
+  gitLibraryCount: number;
+  syncingGitLibraries: boolean;
+  onSyncGitLibraries: () => void;
   onCreateCollection: () => void;
   onImportCollection: () => void;
   onRenameCollection: (collection: SidebarCollection) => void;
@@ -72,6 +76,9 @@ export const AppSidebar = memo(function AppSidebar({
   refreshing,
   onSelectScope,
   onRefresh,
+  gitLibraryCount,
+  syncingGitLibraries,
+  onSyncGitLibraries,
   onCreateCollection,
   onImportCollection,
   onRenameCollection,
@@ -103,16 +110,30 @@ export const AppSidebar = memo(function AppSidebar({
             <Title order={2} c="white">
               {t("app.name")}
             </Title>
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              onClick={onRefresh}
-              loading={refreshing}
-              aria-label={t("sidebar.refreshLibrary")}
-              style={{ color: "var(--app-sidebar-fg)" }}
-            >
-              <RefreshCw size={14} />
-            </ActionIcon>
+            <Group gap={4} wrap="nowrap">
+              {gitLibraryCount > 0 ? (
+                <ActionIcon
+                  variant="subtle"
+                  size="sm"
+                  onClick={onSyncGitLibraries}
+                  loading={syncingGitLibraries}
+                  aria-label={t("sidebar.syncGitLibraries")}
+                  style={{ color: "var(--app-sidebar-fg)" }}
+                >
+                  <GitBranch size={14} />
+                </ActionIcon>
+              ) : null}
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                onClick={onRefresh}
+                loading={refreshing}
+                aria-label={t("sidebar.refreshLibrary")}
+                style={{ color: "var(--app-sidebar-fg)" }}
+              >
+                <RefreshCw size={14} />
+              </ActionIcon>
+            </Group>
           </Group>
 
           <div className="sidebar-section">

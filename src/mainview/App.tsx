@@ -1,9 +1,8 @@
-import { appRpc, onAppMessage } from "@mainview-bridge";
+import { appRpc } from "@mainview-bridge";
 import { useMediaQuery } from "@mantine/hooks";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { toolPresetById } from "../shared/toolPresets";
-import type { AppLanguage, LibraryItemSummary } from "../shared/types";
-import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { LibraryItemSummary } from "../shared/types";
+import { AppDialogs, appDialogOpen } from "./AppDialogs";
 import { LibraryItemDetails } from "./features/editor/LibraryItemDetails";
 import type {
   EditorHandle,
@@ -11,39 +10,26 @@ import type {
   LibraryItemDetailsSaveState,
   LibraryItemDetailsTooling,
 } from "./features/editor/types";
-import { useScopeState } from "./features/layout/useScopeState";
+import { useLibraryView } from "./features/layout/useLibraryView";
 import { useSplitPane } from "./features/layout/useSplitPane";
 import { AppSidebar } from "./features/navigation/AppSidebar";
-import { CreateCollectionModal } from "./features/navigation/CreateCollectionModal";
-import { DeleteCollectionDialog } from "./features/navigation/DeleteCollectionDialog";
-import { ImportCollectionModal } from "./features/navigation/ImportCollectionModal";
-import { RenameCollectionModal } from "./features/navigation/RenameCollectionModal";
 import { useCollectionDialogs } from "./features/navigation/useCollectionDialogs";
-import { notify } from "./features/notifications/notify";
+import { useAppNotifications } from "./features/notifications/useAppNotifications";
 import { OnboardingTour } from "./features/onboarding/OnboardingTour";
-import { SettingsModal } from "./features/settings/components/SettingsModal";
+import { AppSettingsModal } from "./features/settings/components/AppSettingsModal";
+import { useAppLanguage } from "./features/settings/state/useAppLanguage";
+import { useSettingsActions } from "./features/settings/state/useSettingsActions";
 import { useSettingsState } from "./features/settings/state/useSettingsState";
 import { useUpdaterState } from "./features/settings/state/useUpdaterState";
-import { KeyboardShortcutsModal } from "./features/shortcuts/KeyboardShortcutsModal";
 import { useAppShortcuts } from "./features/shortcuts/useAppShortcuts";
-import { CreateLibraryItemModal } from "./features/skills/CreateLibraryItemModal";
-import { DeleteLibraryItemDialog } from "./features/skills/DeleteLibraryItemDialog";
 import { LibraryItemListPane } from "./features/skills/LibraryItemListPane";
-import {
-  buildLibraryCollections,
-  buildLibraryItemSearchIndex,
-  buildToolFilters,
-  filterByKind,
-  filterLibraryItemSearchIndex,
-} from "./features/skills/libraryItems";
-import { MoveLibraryItemModal } from "./features/skills/MoveLibraryItemModal";
-import { RenameLibraryItemModal } from "./features/skills/RenameLibraryItemModal";
 import { useLibraryItemDialogs } from "./features/skills/useLibraryItemDialogs";
 import { useLibraryItemLibrary } from "./features/skills/useLibraryItemLibrary";
-import { MissingToolParentDialog } from "./features/tools/MissingToolParentDialog";
+import { ToolInstructionsDetails } from "./features/toolInstructions/ToolInstructionsDetails";
+import { useToolInstructions } from "./features/toolInstructions/useToolInstructions";
+import { useToolInstructionsEntryPoints } from "./features/toolInstructions/useToolInstructionsEntryPoints";
 import { useLibraryItemTools } from "./features/tools/useLibraryItemTools";
-import { applyAppLanguage, useAppTranslation } from "./i18n/i18n";
-import { measureRenderer } from "./performance";
+import { useAppTranslation } from "./i18n/i18n";
 
 function App() {
   const { t } = useAppTranslation();
@@ -53,186 +39,53 @@ function App() {
   const { containerRef, isDragging, listWidth, separatorProps } = useSplitPane(largeLayout);
 
   const settings = useSettingsState();
-  const library = useLibraryItemLibrary(settings.appSettings?.defaultEditorMode ?? "preview");
+  const defaultEditorMode = settings.appSettings?.defaultEditorMode ?? "preview";
+  const library = useLibraryItemLibrary(defaultEditorMode);
   const updater = useUpdaterState();
+  const toolInstructions = useToolInstructions(defaultEditorMode);
   const skillTools = useLibraryItemTools({
     activeLibraryItem: library.activeLibraryItem,
     setAppSettings: settings.setAppSettings,
     setError: library.setError,
   });
+  const settingsActions = useSettingsActions(settings, {
+    activeLibraryItemId: library.activeLibraryItemId,
+    reloadItems: library.loadSkillList,
+    reloadItemsAfterRestore: library.reloadLibraryAfterRestore,
+    reloadToolStatuses: skillTools.loadToolStatuses,
+  });
+
+  const { loadSettings } = settings;
+  const { open: openSettingsModal } = settings.modal;
+  const { runToolAction } = skillTools;
 
   useEffect(() => {
-    void settings.loadSettings();
-  }, [settings.loadSettings]);
+    void loadSettings();
+  }, [loadSettings]);
+  useAppLanguage(settings);
+  useAppNotifications(settings.appSettings?.gitLibraries);
 
-  useEffect(() => {
-    return onAppMessage("autoGitBackupCompleted", (result) => {
-      if (result.changed && result.pushed) {
-        notify.info(t("settings.backup.notification.synced.message", { branch: result.branch }), {
-          title: t("settings.backup.notification.synced.title"),
-        });
-        return;
-      }
-
-      notify.error(result.message || t("settings.backup.error.run"), {
-        title: t("settings.backup.notification.failed.title"),
-      });
-    });
-  }, [t]);
-
-  useEffect(() => {
-    void applyAppLanguage(
-      settings.modal.opened
-        ? settings.general.language
-        : (settings.appSettings?.language ?? "system")
-    );
-  }, [settings.appSettings?.language, settings.general.language, settings.modal.opened]);
-
-  const handleSettingsLanguageChange = useCallback(
-    (nextLanguage: AppLanguage) => {
-      settings.general.setLanguage(nextLanguage);
-      void applyAppLanguage(nextLanguage);
-    },
-    [settings.general.setLanguage]
-  );
-
-  const collections = useMemo(
-    () =>
-      measureRenderer(
-        "renderer.buildLibraryCollections",
-        () => buildLibraryCollections(library.libraryItemList, library.collectionList),
-        (result) => ({
-          items: library.libraryItemList.length,
-          collections: result.length,
-        })
-      ),
-    [library.collectionList, library.libraryItemList]
-  );
-  const tools = useMemo(
-    () =>
-      measureRenderer(
-        "renderer.buildToolFilters",
-        () =>
-          buildToolFilters(
-            library.libraryItemList,
-            settings.appSettings?.tools ?? [],
-            settings.appSettings?.toolMappings ?? []
-          ),
-        (result) => ({
-          items: library.libraryItemList.length,
-          tools: result.length,
-        })
-      ),
-    [settings.appSettings?.toolMappings, settings.appSettings?.tools, library.libraryItemList]
-  );
-
-  const scope = useScopeState(collections, tools);
+  const view = useLibraryView({
+    libraryItems: library.libraryItemList,
+    collectionList: library.collectionList,
+    appSettings: settings.appSettings,
+    activeItemId: library.activeLibraryItemId,
+    clearActiveItem: library.clearActiveSkill,
+    setActiveItemId: library.setActiveSkillId,
+  });
+  const {
+    scope,
+    activeCollection,
+    activeTool,
+    activeCollectionReadOnly,
+    writableCollections,
+    collectionTitleById,
+    gitLibraryById,
+  } = view;
   const { query, setQuery, activeScope, setActiveScope, kindFilter, setKindFilter } = scope;
-  const deferredQuery = useDeferredValue(query);
-
-  const activeCollection = activeScope.startsWith("collection:")
-    ? (collections.find((collection) => collection.id === activeScope.replace("collection:", "")) ??
-      null)
-    : null;
-  const activeTool = activeScope.startsWith("tool:")
-    ? (tools.find((tool) => tool.id === activeScope.replace("tool:", "")) ?? null)
-    : null;
-
-  const scopedSkills = activeScope.startsWith("tool:")
-    ? (activeTool?.items ?? [])
-    : activeScope.startsWith("collection:")
-      ? (activeCollection?.items ?? [])
-      : library.libraryItemList;
-  const collectionTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const collection of collections) {
-      map.set(collection.id, collection.title);
-    }
-    return map;
-  }, [collections]);
-  /**
-   * Show per-row collection labels only when the current scope can span more
-   * than one collection. Within a single collection scope the sidebar already
-   * tells the user which one they're in, so labels would be redundant noise.
-   */
-  const showItemCollections = activeScope === "all" || activeScope.startsWith("tool:");
-  const syncSettingsAfterSave = settings.backup.hasUnsavedChanges && settings.backup.config.enabled;
   const activeDocumentCollectionTitle = library.activeLibraryItem
     ? (collectionTitleById.get(library.activeLibraryItem.item.collectionId) ?? null)
     : null;
-  const kindScopedSkills = useMemo(
-    () =>
-      measureRenderer(
-        "renderer.filterByKind",
-        () => filterByKind(scopedSkills, kindFilter),
-        (result) => ({
-          input: scopedSkills.length,
-          output: result.length,
-          kindFilter,
-        })
-      ),
-    [kindFilter, scopedSkills]
-  );
-  const searchableSkills = useMemo(
-    () =>
-      measureRenderer(
-        "renderer.buildLibraryItemSearchIndex",
-        () => buildLibraryItemSearchIndex(kindScopedSkills),
-        (result) => ({ items: result.length })
-      ),
-    [kindScopedSkills]
-  );
-  const shownSkills = useMemo(
-    () =>
-      measureRenderer(
-        "renderer.filterLibraryItemSearchIndex",
-        () => filterLibraryItemSearchIndex(searchableSkills, deferredQuery),
-        (result) => ({
-          input: searchableSkills.length,
-          output: result.length,
-          queryLength: deferredQuery.trim().length,
-        })
-      ),
-    [deferredQuery, searchableSkills]
-  );
-  const sidebarCollections = useMemo(
-    () =>
-      collections.map((collection) => ({
-        id: collection.id,
-        title: collection.title,
-        count: collection.items.length,
-      })),
-    [collections]
-  );
-  const sidebarTools = useMemo(
-    () =>
-      tools.map((tool) => ({
-        id: tool.id,
-        title: tool.title,
-        count: tool.items.length,
-        icon: toolPresetById(tool.id)?.icon ?? "tool",
-      })),
-    [tools]
-  );
-
-  useEffect(() => {
-    if (shownSkills.length === 0) {
-      library.clearActiveSkill();
-      return;
-    }
-    if (
-      library.activeLibraryItemId &&
-      shownSkills.some((skill) => skill.id === library.activeLibraryItemId)
-    ) {
-      return;
-    }
-    library.setActiveSkillId(shownSkills[0]?.id ?? null);
-  }, [
-    library.activeLibraryItemId,
-    library.clearActiveSkill,
-    library.setActiveSkillId,
-    shownSkills,
-  ]);
 
   const collectionDialogs = useCollectionDialogs({
     library,
@@ -240,13 +93,24 @@ function App() {
     setActiveScope,
     setQuery,
   });
+  const { onExport: exportCollection } = collectionDialogs;
   const skillDialogs = useLibraryItemDialogs({
     library,
-    collections,
+    collections: view.collections,
     activeCollectionId: activeCollection?.id ?? null,
     setActiveScope,
     setQuery,
     setKindFilter,
+  });
+  const instructionsEntry = useToolInstructionsEntryPoints({
+    instructions: toolInstructions,
+    tools: settings.appSettings?.tools,
+    activeToolId: activeTool?.id ?? null,
+    requestItemChange: library.requestSkillChange,
+    createItem: skillDialogs.create.onCreate,
+    settingsHaveChanges: settings.modal.hasChanges,
+    saveSettings: settingsActions.save,
+    closeSettings: settings.modal.close,
   });
 
   const handleFocusEditor = useCallback(() => editorRef.current?.focus(), []);
@@ -254,40 +118,48 @@ function App() {
     void appRpc.request.revealPath({ path: item.rootPath });
   }, []);
   const handleInstallTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "install"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "install"),
+    [runToolAction]
   );
   const handleRemoveTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "remove"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "remove"),
+    [runToolAction]
   );
   const handleRepairTool = useCallback(
-    (toolId: string) => void skillTools.runToolAction(toolId, "repair"),
-    [skillTools.runToolAction]
+    (toolId: string) => void runToolAction(toolId, "repair"),
+    [runToolAction]
   );
   const handleExportCollection = useCallback(
-    (collection: { id: string; title: string }) => void collectionDialogs.onExport(collection),
-    [collectionDialogs.onExport]
+    (collection: { id: string; title: string }) => void exportCollection(collection),
+    [exportCollection]
   );
-  const handleOpenUpdates = useCallback(
-    () => settings.modal.open("updates"),
-    [settings.modal.open]
-  );
+  const handleOpenUpdates = useCallback(() => openSettingsModal("updates"), [openSettingsModal]);
   const handleOpenShortcuts = useCallback(() => setShortcutsModalOpen(true), []);
 
-  const activeItemKind = library.activeLibraryItem?.item.kind ?? "skill";
   const libraryItemSupportsTools = Boolean(library.activeLibraryItem);
-  const canSaveCurrent = library.currentFileHasChanges && Boolean(library.currentFile);
-  const canSaveAll = library.changedFiles.length > 0;
+  const activeItemReadOnly = useMemo(() => {
+    const sourceLibraryId = library.activeLibraryItem?.item.sourceLibraryId;
+    if (!sourceLibraryId) return false;
+    return Boolean(gitLibraryById.get(sourceLibraryId)?.readOnly);
+  }, [gitLibraryById, library.activeLibraryItem?.item.sourceLibraryId]);
+  const canSaveCurrent =
+    !activeItemReadOnly && library.currentFileHasChanges && Boolean(library.currentFile);
+  const canSaveAll = !activeItemReadOnly && library.changedFiles.length > 0;
   const listPermissions = useMemo(
     () => ({
-      canCreate: collections.length > 0,
-      canRename: Boolean(library.activeLibraryItem),
-      canDelete: Boolean(library.activeLibraryItem),
+      canCreate: writableCollections.length > 0 && !activeCollectionReadOnly,
+      canRename: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
+      canDelete: Boolean(library.activeLibraryItem) && !activeItemReadOnly,
       canReveal: Boolean(library.activeLibraryItem),
-      canMove: collections.length > 1 && Boolean(library.activeLibraryItem),
+      canMove:
+        writableCollections.length > 1 && Boolean(library.activeLibraryItem) && !activeItemReadOnly,
     }),
-    [collections.length, library.activeLibraryItem]
+    [
+      activeCollectionReadOnly,
+      activeItemReadOnly,
+      library.activeLibraryItem,
+      writableCollections.length,
+    ]
   );
   const detailsSaveState = useMemo<LibraryItemDetailsSaveState>(
     () => ({
@@ -354,34 +226,27 @@ function App() {
     ]
   );
   const shortcutsDisabled =
-    collectionDialogs.create.opened ||
-    collectionDialogs.import.opened ||
-    Boolean(collectionDialogs.delete.target) ||
-    Boolean(collectionDialogs.rename.target) ||
-    Boolean(skillDialogs.delete.target) ||
-    Boolean(skillDialogs.move.target) ||
-    Boolean(skillDialogs.rename.target) ||
-    shortcutsModalOpen ||
+    appDialogOpen({
+      library,
+      collectionDialogs,
+      itemDialogs: skillDialogs,
+      shortcutsOpened: shortcutsModalOpen,
+    }) ||
     settings.modal.opened ||
-    library.unsavedDialogOpen;
+    toolInstructions.unsavedDialog.opened ||
+    toolInstructions.conflictDialog.opened ||
+    toolInstructions.createRuleDialog.opened;
   const onboardingBlocked =
     shortcutsDisabled ||
     skillTools.missingParentDialog.request !== null ||
     updater.applying ||
     updater.downloading;
-  const openImportCollectionModal = collectionDialogs.import.open;
   const isMac =
     settings.appSettings?.platform === "darwin" || navigator.platform.toLowerCase().includes("mac");
 
-  useEffect(() => {
-    return onAppMessage("githubImportRequested", (draft) => {
-      openImportCollectionModal(draft);
-    });
-  }, [openImportCollectionModal]);
-
   useAppShortcuts({
     enabled: !shortcutsDisabled,
-    canCreateItem: collections.length > 0,
+    canCreateItem: writableCollections.length > 0 && !activeCollectionReadOnly,
     canDeleteItem: Boolean(library.activeLibraryItem),
     canRenameItem: Boolean(library.activeLibraryItem),
     onCreateItem: skillDialogs.create.open,
@@ -401,12 +266,15 @@ function App() {
     <div className={isMac ? "skillful-shell platform-mac" : "skillful-shell"}>
       <div className="app-layout">
         <AppSidebar
-          collections={sidebarCollections}
-          tools={sidebarTools}
+          collections={view.sidebarCollections}
+          tools={view.sidebarTools}
           selectedScope={activeScope}
           refreshing={library.refreshingSkills}
           onSelectScope={setActiveScope}
           onRefresh={library.refreshLibraryItems}
+          gitLibraryCount={settings.appSettings?.gitLibraries.length ?? 0}
+          syncingGitLibraries={settings.gitLibraries.syncingAll}
+          onSyncGitLibraries={settings.gitLibraries.syncAll}
           onCreateCollection={collectionDialogs.create.open}
           onImportCollection={collectionDialogs.import.open}
           onRenameCollection={collectionDialogs.rename.request}
@@ -432,7 +300,7 @@ function App() {
             }
           >
             <LibraryItemListPane
-              libraryItems={shownSkills}
+              libraryItems={view.shownItems}
               selectedId={library.activeLibraryItemId}
               query={query}
               title={activeTool?.title ?? activeCollection?.title ?? t("library.allItems")}
@@ -440,15 +308,18 @@ function App() {
               kindFilter={kindFilter}
               onKindFilterChange={setKindFilter}
               permissions={listPermissions}
-              showItemCollections={showItemCollections}
+              showItemCollections={view.showItemCollections}
               collectionTitleById={collectionTitleById}
+              gitLibraryById={gitLibraryById}
+              gitLibrarySyncedAt={settings.appSettings?.gitLibrarySyncedAt ?? {}}
               onCreateSkill={skillDialogs.create.open}
               onRenameSkill={skillDialogs.rename.request}
               onMoveSkill={skillDialogs.move.request}
               onRevealSkill={handleRevealSkill}
               onDeleteSkill={skillDialogs.delete.request}
               onQueryChange={setQuery}
-              onSelectSkill={library.requestSkillChange}
+              onSelectSkill={instructionsEntry.selectItem}
+              instructionsAction={instructionsEntry.listHeaderAction}
               onFocusEditor={handleFocusEditor}
             />
             {largeLayout ? (
@@ -461,212 +332,49 @@ function App() {
                 <span className="pane-separator-handle" />
               </button>
             ) : null}
-            <LibraryItemDetails
-              document={library.activeLibraryItem}
-              collectionTitle={activeDocumentCollectionTitle}
-              activeRelativePath={library.activeFilePath}
-              onActiveRelativePathChange={library.setActiveFilePath}
-              drafts={library.activeDrafts}
-              onDraftChange={library.updateDraft}
-              viewModeIntent={library.viewModeIntent}
-              saveState={detailsSaveState}
-              tooling={detailsTooling}
-              fileActions={detailsFileActions}
-              editorRef={editorRef}
-            />
+            {toolInstructions.toolId ? (
+              <ToolInstructionsDetails
+                instructions={toolInstructions}
+                editorRef={editorRef}
+                onRevealPath={(path) => void appRpc.request.revealPath({ path })}
+              />
+            ) : (
+              <LibraryItemDetails
+                document={library.activeLibraryItem}
+                collectionTitle={activeDocumentCollectionTitle}
+                readOnly={activeItemReadOnly}
+                activeRelativePath={library.activeFilePath}
+                onActiveRelativePathChange={library.setActiveFilePath}
+                drafts={library.activeDrafts}
+                onDraftChange={library.updateDraft}
+                viewMode={library.viewMode}
+                onViewModeChange={library.setViewMode}
+                saveState={detailsSaveState}
+                tooling={detailsTooling}
+                fileActions={detailsFileActions}
+                editorRef={editorRef}
+              />
+            )}
           </div>
         </main>
       </div>
 
-      <SettingsModal
-        opened={settings.modal.opened}
-        activeTab={settings.modal.activeTab}
-        general={{
-          defaultEditorMode: settings.general.defaultEditorMode,
-          onDefaultEditorModeChange: settings.general.setDefaultEditorMode,
-          language: settings.general.language,
-          onLanguageChange: handleSettingsLanguageChange,
-          suppressSuccessNotifications: settings.general.suppressSuccessNotifications,
-          onSuppressSuccessNotificationsChange: settings.general.setSuppressSuccessNotifications,
-          minimizeToTrayOnClose: settings.general.minimizeToTrayOnClose,
-          onMinimizeToTrayOnCloseChange: settings.general.setMinimizeToTrayOnClose,
-        }}
-        library={{
-          scanRoots: settings.library.rows,
-          defaultScanRoot: settings.appSettings?.defaultScanRoot ?? "",
-          validationById: settings.library.validation.byId,
-          onScanRootChange: settings.library.updateRow,
-          onAddScanRoot: settings.library.addRow,
-          onRemoveScanRoot: settings.library.removeRow,
-          onRestoreScanRoot: settings.library.restoreRow,
-        }}
-        tools={{
-          tools: settings.tools.rows,
-          validationById: settings.tools.validation.byId,
-          availablePresets: settings.tools.availablePresets,
-          onToolChange: settings.tools.updateRow,
-          onPickInstallFolder: settings.tools.pickInstallFolder,
-          onAddTool: settings.tools.addRow,
-          onAddPreset: settings.tools.addPreset,
-          onRemoveTool: settings.tools.removeRow,
-          onRestoreTool: settings.tools.restoreRow,
-          activeRowId: settings.tools.activeRowId,
-          onActiveRowChange: settings.tools.setActiveRowId,
-        }}
-        backup={{
-          config: settings.backup.config,
-          configured: settings.backup.configured,
-          issue: settings.backup.configured ? settings.backup.issue : settings.backup.actionIssue,
-          errorMessage: settings.backup.errorMessage,
-          restoreDisabled: settings.backup.restoreHasValidationErrors || settings.modal.saving,
-          restoreNeedsConfirmation: settings.backup.restoreNeedsConfirmation,
-          restoring: settings.backup.restoring,
-          onConfigChange: settings.backup.updateConfig,
-          onReset: settings.backup.reset,
-          onRestore: (mode) =>
-            void settings.backup.restore({
-              activeLibraryItemId: library.activeLibraryItemId,
-              mode,
-              reloadSkills: library.reloadLibraryAfterRestore,
-              reloadToolStatuses: skillTools.loadToolStatuses,
-            }),
-          onSetup: () =>
-            void settings.backup.setup({
-              activeLibraryItemId: library.activeLibraryItemId,
-              toolMappings: settings.appSettings?.toolMappings ?? [],
-              reloadSkills: library.loadSkillList,
-              reloadToolStatuses: skillTools.loadToolStatuses,
-            }),
-        }}
-        updates={{
-          updateState: updater.updateState,
-          loading: updater.loading,
-          checking: updater.checking,
-          downloading: updater.downloading,
-          applying: updater.applying,
-          errorMessage: updater.errorMessage,
-          onCheckForUpdates: () => void updater.checkForUpdates(),
-          onDownloadUpdate: () => void updater.downloadUpdate(),
-          onApplyUpdate: () => void updater.applyUpdate(),
-        }}
-        footer={{
-          hasChanges: settings.modal.hasChanges,
-          saving: settings.modal.saving,
-          errorMessage: settings.modal.errorMessage,
-          syncAfterSave: syncSettingsAfterSave,
-          onClose: settings.modal.close,
-          onSave: () =>
-            void settings.modal.save({
-              activeLibraryItemId: library.activeLibraryItemId,
-              backupAfterSave: syncSettingsAfterSave,
-              toolMappings: settings.appSettings?.toolMappings ?? [],
-              reloadSkills: library.loadSkillList,
-              reloadToolStatuses: skillTools.loadToolStatuses,
-            }),
-        }}
-        onTabChange={settings.modal.setActiveTab}
-        dirtyTabs={settings.modal.dirtyTabs}
+      <AppSettingsModal
+        settings={settings}
+        actions={settingsActions}
+        updater={updater}
+        onEditInstructions={instructionsEntry.fromSettings.request}
       />
 
-      <CreateCollectionModal
-        opened={collectionDialogs.create.opened}
-        saving={collectionDialogs.create.saving}
-        errorMessage={collectionDialogs.create.errorMessage}
-        onClose={collectionDialogs.create.close}
-        onCreate={collectionDialogs.create.onCreate}
-      />
-
-      <ImportCollectionModal
-        opened={collectionDialogs.import.opened}
-        saving={collectionDialogs.import.saving}
-        errorMessage={collectionDialogs.import.errorMessage}
-        draft={collectionDialogs.import.draft}
-        onClose={collectionDialogs.import.close}
-        onClearError={collectionDialogs.import.clearError}
-        onPickFolder={collectionDialogs.import.onPickFolder}
-        onPickArchive={collectionDialogs.import.onPickArchive}
-        onImportFolder={collectionDialogs.import.onImportFolder}
-        onImportArchive={collectionDialogs.import.onImportArchive}
-        onImportGitHub={collectionDialogs.import.onImportGitHub}
-      />
-
-      <RenameCollectionModal
-        opened={Boolean(collectionDialogs.rename.target)}
-        currentName={collectionDialogs.rename.target?.title ?? ""}
-        saving={library.status === "loading"}
-        errorMessage={collectionDialogs.rename.errorMessage}
-        onClose={collectionDialogs.rename.close}
-        onRename={collectionDialogs.rename.onRename}
-      />
-
-      <CreateLibraryItemModal
-        opened={skillDialogs.create.opened}
-        saving={skillDialogs.create.saving}
-        errorMessage={skillDialogs.create.errorMessage}
-        collections={collections}
-        defaultCollectionId={skillDialogs.create.defaultCollectionId}
-        onClose={skillDialogs.create.close}
-        onCreate={skillDialogs.create.onCreate}
-      />
-
-      <RenameLibraryItemModal
-        opened={Boolean(skillDialogs.rename.target)}
-        itemKind={skillDialogs.rename.target?.kind ?? activeItemKind}
-        currentName={skillDialogs.rename.target?.title ?? ""}
-        saving={library.status === "saving"}
-        errorMessage={skillDialogs.rename.errorMessage}
-        onClose={skillDialogs.rename.close}
-        onRename={skillDialogs.rename.onRename}
-      />
-
-      <MoveLibraryItemModal
-        opened={Boolean(skillDialogs.move.target)}
-        itemKind={skillDialogs.move.target?.kind ?? activeItemKind}
-        itemTitle={skillDialogs.move.target?.title ?? ""}
-        currentCollectionId={skillDialogs.move.target?.collectionId ?? ""}
-        collections={collections}
-        saving={skillDialogs.move.moving}
-        errorMessage={skillDialogs.move.errorMessage}
-        onClose={skillDialogs.move.close}
-        onMove={skillDialogs.move.onMove}
-      />
-
-      <DeleteCollectionDialog
-        opened={Boolean(collectionDialogs.delete.target)}
-        collectionTitle={collectionDialogs.delete.target?.title ?? ""}
-        deleting={collectionDialogs.delete.deleting}
-        errorMessage={collectionDialogs.delete.errorMessage}
-        onCancel={collectionDialogs.delete.close}
-        onDelete={() => void collectionDialogs.delete.onDelete()}
-      />
-
-      <DeleteLibraryItemDialog
-        opened={Boolean(skillDialogs.delete.target)}
-        itemKind={skillDialogs.delete.target?.kind ?? "skill"}
-        libraryItemTitle={skillDialogs.delete.target?.title ?? ""}
-        deleting={skillDialogs.delete.deleting}
-        errorMessage={skillDialogs.delete.errorMessage}
-        onCancel={skillDialogs.delete.close}
-        onDelete={() => void skillDialogs.delete.onDelete()}
-      />
-
-      <KeyboardShortcutsModal
-        opened={shortcutsModalOpen}
-        onClose={() => setShortcutsModalOpen(false)}
-      />
-
-      <MissingToolParentDialog
-        confirming={skillTools.missingParentDialog.confirming}
-        request={skillTools.missingParentDialog.request}
-        onCancel={skillTools.missingParentDialog.onCancel}
-        onConfirm={() => void skillTools.missingParentDialog.onConfirm()}
-      />
-
-      <UnsavedChangesDialog
-        opened={library.unsavedDialogOpen}
-        onSave={() => void library.confirmSaveAndNavigate()}
-        onDiscard={library.discardAndNavigate}
-        onCancel={library.cancelNavigation}
+      <AppDialogs
+        library={library}
+        collectionDialogs={collectionDialogs}
+        itemDialogs={skillDialogs}
+        writableCollections={writableCollections}
+        onCreateItem={instructionsEntry.createItem}
+        shortcuts={{ opened: shortcutsModalOpen, onClose: () => setShortcutsModalOpen(false) }}
+        missingToolParent={skillTools.missingParentDialog}
+        instructionsFromSettings={instructionsEntry.fromSettings.dialog}
       />
 
       <OnboardingTour

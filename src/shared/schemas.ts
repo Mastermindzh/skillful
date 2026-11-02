@@ -13,6 +13,8 @@ export const ToolConfigSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   installRoots: ToolInstallRootsSchema,
+  // Absent in settings written before instruction files existed; filled from the preset on load.
+  instructionsPath: z.string().optional(),
 });
 
 export const LibraryItemToolMappingSchema = z.object({
@@ -26,8 +28,24 @@ export const GitBackupConfigSchema = z.object({
   branch: z.string().default("main"),
   includeSettings: z.boolean().default(true),
   includeDefaultLibrary: z.boolean().default(true),
+  // Absent for backups configured before this option existed; resolved on load so those stay off.
+  includeToolInstructions: z.boolean().optional(),
   autoBackup: z.boolean().default(false),
   autoBackupIntervalMinutes: z.number().int().min(1).default(10),
+});
+
+export const GIT_LIBRARY_SYNC_MODE = z.enum(["pull", "two-way"]);
+
+export const GitLibraryConfigSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  remoteUrl: z.string().min(1),
+  branch: z.string().min(1).default("main"),
+  path: z.string().default(""),
+  syncMode: GIT_LIBRARY_SYNC_MODE.default("pull"),
+  autoSync: z.boolean().default(true),
+  syncIntervalMinutes: z.number().int().min(1).default(60),
+  readOnly: z.boolean().default(false),
 });
 
 export const AppConfigSchema = z.object({
@@ -45,9 +63,12 @@ export const AppConfigSchema = z.object({
     branch: "main",
     includeSettings: true,
     includeDefaultLibrary: true,
+    includeToolInstructions: true,
     autoBackup: false,
     autoBackupIntervalMinutes: 10,
   }),
+  gitLibraries: z.array(GitLibraryConfigSchema).default([]),
+  gitLibrarySyncedAt: z.record(z.string(), z.string()).default({}),
 });
 
 export const CollectionArchiveManifestSchema = z.object({

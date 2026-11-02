@@ -28,6 +28,16 @@ bun run dist:snap
 bun run dist:flatpak
 ```
 
+## Release Notes
+
+The `CHANGELOG.md` section for the tagged version becomes the GitHub release notes. Relative links
+and images are rewritten to the tag, so screenshots under `docs/images/` show up on the release
+page. Preview the result before tagging:
+
+```bash
+node scripts/release-notes.mjs v1.3.0
+```
+
 ## App Smoke Test
 
 - Launch the packaged app.
@@ -48,3 +58,6 @@ bun run dist:flatpak
 - Switch between preview and edit mode.
 - Switch language in settings and confirm the UI updates.
 - Toggle success/info notification hiding.
+- Add a git library, sync it, and confirm its collection appears with the git origin badge.
+- Open a tool's instructions from the list header, edit and save, and confirm the file changed on disk.
+- Run a git backup with tool instructions included and confirm `tool-instructions/` was pushed.
