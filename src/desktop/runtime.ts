@@ -1,5 +1,5 @@
 import { ensureDirectory } from "../main/fs";
-import { GitLibrarySyncScheduler } from "../main/git/librarySyncScheduler";
+import { GitLibrarySyncScheduler, gitLibrariesNeedingSync } from "../main/git/librarySyncScheduler";
 import { GitBackupScheduler } from "../main/git/scheduler";
 import { measureAsync } from "../main/performance";
 import { gitLibraryAvailable } from "../main/settings";
@@ -91,7 +91,8 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       );
       adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
       gitBackupScheduler.configure(config.gitBackup);
-      gitLibraryScheduler.configure(config.gitLibraries.filter(gitLibraryAvailable));
+      const gitLibraries = config.gitLibraries.filter(gitLibraryAvailable);
+      gitLibraryScheduler.configure(gitLibraries);
       if (!samePathSet(previousConfig.effectiveScanRoots, config.effectiveScanRoots)) {
         const libraryItems = await measureAsync(
           "desktop.saveConfig.rescan",
@@ -100,6 +101,11 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
         );
         await measureAsync("desktop.saveConfig.startWatching", startWatching);
         adapters.sendLibraryItemsUpdated(libraryItems, "config");
+      }
+      // Cloning can take a while, so it runs in the background; the scheduler reports the result
+      // and the refreshed library arrives as a libraryItemsUpdated message.
+      for (const libraryId of gitLibrariesNeedingSync(previousConfig.gitLibraries, gitLibraries)) {
+        void gitLibraryScheduler.runNow(libraryId);
       }
       return config;
     },

@@ -6,6 +6,7 @@
 
 Use a git repository as a skill and agent library. Skillful clones it, keeps it in sync on an interval, and marks where each item came from, so a team can share one playbook while everyone keeps their own library next to it.
 
+- New libraries are cloned as soon as you save them, and re-synced when you change their remote, branch, or folder
 - Pull-only sync fast-forwards from the remote and reports local edits; two-way sync also pushes them
 - Read-only libraries keep the remote the only author, ideal for shared team playbooks
 - Uses your system git and ssh keys; Skillful never reads or stores credentials

@@ -325,6 +325,8 @@ export const nlMessages = {
   "settings.gitLibrary.error.syncInterval": "Gebruik een interval van minstens 1 minuut.",
   "settings.gitLibrary.notification.synced.title": "Git-bibliotheek gesynchroniseerd",
   "settings.gitLibrary.notification.synced.message": "{name} is bijgewerkt vanaf de remote.",
+  "settings.gitLibrary.notification.cloned.message":
+    "{name} is gekloond en aan je bibliotheek toegevoegd.",
   "settings.gitLibrary.notification.failed.title": "Synchroniseren van git-bibliotheek mislukt",
   "sidebar.syncGitLibraries": "Git-bibliotheken synchroniseren",
   "library.gitOrigin.ariaLabel": "Uit git-bibliotheek {name}",

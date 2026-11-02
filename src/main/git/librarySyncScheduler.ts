@@ -37,6 +37,25 @@ function errorResult(library: GitLibraryConfig, error: unknown): GitLibrarySyncR
 }
 
 /**
+ * Libraries that were just added, or now point at a different remote, branch, or folder. These
+ * sync once right after saving instead of waiting a full interval (or forever, without auto sync).
+ */
+export function gitLibrariesNeedingSync(previous: GitLibraryConfig[], next: GitLibraryConfig[]) {
+  const previousById = new Map(previous.map((library) => [library.id, library]));
+  return next
+    .filter((library) => {
+      const before = previousById.get(library.id);
+      return (
+        !before ||
+        before.remoteUrl !== library.remoteUrl ||
+        before.branch !== library.branch ||
+        before.path !== library.path
+      );
+    })
+    .map((library) => library.id);
+}
+
+/**
  * Runs each git library on its own interval. Libraries are keyed by id, so reconfiguring only
  * restarts timers whose schedule actually changed and a slow sync can never overlap itself.
  */
@@ -109,7 +128,8 @@ export class GitLibrarySyncScheduler {
 
     try {
       const result = await this.runSync(libraryId);
-      if (NOTIFY_STATES.has(result.state)) this.notify(result);
+      // A first clone reports up-to-date, but is still news: the library just appeared.
+      if (result.cloned || NOTIFY_STATES.has(result.state)) this.notify(result);
     } catch (error) {
       this.notify(errorResult(library, error));
     } finally {

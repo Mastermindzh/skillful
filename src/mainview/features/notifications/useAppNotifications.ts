@@ -26,6 +26,12 @@ export function useAppNotifications(gitLibraries: GitLibraryConfig[] | undefined
     return onAppMessage("gitLibrarySynced", (result) => {
       const name =
         gitLibraries?.find((entry) => entry.id === result.libraryId)?.name || result.remoteUrl;
+      if (result.cloned) {
+        notify.info(t("settings.gitLibrary.notification.cloned.message", { name }), {
+          title: t("settings.gitLibrary.notification.synced.title"),
+        });
+        return;
+      }
       if (result.state === "updated") {
         notify.info(t("settings.gitLibrary.notification.synced.message", { name }), {
           title: t("settings.gitLibrary.notification.synced.title"),

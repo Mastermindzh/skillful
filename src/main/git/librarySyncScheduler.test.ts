@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GitLibraryConfig, GitLibrarySyncResult } from "../../shared/types";
-import { GitLibrarySyncScheduler } from "./librarySyncScheduler";
+import { GitLibrarySyncScheduler, gitLibrariesNeedingSync } from "./librarySyncScheduler";
 
 function library(overrides: Partial<GitLibraryConfig> = {}): GitLibraryConfig {
   return {
@@ -107,6 +107,31 @@ describe("GitLibrarySyncScheduler", () => {
     failing.dispose();
   });
 
+  it("notifies when a library was cloned for the first time", async () => {
+    const notify = vi.fn();
+    const scheduler = new GitLibrarySyncScheduler(
+      async (libraryId) => result({ libraryId, state: "up-to-date", cloned: true }),
+      notify
+    );
+    scheduler.configure([library()]);
+
+    await scheduler.runNow("library-1");
+
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ cloned: true }));
+    scheduler.dispose();
+  });
+
+  it("can sync a library on demand even when auto sync is off", async () => {
+    const runSync = vi.fn(async (libraryId: string) => result({ libraryId }));
+    const scheduler = new GitLibrarySyncScheduler(runSync, vi.fn());
+    scheduler.configure([library({ autoSync: false })]);
+
+    await scheduler.runNow("library-1");
+
+    expect(runSync).toHaveBeenCalledWith("library-1");
+    scheduler.dispose();
+  });
+
   it("never runs a second sync for a library while one is in flight", async () => {
     let release: (() => void) | undefined;
     const runSync = vi.fn(
@@ -140,5 +165,35 @@ describe("GitLibrarySyncScheduler", () => {
       expect.objectContaining({ state: "error", message: "git exploded" })
     );
     scheduler.dispose();
+  });
+});
+
+describe("gitLibrariesNeedingSync", () => {
+  it("picks libraries that are new or point somewhere else", () => {
+    const unchanged = library({ id: "same" });
+    const renamed = library({ id: "renamed" });
+    const moved = library({ id: "moved", branch: "main" });
+
+    expect(
+      gitLibrariesNeedingSync(
+        [unchanged, renamed, moved],
+        [
+          unchanged,
+          { ...renamed, name: "New name", syncIntervalMinutes: 5, readOnly: true },
+          { ...moved, branch: "develop" },
+          library({ id: "added" }),
+        ]
+      )
+    ).toEqual(["moved", "added"]);
+  });
+
+  it("re-syncs when the remote or folder changes", () => {
+    const before = library();
+    expect(
+      gitLibrariesNeedingSync([before], [{ ...before, remoteUrl: "git@example.com:me/other.git" }])
+    ).toEqual(["library-1"]);
+    expect(gitLibrariesNeedingSync([before], [{ ...before, path: "/srv/skills" }])).toEqual([
+      "library-1",
+    ]);
   });
 });

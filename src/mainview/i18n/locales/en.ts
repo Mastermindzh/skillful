@@ -318,6 +318,7 @@ export const enMessages = {
   "settings.gitLibrary.error.syncInterval": "Use an interval of at least 1 minute.",
   "settings.gitLibrary.notification.synced.title": "Git library synced",
   "settings.gitLibrary.notification.synced.message": "{name} was updated from the remote.",
+  "settings.gitLibrary.notification.cloned.message": "{name} was cloned and added to your library.",
   "settings.gitLibrary.notification.failed.title": "Git library sync failed",
   "sidebar.syncGitLibraries": "Sync git libraries",
   "library.gitOrigin.ariaLabel": "From git library {name}",
