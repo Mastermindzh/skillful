@@ -197,3 +197,5 @@ export function useLibraryItemTools({
     toolStatuses: activeLibraryItem ? toolStatuses : NO_TOOL_STATUSES,
   };
 }
+
+export type LibraryItemTools = ReturnType<typeof useLibraryItemTools>;

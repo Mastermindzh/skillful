@@ -41,6 +41,8 @@ export type MockFixture = {
     }
   >;
   pendingGitHubImport?: GitHubImportDraft;
+  /** Instruction files on the fake disk, keyed by tool id then path relative to its folder. */
+  toolInstructions?: Record<string, Record<string, string>>;
 };
 
 export type MockState = {
@@ -48,6 +50,7 @@ export type MockState = {
   collections: LibraryItemCollectionSummary[];
   documents: LibraryItemDocument[];
   updateState: AppUpdateState;
+  toolInstructions: Record<string, Record<string, string>>;
 };
 
 declare global {

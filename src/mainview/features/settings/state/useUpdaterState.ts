@@ -177,3 +177,5 @@ export function useUpdaterState() {
     loadUpdateState,
   };
 }
+
+export type UpdaterState = ReturnType<typeof useUpdaterState>;

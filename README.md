@@ -51,6 +51,9 @@ Skillful treats those files like a library worth maintaining. Edit once, install
 - Keep screenshots, scripts, examples, and other supporting files beside each item
 - Install the same item into multiple tools without copying source files
 - Detect and repair broken installs
+- Use a git repository as a shared, auto-synced library (pull-only or two-way, optionally read-only)
+- Back up settings, your library, and tool instructions to a private git repository, and restore them on another machine
+- Edit each tool's own instructions (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, ...) in place, and include them in git backups
 - Import folders, `.skillful.zip` archives, and public GitHub source archives
 - Open Skillful import links from repositories that publish GitHub-safe import buttons
 - Validate frontmatter metadata and warn before incomplete entries drift into your library
@@ -140,7 +143,7 @@ When changing core workflow behavior, keep the product model intact:
 
 - the filesystem stays the source of truth
 - collections are content groups
-- tools are install destinations
+- tools are install destinations; their own instruction files are edited where the tool reads them
 - skills and agents stay as readable folders on disk
 - user-facing behavior should get tests
 

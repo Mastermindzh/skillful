@@ -108,6 +108,13 @@ export function BackupSettingsPanel({
               }
               label={t("settings.backup.includeDefaultLibrary")}
             />
+            <Checkbox
+              checked={config.includeToolInstructions}
+              onChange={(event) =>
+                onConfigChange("includeToolInstructions", event.currentTarget.checked)
+              }
+              label={t("settings.backup.includeToolInstructions")}
+            />
           </Stack>
 
           <Stack gap={6}>

@@ -1,25 +1,32 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { useState } from "react";
-import type { LibraryItemDocument } from "../../../shared/types";
 import { TextEntryDialog } from "../../components/dialogs/TextEntryDialog";
 import { useOnDialogOpen } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 
-type CreateSkillFileModalProps = {
+type CreateMarkdownFileModalProps = {
   opened: boolean;
   saving: boolean;
   errorMessage: string | null;
+  /** Defaults to the "new markdown file" texts used for library items. */
+  title?: string;
+  description?: string;
+  placeholder?: string;
   onClose: () => void;
-  onCreate: (name: string) => Promise<LibraryItemDocument | null>;
+  /** Resolves to something truthy once the file was created. */
+  onCreate: (name: string) => Promise<unknown>;
 };
 
-export function CreateLibraryItemFileModal({
+export function CreateMarkdownFileModal({
   opened,
   saving,
   errorMessage,
+  title,
+  description,
+  placeholder,
   onClose,
   onCreate,
-}: CreateSkillFileModalProps) {
+}: CreateMarkdownFileModalProps) {
   const { t } = useAppTranslation();
   const [name, setName] = useState("");
 
@@ -36,10 +43,10 @@ export function CreateLibraryItemFileModal({
   return (
     <TextEntryDialog
       opened={opened}
-      title={t("file.create.title")}
-      description={t("file.create.description")}
+      title={title ?? t("file.create.title")}
+      description={description ?? t("file.create.description")}
       label={t("file.name")}
-      placeholder={t("file.name.placeholder")}
+      placeholder={placeholder ?? t("file.name.placeholder")}
       value={name}
       saving={saving}
       errorMessage={errorMessage}

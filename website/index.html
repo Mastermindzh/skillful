@@ -277,8 +277,8 @@
           <article class="feature-card">
             <h2>Skills and agents together.</h2>
             <p>
-              Keep `SKILL.md` and `AGENT.md` workflows in one library, with filters and badges that
-              make the difference clear without splitting your workspace.
+              Keep <code>SKILL.md</code> and <code>AGENT.md</code> workflows in one library, with
+              filters and badges that make the difference clear without splitting your workspace.
             </p>
           </article>
           <article class="feature-card">
@@ -286,6 +286,20 @@
             <p>
               Spot broken symlinks, repair them in a click, and remove cleanly when a skill has
               outlived its use.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h2>Share libraries over git.</h2>
+            <p>
+              Point Skillful at a git repository and it keeps that library in sync next to your own.
+              Pull-only, two-way, or read-only for a team playbook nobody edits by accident.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h2>Tune every tool.</h2>
+            <p>
+              Edit <code>CLAUDE.md</code>, <code>AGENTS.md</code>, and <code>GEMINI.md</code> in
+              place, right where each tool reads them, and back them up with your library.
             </p>
           </article>
         </section>
@@ -327,8 +341,9 @@
           <h2>Your library, your disk.</h2>
           <p>
             Skillful is source-available and free. Your skills, agents, and notes stay on your
-            machine: no account, no telemetry, no servers. You own the folder, and if Skillful ever
-            disappears your library still works, because it's all local.
+            machine, or in a git repository you choose: no account, no telemetry, no servers. You
+            own the folder, and if Skillful ever disappears your library still works, because it's
+            all local.
           </p>
         </section>
 
@@ -347,9 +362,9 @@
             <details>
               <summary>Do my skills ever leave my machine?</summary>
               <p>
-                No. Everything stays on your local filesystem. Skillful has no backend and no
-                analytics. The only outbound traffic is to GitHub: update checks against the release
-                feed, and the source archives you explicitly choose to import. See the
+                Only if you ask. Everything stays on your local filesystem and Skillful has no
+                backend and no analytics. Update checks and GitHub imports talk to GitHub, and git
+                backup and git libraries talk to the git remotes you configure yourself. See the
                 <a href="#privacy">Privacy</a> section for the full list.
               </p>
             </details>
@@ -390,10 +405,22 @@
             <details>
               <summary>How do I back up my library?</summary>
               <p>
-                However you already back up files. Your library is just a folder, so
-                <code>git init</code> and push it to a private repo, sync it with your usual backup
-                tool, or drag a copy onto a USB drive. There's nothing proprietary to export and
-                nothing to migrate when you switch machines.
+                Turn on git backup in settings and point it at a private repository. Skillful
+                commits your settings, your library, and optionally your tools' instruction files,
+                pushes them on an interval if you like, and restores everything on a new machine.
+              </p>
+              <p>
+                Your library is still just a folder, so your usual backup tool works too. There's
+                nothing proprietary to export and nothing to migrate when you switch machines.
+              </p>
+            </details>
+            <details>
+              <summary>Can I edit CLAUDE.md and AGENTS.md too?</summary>
+              <p>
+                Yes. Select a tool in the sidebar and open its instructions: Skillful edits the
+                tool's own file in place, such as <code>~/.claude/CLAUDE.md</code> or
+                <code>~/.codex/AGENTS.md</code>, plus Claude Code's rule files. If the tool changed
+                the file while you were editing, Skillful asks before overwriting it.
               </p>
             </details>
           </div>
@@ -405,8 +432,7 @@
           <p>
             Skillful is local-first. There is no Skillful account, no Skillful server, and no
             analytics or telemetry of any kind. The app makes a small, predictable set of outbound
-            network requests, all of them to GitHub, all of them only when you ask for them or to
-            keep the app up to date:
+            network requests, only when you ask for them or to keep the app up to date:
           </p>
           <ul class="privacy-list">
             <li>
@@ -425,10 +451,21 @@
               prefills the import dialog locally. No request is made until you click
               <em>Import</em>.
             </li>
+            <li>
+              <strong>Git backup (opt-in).</strong> When you turn it on, Skillful pushes your
+              settings, library, and (if you choose) your tools' instruction files to the git remote
+              you configured, and pulls them back when you restore.
+            </li>
+            <li>
+              <strong>Git libraries (opt-in).</strong> Each git library you add is cloned and synced
+              from its remote; two-way libraries also push your changes back to it.
+            </li>
           </ul>
           <p>
-            That's the entire list. Your skill folders, drafts, settings, and library paths never
-            leave your disk. You can verify this by reading
+            That's the entire list. Git operations use your system git and ssh keys; Skillful never
+            reads or stores credentials. Beyond the remotes you set up yourself, your skill folders,
+            drafts, settings, and library paths never leave your disk. You can verify this by
+            reading
             <a href="https://github.com/Mastermindzh/skillful" target="_blank" rel="noreferrer"
               >the source</a
             >

@@ -22,6 +22,14 @@ export function isAbsolutePathOnPlatform(value: string, platform: Platform) {
   return platform === "win32" ? isWindowsAbsolutePath(value) : value.startsWith("/");
 }
 
+/**
+ * Instruction files are markdown. Holding configured paths to that keeps a restored or hand-edited
+ * settings file from pointing Skillful's in-place writes (and backups) at e.g. `~/.bashrc`.
+ */
+export function isMarkdownPath(value: string) {
+  return /\.md$/i.test(value.trim());
+}
+
 export function toPortablePath(filePath: string) {
   return filePath.replace(/\\/g, "/");
 }

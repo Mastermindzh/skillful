@@ -169,6 +169,11 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       service.removeLibraryItemTool(itemId, toolId),
     repairLibraryItemTool: async ({ itemId, toolId }) =>
       service.repairLibraryItemTool(itemId, toolId),
+    readToolInstructions: async ({ toolId }) => service.readToolInstructions(toolId),
+    saveToolInstructions: async ({ toolId, files, overwrite }) =>
+      service.saveToolInstructions(toolId, files, overwrite),
+    createToolInstructionsRule: async ({ toolId, name }) =>
+      service.createToolInstructionsRule(toolId, name),
     getUpdateState: async () => adapters.updater.getUpdateState(),
     checkForUpdates: async () => adapters.updater.checkForUpdates(),
     downloadUpdate: async () => adapters.updater.downloadUpdate(),

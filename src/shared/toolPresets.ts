@@ -21,11 +21,25 @@ export type ToolIconKey =
 export type SupportedToolPlatform = "darwin" | "linux" | "win32";
 type ToolPresetInstallRoots = Partial<Record<LibraryItemKind, string[]>>;
 
+/**
+ * Where a tool reads its always-loaded, user-level instructions. Paths are home-relative (`~/`) so
+ * the same value works on every platform and survives a backup restore on another OS.
+ */
+export type ToolInstructionsPreset = {
+  file: string;
+  /** Sibling file that, when present, the tool loads instead of `file`. */
+  overrideFile?: string;
+  /** Folder next to `file` whose `*.md` files the tool also loads in every session. */
+  rulesDirectory?: string;
+};
+
 export type ToolPreset = {
   id: ToolPresetId;
   name: string;
   icon: ToolIconKey;
   installRootsByPlatform: Partial<Record<SupportedToolPlatform, ToolPresetInstallRoots>>;
+  /** Omitted for tools that keep user instructions outside the filesystem (e.g. Cursor..). */
+  instructions?: ToolInstructionsPreset;
 };
 
 export const TOOL_PRESETS: ToolPreset[] = [
@@ -47,6 +61,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: ["{home}/.claude/agents"],
       },
     },
+    instructions: { file: "~/.claude/CLAUDE.md", rulesDirectory: "rules" },
   },
   {
     id: "codex",
@@ -66,6 +81,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: [],
       },
     },
+    instructions: { file: "~/.codex/AGENTS.md", overrideFile: "AGENTS.override.md" },
   },
   {
     id: "github-copilot",
@@ -85,6 +101,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: ["{home}/.agents/skills"],
       },
     },
+    instructions: { file: "~/.copilot/copilot-instructions.md" },
   },
   {
     id: "junie",
@@ -104,6 +121,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: ["{home}/.junie/skills"],
       },
     },
+    instructions: { file: "~/.junie/AGENTS.md" },
   },
   {
     id: "cursor",
@@ -142,6 +160,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: ["{home}/.gemini/skills"],
       },
     },
+    instructions: { file: "~/.gemini/GEMINI.md" },
   },
   {
     id: "opencode",
@@ -161,6 +180,7 @@ export const TOOL_PRESETS: ToolPreset[] = [
         agent: ["{home}/.config/opencode/skills"],
       },
     },
+    instructions: { file: "~/.config/opencode/AGENTS.md" },
   },
 ];
 
@@ -191,5 +211,11 @@ export function presetToolConfig(preset: ToolPreset, homeDirectory: string, plat
     id: preset.id,
     name: preset.name,
     installRoots: presetInstallRoots(preset, homeDirectory, platform),
+    instructionsPath: preset.instructions?.file ?? "",
   };
+}
+
+/** Default instructions file for a tool id, or "" for custom tools and tools without one. */
+export function presetInstructionsPath(toolId: string) {
+  return toolPresetById(toolId)?.instructions?.file ?? "";
 }

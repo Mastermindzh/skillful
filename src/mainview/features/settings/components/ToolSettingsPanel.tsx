@@ -15,7 +15,7 @@ export type ToolSettingsPanelProps = {
   validationById: Record<string, ToolRowIssue | null>;
   onToolChange: (
     id: string,
-    field: "name" | "skillInstallRoot" | "agentInstallRoot",
+    field: "name" | "skillInstallRoot" | "agentInstallRoot" | "instructionsPath",
     value: string
   ) => void;
   onPickInstallFolder: (
@@ -27,6 +27,7 @@ export type ToolSettingsPanelProps = {
   onRemoveTool: (id: string) => void;
   onRestoreTool: (id: string) => void;
   onActiveRowChange: (id: string | null) => void;
+  onEditInstructions: (id: string) => void;
 };
 
 export function ToolSettingsPanel({
@@ -42,6 +43,7 @@ export function ToolSettingsPanel({
   onRemoveTool,
   onRestoreTool,
   onActiveRowChange,
+  onEditInstructions,
 }: ToolSettingsPanelProps) {
   const { t } = useAppTranslation();
   return (
@@ -99,6 +101,7 @@ export function ToolSettingsPanel({
                 onPickInstallFolder={onPickInstallFolder}
                 onRemove={onRemoveTool}
                 onRestore={onRestoreTool}
+                onEditInstructions={onEditInstructions}
               />
             );
           })}

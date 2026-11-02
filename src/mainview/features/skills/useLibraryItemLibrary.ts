@@ -883,3 +883,5 @@ export function useLibraryItemLibrary(defaultEditorMode: EditorViewMode = "previ
     viewMode,
   };
 }
+
+export type LibraryItemLibrary = ReturnType<typeof useLibraryItemLibrary>;

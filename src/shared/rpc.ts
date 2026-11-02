@@ -18,6 +18,8 @@ import type {
   LibraryItemSummary,
   LibraryItemToolStatus,
   MoveLibraryItemInput,
+  SaveToolInstructionsFileInput,
+  ToolInstructionsDocument,
 } from "./types";
 import type { AppUpdateState, UpdateStatusEntry } from "./updates";
 
@@ -219,6 +221,23 @@ export type AppRPC = {
       repairLibraryItemTool: {
         params: { itemId: string; toolId: string };
         response: AppSettings;
+      };
+      readToolInstructions: {
+        params: { toolId: string };
+        response: ToolInstructionsDocument;
+      };
+      saveToolInstructions: {
+        params: {
+          toolId: string;
+          files: SaveToolInstructionsFileInput[];
+          /** Skips the changed-on-disk check after the user chose to overwrite. */
+          overwrite?: boolean;
+        };
+        response: ToolInstructionsDocument;
+      };
+      createToolInstructionsRule: {
+        params: { toolId: string; name: string };
+        response: { document: ToolInstructionsDocument; relativePath: string };
       };
       getUpdateState: {
         params: undefined;

@@ -371,7 +371,7 @@ export const enMessages = {
   "settings.backup.error.branchWhitespace": "Branch cannot contain whitespace.",
   "settings.backup.error.autoBackupInterval": "Use an interval of at least 1 minute.",
   "settings.backup.error.localContent":
-    "Local skills or agents already exist. Click replace to restore from git and overwrite the local library.",
+    "Local skills, agents or tool instructions already exist. Click replace to restore from git and overwrite them.",
   "settings.backup.error.restore": "Failed to restore backup.",
   "settings.backup.error.run": "Failed to run backup.",
   "settings.backup.notification.synced.title": "Backup synced",
@@ -455,4 +455,34 @@ export const enMessages = {
   "onboarding.done": "Done",
   "onboarding.next": "Next",
   "onboarding.skip": "Skip tour",
+  "instructions.open": "Edit {tool} instructions",
+  "instructions.title": "{tool} instructions",
+  "instructions.description":
+    "{tool} loads these files at the start of every session. Changes are saved straight to {tool}'s own files.",
+  "instructions.close": "Close instructions",
+  "instructions.overrideActive":
+    "{override} exists, so {main} is ignored. Edit {override}, or delete it to use {main} again.",
+  "instructions.empty": "This file is empty. Switch to edit mode to add instructions.",
+  "instructions.notCreated": "Not created yet, saving creates it.",
+  "instructions.loading": "Loading instructions",
+  "instructions.error.open": "Could not open the instructions.",
+  "instructions.error.save": "Could not save the instructions.",
+  "instructions.error.createRule": "Could not create the rule file.",
+  "instructions.notification.openTitle": "Open instructions",
+  "instructions.rule.create.title": "New rule file",
+  "instructions.rule.create.description":
+    "Rule files are loaded alongside the main instructions in every session.",
+  "instructions.rule.create.placeholder": "testing",
+  "instructions.changed.title": "Changed outside Skillful",
+  "instructions.changed.description":
+    "These files changed on disk after you opened them, possibly by the tool itself:",
+  "instructions.changed.overwrite": "Overwrite",
+  "instructions.changed.reload": "Use their version",
+  "settings.tools.instructionsFile": "Instructions file",
+  "settings.tools.instructionsFileDescription":
+    "Loaded by the tool in every session. Leave empty if the tool has none.",
+  "settings.tools.instructionsFilePlaceholder": "~/.tool/AGENTS.md",
+  "settings.tools.editInstructions": "Edit instructions",
+  "settings.backup.includeToolInstructions": "Tool instructions (CLAUDE.md, AGENTS.md, ...)",
+  "settings.tools.error.instructionsMarkdown": "Use a .md file.",
 } as const;

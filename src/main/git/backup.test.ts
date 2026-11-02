@@ -269,4 +269,77 @@ describe("runGitBackup", () => {
       readFile(path.join(settingsDirectory(), "skills", "Remote", "review-pr", "SKILL.md"), "utf8")
     ).resolves.toBe("# Remote Review PR\n");
   });
+
+  it("snapshots tool instructions only while they are included", async () => {
+    const remotePath = path.join(tmpRoot, "remote.git");
+    const claudeMd = path.join(tmpRoot, "home", ".claude", "CLAUDE.md");
+    await mkdir(path.dirname(claudeMd), { recursive: true });
+    await writeFile(claudeMd, "Use bun.\n", "utf8");
+    const config: AppConfig = {
+      ...appConfig(remotePath),
+      tools: [
+        {
+          id: "claude-code",
+          name: "Claude Code",
+          installRoots: { skill: [path.join(tmpRoot, "home", ".claude", "skills")], agent: [] },
+          instructionsPath: claudeMd,
+        },
+      ],
+    };
+    await git(["init", "--bare", remotePath]);
+    await persistSettings(config);
+
+    await runGitBackup(config);
+    const pushed = await bareGit(remotePath, [
+      "show",
+      "main:tool-instructions/claude-code/CLAUDE.md",
+    ]);
+    expect(pushed.stdout).toBe("Use bun.\n");
+
+    await runGitBackup({
+      ...config,
+      gitBackup: { ...config.gitBackup, includeToolInstructions: false },
+    });
+    await expect(
+      bareGit(remotePath, ["show", "main:tool-instructions/claude-code/CLAUDE.md"])
+    ).rejects.toThrow();
+  });
+
+  it("asks before a safe restore overwrites differing tool instructions", async () => {
+    const remotePath = await createRemoteBackup({
+      ".gitignore": "*\n!/.gitignore\n!/tool-instructions/\n!/tool-instructions/**\n",
+      "tool-instructions/claude-code/CLAUDE.md": "From backup\n",
+    });
+    const config = appConfig(remotePath);
+    let received: unknown;
+    const toolInstructionConflicts = async (input: unknown) => {
+      received = input;
+      return ["/home/me/.claude/CLAUDE.md"];
+    };
+
+    await expect(
+      restoreGitBackup(config.gitBackup, "safe", { toolInstructionConflicts })
+    ).rejects.toMatchObject({
+      code: "git-restore-local-content" satisfies AppError["code"],
+      details: { paths: ["/home/me/.claude/CLAUDE.md"] },
+    });
+    expect(received).toEqual({
+      entries: [{ toolId: "claude-code", relativePath: "CLAUDE.md", content: "From backup\n" }],
+      remoteSettings: null,
+    });
+    await expect(
+      readFile(path.join(settingsDirectory(), "tool-instructions", "claude-code", "CLAUDE.md"))
+    ).rejects.toThrow();
+
+    const result = await restoreGitBackup(config.gitBackup, "replace", {
+      toolInstructionConflicts,
+    });
+    expect(result.restored).toBe(true);
+    await expect(
+      readFile(
+        path.join(settingsDirectory(), "tool-instructions", "claude-code", "CLAUDE.md"),
+        "utf8"
+      )
+    ).resolves.toBe("From backup\n");
+  });
 });

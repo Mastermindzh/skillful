@@ -19,6 +19,7 @@ export function defaultGitBackupConfig(): GitBackupConfig {
     branch: "main",
     includeSettings: true,
     includeDefaultLibrary: true,
+    includeToolInstructions: true,
     autoBackup: false,
     autoBackupIntervalMinutes: 10,
   };
@@ -70,6 +71,7 @@ export function sameGitBackupConfig(left: GitBackupConfig, right: GitBackupConfi
     left.branch === right.branch &&
     left.includeSettings === right.includeSettings &&
     left.includeDefaultLibrary === right.includeDefaultLibrary &&
+    left.includeToolInstructions === right.includeToolInstructions &&
     left.autoBackup === right.autoBackup &&
     left.autoBackupIntervalMinutes === right.autoBackupIntervalMinutes
   );

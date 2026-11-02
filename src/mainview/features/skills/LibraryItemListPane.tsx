@@ -12,7 +12,17 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Ellipsis, FolderInput, FolderOpen, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import {
+  Ellipsis,
+  FolderInput,
+  FolderOpen,
+  Pencil,
+  Plus,
+  ScrollText,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { GitLibraryConfig, LibraryItemSummary } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
@@ -68,6 +78,8 @@ type LibraryItemListPaneProps = {
   onQueryChange: (value: string) => void;
   onSelectSkill: (id: string | null) => void;
   onFocusEditor: () => void;
+  /** Shown while a tool scope is active and that tool has an instructions file. */
+  instructionsAction?: { label: string; active: boolean; onOpen: () => void } | null;
 };
 
 export function LibraryItemListPane({
@@ -91,6 +103,7 @@ export function LibraryItemListPane({
   onQueryChange,
   onSelectSkill,
   onFocusEditor,
+  instructionsAction,
 }: LibraryItemListPaneProps) {
   const { t } = useAppTranslation();
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -195,6 +208,19 @@ export function LibraryItemListPane({
             <Badge color="gray" variant="light" className="list-pane-count-badge">
               {libraryItems.length}
             </Badge>
+            {instructionsAction ? (
+              <Tooltip label={instructionsAction.label} openDelay={500}>
+                <ActionIcon
+                  variant={instructionsAction.active ? "light" : "subtle"}
+                  size="sm"
+                  aria-label={instructionsAction.label}
+                  aria-pressed={instructionsAction.active}
+                  onClick={instructionsAction.onOpen}
+                >
+                  <ScrollText size={15} />
+                </ActionIcon>
+              </Tooltip>
+            ) : null}
             <Tooltip
               label={canCreate ? t("library.createItem") : t("library.createCollectionFirst")}
               openDelay={500}

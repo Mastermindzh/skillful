@@ -132,8 +132,8 @@ export function useSettingsState() {
       reloadSkills,
       reloadToolStatuses,
       toolMappings,
-    }: SaveSettingsOptions) => {
-      if (hasValidationErrors) return;
+    }: SaveSettingsOptions): Promise<boolean> => {
+      if (hasValidationErrors) return false;
       setSettingsSaving(true);
       try {
         const scanRootsChanged = !sameScanRoots(
@@ -166,10 +166,12 @@ export function useSettingsState() {
           }
         }
         setSettingsOpen(false);
+        return true;
       } catch (nextError) {
         setSettingsError(
           nextError instanceof Error ? nextError.message : t("common.error.saveSettings")
         );
+        return false;
       } finally {
         setSettingsSaving(false);
       }
@@ -409,3 +411,5 @@ export function useSettingsState() {
     },
   };
 }
+
+export type SettingsState = ReturnType<typeof useSettingsState>;
