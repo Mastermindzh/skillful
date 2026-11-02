@@ -8,12 +8,10 @@
   --panel-border: rgba(255, 255, 255, 0.08);
   --text: rgba(255, 255, 255, 0.94);
   --muted: rgba(255, 255, 255, 0.62);
-  --accent:
-    linear-gradient(180deg, rgba(224, 136, 63, 0.95), rgba(198, 109, 36, 0.95));
+  --accent: linear-gradient(180deg, rgba(224, 136, 63, 0.95), rgba(198, 109, 36, 0.95));
   --accent-soft: rgba(217, 142, 79, 0.16);
   --shadow: rgba(0, 0, 0, 0.28);
-  --placeholder-bg:
-    linear-gradient(135deg, rgba(224, 136, 63, 0.12), rgba(108, 60, 180, 0.14));
+  --placeholder-bg: linear-gradient(135deg, rgba(224, 136, 63, 0.12), rgba(108, 60, 180, 0.14));
 }
 
 [data-theme="light"] {
@@ -26,12 +24,10 @@
   --panel-border: rgba(90, 60, 140, 0.12);
   --text: rgba(33, 24, 54, 0.96);
   --muted: rgba(90, 60, 140, 0.72);
-  --accent:
-    linear-gradient(180deg, rgba(108, 60, 180, 0.95), rgba(88, 44, 160, 0.95));
+  --accent: linear-gradient(180deg, rgba(108, 60, 180, 0.95), rgba(88, 44, 160, 0.95));
   --accent-soft: rgba(108, 60, 180, 0.12);
   --shadow: rgba(90, 60, 140, 0.14);
-  --placeholder-bg:
-    linear-gradient(135deg, rgba(108, 60, 180, 0.08), rgba(224, 136, 63, 0.1));
+  --placeholder-bg: linear-gradient(135deg, rgba(108, 60, 180, 0.08), rgba(224, 136, 63, 0.1));
 }
 
 :root {
@@ -261,7 +257,10 @@ a {
   padding: 0 16px;
   border-radius: 999px;
   font-weight: 700;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
 }
 
 .button:hover,
@@ -533,7 +532,10 @@ a {
   font-size: 1rem;
   font-weight: 600;
   border: 1px solid transparent;
-  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease,
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease,
     background 140ms ease;
   cursor: pointer;
 }
@@ -587,7 +589,9 @@ a {
   border: 1px solid var(--panel-border);
   font-size: 0.88rem;
   color: var(--muted);
-  transition: color 140ms ease, border-color 140ms ease;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease;
 }
 
 .download-chip:hover {

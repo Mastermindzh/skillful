@@ -1,7 +1,10 @@
 import { ensureDirectory } from "../main/fs";
+import { GitLibrarySyncScheduler } from "../main/git/librarySyncScheduler";
 import { GitBackupScheduler } from "../main/git/scheduler";
 import { measureAsync } from "../main/performance";
+import { gitLibraryAvailable } from "../main/settings";
 import { LibraryItemStore } from "../main/skills";
+import type { GitLibrarySyncResult } from "../shared/types";
 import type {
   DesktopRequestHandlers,
   DesktopRuntimeAdapters,
@@ -36,6 +39,10 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
     () => service.runGitBackup(),
     adapters.sendAutoGitBackupCompleted
   );
+  const gitLibraryScheduler = new GitLibrarySyncScheduler(
+    (libraryId) => syncGitLibraryAndRefresh(libraryId),
+    adapters.sendGitLibrarySynced
+  );
   await measureAsync(
     "desktop.startup.scanAll",
     () => service.scanAll(),
@@ -52,6 +59,27 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
     });
   }
 
+  /**
+   * Git writes straight into a scan root, and the store suppresses watcher echoes while it does
+   * so. Whatever landed on disk therefore has to be picked up here, and a fresh clone also needs
+   * watchers because its directory did not exist when they were installed.
+   */
+  async function refreshAfterGitLibraryChange(result: GitLibrarySyncResult) {
+    if (!result.cloned && !result.pulled) return result;
+    const libraryItems = await measureAsync(
+      "desktop.gitLibrary.rescan",
+      () => service.scanAll(),
+      (items) => ({ items: items.length })
+    );
+    if (result.cloned) await startWatching();
+    adapters.sendLibraryItemsUpdated(libraryItems, "git-library");
+    return result;
+  }
+
+  async function syncGitLibraryAndRefresh(libraryId: string) {
+    return refreshAfterGitLibraryChange(await service.syncGitLibrary(libraryId));
+  }
+
   const handlers: DesktopRequestHandlers = {
     getConfig: async () => service.getConfig(),
     setOnboardingTourCompleted: async ({ completed }) =>
@@ -63,6 +91,7 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
       );
       adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
       gitBackupScheduler.configure(config.gitBackup);
+      gitLibraryScheduler.configure(config.gitLibraries.filter(gitLibraryAvailable));
       if (!samePathSet(previousConfig.effectiveScanRoots, config.effectiveScanRoots)) {
         const libraryItems = await measureAsync(
           "desktop.saveConfig.rescan",
@@ -84,6 +113,18 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
     initializeGitBackup: async ({ gitBackup }) => service.initializeGitBackup(gitBackup),
     runGitBackup: async () => service.runGitBackup(),
     restoreGitBackup: async ({ gitBackup, mode }) => service.restoreGitBackup(gitBackup, mode),
+    getGitLibraryStatuses: async () => service.getGitLibraryStatuses(),
+    syncGitLibrary: async ({ libraryId }) => syncGitLibraryAndRefresh(libraryId),
+    syncAllGitLibraries: async () => {
+      const results = await service.syncAllGitLibraries();
+      for (const result of results) await refreshAfterGitLibraryChange(result);
+      return results;
+    },
+    pushGitLibraryChanges: async ({ libraryId }) => service.pushGitLibraryChanges(libraryId),
+    discardGitLibraryChanges: async ({ libraryId }) =>
+      refreshAfterGitLibraryChange(await service.discardGitLibraryChanges(libraryId)),
+    scanGitLibraryHostKey: async ({ host }) => service.scanGitLibraryHostKey(host),
+    trustGitLibraryHost: async ({ hostKey }) => service.trustGitLibraryHost(hostKey),
     importCollection: async (input) => service.importCollection(input),
     importCollectionArchive: async (input) => service.importCollectionArchive(input),
     importCollectionFromGitHub: async (input) => service.importCollectionFromGitHub(input),
@@ -143,11 +184,15 @@ export async function createDesktopRuntime(adapters: DesktopRuntimeAdapters) {
   const config = await service.getConfig();
   adapters.shell.setMinimizeToTrayOnClose(config.minimizeToTrayOnClose);
   gitBackupScheduler.configure(config.gitBackup);
+  gitLibraryScheduler.configure(config.gitLibraries.filter(gitLibraryAvailable));
 
   return {
     handlers,
     startWatching,
-    dispose: () => gitBackupScheduler.dispose(),
+    dispose: () => {
+      gitBackupScheduler.dispose();
+      gitLibraryScheduler.dispose();
+    },
     // Narrow accessor for shell-level diagnostics (e.g. the bun entry point logs effective
     // scan roots on startup). Intentionally does not expose the full `LibraryItemStore` so shells
     // cannot bypass the request handlers.

@@ -54,6 +54,10 @@ export function normalizeSettings(settings?: Partial<AppSettings>): AppSettings 
       autoBackup: false,
       autoBackupIntervalMinutes: 10,
     },
+    gitLibraries: settings?.gitLibraries ?? [],
+    gitLibraryPaths: settings?.gitLibraryPaths ?? {},
+    defaultGitLibraryRoot: settings?.defaultGitLibraryRoot ?? "/mock/skillful/git-libraries",
+    gitLibrarySyncedAt: settings?.gitLibrarySyncedAt ?? {},
   };
 }
 
@@ -204,7 +208,7 @@ export function normalizeUpdateState(updateState?: Partial<AppUpdateState>): App
   return {
     localInfo: {
       ...(fallback?.localInfo ?? fallbackLocalInfo),
-      ...(updateState?.localInfo ?? {}),
+      ...updateState?.localInfo,
     },
     updateInfo: updateState?.updateInfo
       ? {

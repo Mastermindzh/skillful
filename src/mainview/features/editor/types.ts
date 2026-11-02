@@ -50,14 +50,14 @@ export type LibraryItemDetailsFileActions = {
 export type LibraryItemDetailsProps = {
   document: LibraryItemDocument | null;
   collectionTitle: string | null;
+  /** Items inside a read-only git library are previewed only; every edit affordance is hidden. */
+  readOnly: boolean;
   activeRelativePath: string | null;
   onActiveRelativePathChange: (value: string | null) => void;
   drafts: DraftMap;
   onDraftChange: (relativePath: string, value: string) => void;
-  viewModeIntent: {
-    mode: EditorViewMode;
-    token: number;
-  };
+  viewMode: EditorViewMode;
+  onViewModeChange: (mode: EditorViewMode) => void;
   saveState: LibraryItemDetailsSaveState;
   tooling: LibraryItemDetailsTooling;
   fileActions: LibraryItemDetailsFileActions;

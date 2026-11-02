@@ -1,9 +1,10 @@
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   type GitHubImportDraft,
   suggestedGitHubCollectionName,
 } from "../../../shared/githubImport";
+import { useOnDialogOpen, useOnValueChange } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 import type { ImportCollectionFieldErrors, ImportMode } from "./importCollectionModels";
 import { classifyImportCollectionError, importedCollectionName } from "./importCollections";
@@ -41,46 +42,47 @@ export function useImportCollectionModalState({
   const [name, setName] = useState("");
   const [sourcePath, setSourcePath] = useState("");
   const [repo, setRepo] = useState("");
-  const [ref, setRef] = useState("");
+  const [gitRef, setGitRef] = useState("");
   const [gitPath, setGitPath] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [localErrors, setLocalErrors] = useState<ImportCollectionFieldErrors>({});
   const [nameTouched, setNameTouched] = useState(false);
 
-  useEffect(() => {
-    if (!opened) {
-      setMode("archive");
-      setName("");
-      setSourcePath("");
-      setRepo("");
-      setRef("");
-      setGitPath("");
-      setAdvancedOpen(false);
-      setLocalErrors({});
-      setNameTouched(false);
-    }
-  }, [opened]);
+  const resetFields = () => {
+    setMode("archive");
+    setName("");
+    setSourcePath("");
+    setRepo("");
+    setGitRef("");
+    setGitPath("");
+    setAdvancedOpen(false);
+    setLocalErrors({});
+    setNameTouched(false);
+  };
 
-  useEffect(() => {
-    if (!opened || !draft) return;
-
+  const applyDraft = (nextDraft: GitHubImportDraft) => {
     setMode("github");
     setSourcePath("");
-    setRepo(draft.repo);
-    setRef(draft.ref ?? "");
-    setGitPath(draft.path ?? "");
-    setAdvancedOpen(Boolean(draft.ref || draft.path));
+    setRepo(nextDraft.repo);
+    setGitRef(nextDraft.ref ?? "");
+    setGitPath(nextDraft.path ?? "");
+    setAdvancedOpen(Boolean(nextDraft.ref || nextDraft.path));
     setLocalErrors({});
-    setNameTouched(Boolean(draft.name));
+    setNameTouched(Boolean(nextDraft.name));
     setName(
-      draft.name ??
+      nextDraft.name ??
         suggestedGitHubCollectionName({
-          repo: draft.repo,
-          path: draft.path,
+          repo: nextDraft.repo,
+          path: nextDraft.path,
         })
     );
-    onClearError();
-  }, [draft, onClearError, opened]);
+  };
+
+  useOnDialogOpen(opened, resetFields);
+  // A deep link can deliver a new draft while the dialog is already open.
+  useOnValueChange(opened ? draft : null, (nextDraft) => {
+    if (nextDraft) applyDraft(nextDraft);
+  });
 
   const isGitHubMode = mode === "github";
   const canImport =
@@ -113,7 +115,7 @@ export function useImportCollectionModalState({
     setName("");
     setSourcePath("");
     setRepo("");
-    setRef("");
+    setGitRef("");
     setGitPath("");
     setAdvancedOpen(false);
     setLocalErrors({});
@@ -134,7 +136,7 @@ export function useImportCollectionModalState({
   };
 
   const handleRefChange = (value: string) => {
-    setRef(value);
+    setGitRef(value);
     clearFieldError("ref");
   };
 
@@ -198,7 +200,7 @@ export function useImportCollectionModalState({
           : await onImportGitHub({
               name,
               repo,
-              ref: ref.trim() || undefined,
+              ref: gitRef.trim() || undefined,
               path: gitPath.trim() || undefined,
             });
 
@@ -206,7 +208,7 @@ export function useImportCollectionModalState({
       setName("");
       setSourcePath("");
       setRepo("");
-      setRef("");
+      setGitRef("");
       setGitPath("");
       setAdvancedOpen(false);
       setNameTouched(false);
@@ -219,7 +221,7 @@ export function useImportCollectionModalState({
     name,
     sourcePath,
     repo,
-    ref,
+    gitRef,
     gitPath,
     advancedOpen,
     canImport,

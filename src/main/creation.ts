@@ -116,7 +116,7 @@ function normalizeAdditionalFileName(relativePath: string, name: string) {
   );
 }
 
-async function resolveWritableCollectionPath(
+export async function resolveWritableCollectionPath(
   scanRoots: string[],
   kind: LibraryItemKind,
   collectionId: string

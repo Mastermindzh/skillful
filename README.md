@@ -84,8 +84,8 @@ a project at this stage. (though feel free to donate...) So the macOS DMG and th
   `xattr -dr com.apple.quarantine /Applications/Skillful.app`, or
   System Settings → Privacy & Security → "Open Anyway" after the first failed
   launch.
-- **Windows**: SmartScreen "Unrecognized app" prompt. Click *More info* →
-  *Run anyway*. It won't ask again on subsequent launches.
+- **Windows**: SmartScreen "Unrecognized app" prompt. Click _More info_ →
+  _Run anyway_. It won't ask again on subsequent launches.
 - **Linux**: no signing prompts; the package format you choose handles
   integrity (HTTPS download + SHA-512 in `latest-linux.yml`, repo signatures,
   or store review).

@@ -6,6 +6,7 @@ import { visibleFileLabel } from "../skills/libraryItems";
 import { ADDITIONAL_FILES_TAB } from "./constants";
 
 type CurrentFileActions = {
+  canCreate: boolean;
   canManage: boolean;
   onCreate: () => void;
   onRename: () => void;
@@ -63,6 +64,7 @@ export function LibraryItemTabsBar({
         variant="subtle"
         size="sm"
         aria-label={t("file.create.ariaLabel")}
+        disabled={!currentFileActions.canCreate}
         onClick={currentFileActions.onCreate}
       >
         <Plus size={15} />

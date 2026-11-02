@@ -13,8 +13,8 @@
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 
 // ── CLI args ──────────────────────────────────────────────────────────
 function arg(flag: string, fallback: string): string {
@@ -32,30 +32,95 @@ const AGENT_COUNT = TOTAL_ITEMS - SKILL_COUNT;
 
 // ── Vocabulary for random names ───────────────────────────────────────
 const ADJECTIVES = [
-  "fast", "smart", "lazy", "clever", "robust", "elegant", "precise",
-  "dynamic", "minimal", "verbose", "strict", "flexible", "async",
-  "reactive", "parallel", "atomic", "fluent", "modular", "secure", "lean",
+  "fast",
+  "smart",
+  "lazy",
+  "clever",
+  "robust",
+  "elegant",
+  "precise",
+  "dynamic",
+  "minimal",
+  "verbose",
+  "strict",
+  "flexible",
+  "async",
+  "reactive",
+  "parallel",
+  "atomic",
+  "fluent",
+  "modular",
+  "secure",
+  "lean",
 ];
 
 const SKILL_NOUNS = [
-  "reviewer", "linter", "formatter", "debugger", "optimizer", "refactorer",
-  "scanner", "migrator", "deployer", "profiler", "documenter", "transpiler",
-  "bundler", "validator", "generator", "analyzer", "compiler", "parser",
-  "serializer", "transformer",
+  "reviewer",
+  "linter",
+  "formatter",
+  "debugger",
+  "optimizer",
+  "refactorer",
+  "scanner",
+  "migrator",
+  "deployer",
+  "profiler",
+  "documenter",
+  "transpiler",
+  "bundler",
+  "validator",
+  "generator",
+  "analyzer",
+  "compiler",
+  "parser",
+  "serializer",
+  "transformer",
 ];
 
 const AGENT_NOUNS = [
-  "triage-agent", "release-agent", "review-agent", "merge-agent",
-  "deploy-agent", "monitor-agent", "alert-agent", "backup-agent",
-  "cleanup-agent", "onboard-agent", "audit-agent", "report-agent",
-  "sync-agent", "rollback-agent", "hotfix-agent", "notify-agent",
-  "schedule-agent", "provision-agent", "scale-agent", "patch-agent",
+  "triage-agent",
+  "release-agent",
+  "review-agent",
+  "merge-agent",
+  "deploy-agent",
+  "monitor-agent",
+  "alert-agent",
+  "backup-agent",
+  "cleanup-agent",
+  "onboard-agent",
+  "audit-agent",
+  "report-agent",
+  "sync-agent",
+  "rollback-agent",
+  "hotfix-agent",
+  "notify-agent",
+  "schedule-agent",
+  "provision-agent",
+  "scale-agent",
+  "patch-agent",
 ];
 
 const DOMAINS = [
-  "TypeScript", "React", "Node.js", "Python", "Rust", "Go", "CSS",
-  "SQL", "GraphQL", "Docker", "Kubernetes", "CI/CD", "REST API",
-  "WebSocket", "gRPC", "Redis", "PostgreSQL", "MongoDB", "AWS", "Git",
+  "TypeScript",
+  "React",
+  "Node.js",
+  "Python",
+  "Rust",
+  "Go",
+  "CSS",
+  "SQL",
+  "GraphQL",
+  "Docker",
+  "Kubernetes",
+  "CI/CD",
+  "REST API",
+  "WebSocket",
+  "gRPC",
+  "Redis",
+  "PostgreSQL",
+  "MongoDB",
+  "AWS",
+  "Git",
 ];
 
 function pick<T>(arr: T[], index: number): T {

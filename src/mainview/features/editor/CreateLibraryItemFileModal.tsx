@@ -1,7 +1,8 @@
 import type { ComponentPropsWithoutRef } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LibraryItemDocument } from "../../../shared/types";
 import { TextEntryDialog } from "../../components/dialogs/TextEntryDialog";
+import { useOnDialogOpen } from "../../components/dialogs/useOnDialogOpen";
 import { useAppTranslation } from "../../i18n/i18n";
 
 type CreateSkillFileModalProps = {
@@ -22,11 +23,7 @@ export function CreateLibraryItemFileModal({
   const { t } = useAppTranslation();
   const [name, setName] = useState("");
 
-  useEffect(() => {
-    if (!opened) {
-      setName("");
-    }
-  }, [opened]);
+  useOnDialogOpen(opened, () => setName(""));
 
   const handleSubmit: ComponentPropsWithoutRef<"form">["onSubmit"] = async (event) => {
     event.preventDefault();

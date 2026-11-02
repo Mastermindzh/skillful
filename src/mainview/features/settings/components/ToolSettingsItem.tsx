@@ -1,14 +1,17 @@
 import { Accordion, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { Minus, Undo2 } from "lucide-react";
+import type { Platform } from "../../../../shared/types";
 import { useAppTranslation } from "../../../i18n/i18n";
 import type { ToolRow, ToolRowIssue } from "../model/tools";
 import { preventFileUriDrop } from "../utils/dnd";
 import { InstallFolderInput } from "./InstallFolderInput";
+import { OtherPlatformPathNotice } from "./OtherPlatformPathNotice";
 import { PendingRemovalBadge } from "./PendingRemovalBadge";
 
 type ToolSettingsItemProps = {
   issue?: ToolRowIssue | null;
   label: string;
+  platform?: Platform;
   onChange: (
     id: string,
     field: "name" | "skillInstallRoot" | "agentInstallRoot",
@@ -26,6 +29,7 @@ type ToolSettingsItemProps = {
 export function ToolSettingsItem({
   issue,
   label,
+  platform,
   onChange,
   onPickInstallFolder,
   onRemove,
@@ -72,6 +76,9 @@ export function ToolSettingsItem({
             onChange={(value) => onChange(tool.id, "skillInstallRoot", value)}
             onPick={() => void onPickInstallFolder(tool.id, "skillInstallRoot")}
           />
+          {issue?.skillInstallRoot || pending ? null : (
+            <OtherPlatformPathNotice path={tool.skillInstallRoot} platform={platform} />
+          )}
           <InstallFolderInput
             label={t("settings.tools.agentFolder")}
             placeholder={t("settings.tools.agentFolderPlaceholder")}
@@ -81,6 +88,9 @@ export function ToolSettingsItem({
             onChange={(value) => onChange(tool.id, "agentInstallRoot", value)}
             onPick={() => void onPickInstallFolder(tool.id, "agentInstallRoot")}
           />
+          {issue?.agentInstallRoot || pending ? null : (
+            <OtherPlatformPathNotice path={tool.agentInstallRoot} platform={platform} />
+          )}
           {issue?.installRoots && !pending ? (
             <Text size="sm" c="red.7">
               {t(issue.installRoots)}

@@ -1,6 +1,7 @@
 import {
   emitAutoGitBackupCompleted,
   emitGitHubImportRequested,
+  emitGitLibrarySynced,
   emitLibraryItemsUpdated,
 } from "./events";
 import { collectionRequests } from "./requests/collections";
@@ -32,6 +33,7 @@ declare global {
     __SKILLFUL_E2E_EVENTS__?: {
       emitAutoGitBackupCompleted: typeof emitAutoGitBackupCompleted;
       emitGitHubImportRequested: typeof emitGitHubImportRequested;
+      emitGitLibrarySynced: typeof emitGitLibrarySynced;
       emitLibraryItemsUpdated: typeof emitLibraryItemsUpdated;
     };
   }
@@ -42,6 +44,7 @@ if (typeof window !== "undefined") {
   window.__SKILLFUL_E2E_EVENTS__ = {
     emitAutoGitBackupCompleted,
     emitGitHubImportRequested,
+    emitGitLibrarySynced,
     emitLibraryItemsUpdated,
   };
 }

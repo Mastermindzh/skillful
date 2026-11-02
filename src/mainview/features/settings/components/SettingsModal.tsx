@@ -1,4 +1,4 @@
-import { Button, Group, Modal, Stack, Tabs, Text } from "@mantine/core";
+import { Button, Divider, Group, Modal, Stack, Tabs, Text } from "@mantine/core";
 import { UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { UnsavedChangesDialog } from "../../../components/UnsavedChangesDialog";
@@ -7,6 +7,10 @@ import type { SettingsTab } from "../state/useSettingsState";
 import { BackupSettingsPanel, type BackupSettingsPanelProps } from "./BackupSettingsPanel";
 import { DirtyTabLabel } from "./DirtyTabLabel";
 import { GeneralSettingsPanel, type GeneralSettingsPanelProps } from "./GeneralSettingsPanel";
+import {
+  GitLibrarySettingsPanel,
+  type GitLibrarySettingsPanelProps,
+} from "./GitLibrarySettingsPanel";
 import { LibrarySettingsPanel, type LibrarySettingsPanelProps } from "./LibrarySettingsPanel";
 import { ToolSettingsPanel, type ToolSettingsPanelProps } from "./ToolSettingsPanel";
 import { UpdatesPanel, type UpdatesPanelProps } from "./UpdatesPanel";
@@ -16,6 +20,7 @@ type SettingsModalProps = {
   activeTab: SettingsTab;
   general: GeneralSettingsPanelProps;
   library: LibrarySettingsPanelProps;
+  gitLibraries: GitLibrarySettingsPanelProps;
   tools: ToolSettingsPanelProps;
   backup: BackupSettingsPanelProps;
   updates: UpdatesPanelProps;
@@ -41,6 +46,7 @@ export function SettingsModal({
   activeTab,
   general,
   library,
+  gitLibraries,
   tools,
   backup,
   updates,
@@ -124,7 +130,11 @@ export function SettingsModal({
             </Tabs.Panel>
 
             <Tabs.Panel value="library" pt="md">
-              <LibrarySettingsPanel {...library} />
+              <Stack gap="lg">
+                <LibrarySettingsPanel {...library} />
+                <Divider />
+                <GitLibrarySettingsPanel {...gitLibraries} />
+              </Stack>
             </Tabs.Panel>
 
             <Tabs.Panel value="tools" pt="md">

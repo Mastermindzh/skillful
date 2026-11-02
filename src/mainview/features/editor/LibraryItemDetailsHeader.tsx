@@ -1,5 +1,5 @@
-import { ActionIcon, Group, Menu, Text, Title, Tooltip } from "@mantine/core";
-import { ChevronDown, Eye, Pencil, Save } from "lucide-react";
+import { ActionIcon, Badge, Group, Menu, Text, Title, Tooltip } from "@mantine/core";
+import { ChevronDown, Eye, Lock, Pencil, Save } from "lucide-react";
 import type { ReactNode } from "react";
 import type { EditorViewMode, LibraryItemFile, LibraryItemSummary } from "../../../shared/types";
 import { useAppTranslation } from "../../i18n/i18n";
@@ -10,6 +10,7 @@ type LibraryItemDetailsHeaderProps = {
   libraryItem: LibraryItemSummary;
   collectionTitle: string | null;
   activeFile: LibraryItemFile | null;
+  readOnly: boolean;
   viewMode: EditorViewMode;
   onViewModeChange: (value: EditorViewMode) => void;
   compactActions: boolean | undefined;
@@ -25,6 +26,7 @@ export function LibraryItemDetailsHeader({
   libraryItem,
   collectionTitle,
   activeFile,
+  readOnly,
   viewMode,
   onViewModeChange,
   compactActions: _compactActions,
@@ -64,7 +66,19 @@ export function LibraryItemDetailsHeader({
       </div>
       <Group gap="xs" wrap="nowrap" className="editor-actions">
         {actionsSlot}
-        {activeFile ? (
+        {readOnly ? (
+          <Tooltip label={t("details.readOnly.tooltip")} withArrow>
+            <Badge
+              color="gray"
+              variant="light"
+              leftSection={<Lock size={12} />}
+              style={{ textTransform: "none" }}
+            >
+              {t("details.readOnly.badge")}
+            </Badge>
+          </Tooltip>
+        ) : null}
+        {activeFile && !readOnly ? (
           <Tooltip label={toggleLabel} withArrow>
             <ActionIcon
               variant="subtle"
@@ -78,49 +92,51 @@ export function LibraryItemDetailsHeader({
             </ActionIcon>
           </Tooltip>
         ) : null}
-        <Group gap={0} wrap="nowrap" className="editor-save-split">
-          <ActionIcon
-            variant="filled"
-            size="lg"
-            loading={saving}
-            disabled={!canSaveAll && !canSaveCurrent}
-            onClick={onSaveAll}
-            aria-label={t("details.saveAll")}
-            title={t("details.saveAll")}
-            className="editor-save-split-main"
-          >
-            <Save size={16} />
-          </ActionIcon>
-          <Menu position="bottom-end" withinPortal>
-            <Menu.Target>
-              <ActionIcon
-                variant="filled"
-                size="lg"
-                aria-label={t("details.saveOptions")}
-                disabled={!canSaveAll && !canSaveCurrent}
-                className="editor-save-split-chevron"
-              >
-                <ChevronDown size={14} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<Save size={14} />}
-                onClick={onSaveAll}
-                disabled={!canSaveAll}
-              >
-                {t("details.saveAll")}
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<Save size={14} />}
-                onClick={onSaveCurrent}
-                disabled={!canSaveCurrent}
-              >
-                {saveCurrentLabel}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
+        {readOnly ? null : (
+          <Group gap={0} wrap="nowrap" className="editor-save-split">
+            <ActionIcon
+              variant="filled"
+              size="lg"
+              loading={saving}
+              disabled={!canSaveAll && !canSaveCurrent}
+              onClick={onSaveAll}
+              aria-label={t("details.saveAll")}
+              title={t("details.saveAll")}
+              className="editor-save-split-main"
+            >
+              <Save size={16} />
+            </ActionIcon>
+            <Menu position="bottom-end" withinPortal>
+              <Menu.Target>
+                <ActionIcon
+                  variant="filled"
+                  size="lg"
+                  aria-label={t("details.saveOptions")}
+                  disabled={!canSaveAll && !canSaveCurrent}
+                  className="editor-save-split-chevron"
+                >
+                  <ChevronDown size={14} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<Save size={14} />}
+                  onClick={onSaveAll}
+                  disabled={!canSaveAll}
+                >
+                  {t("details.saveAll")}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<Save size={14} />}
+                  onClick={onSaveCurrent}
+                  disabled={!canSaveCurrent}
+                >
+                  {saveCurrentLabel}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
+        )}
       </Group>
     </div>
   );

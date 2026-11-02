@@ -17,6 +17,7 @@ export type LibraryKindFilter = "all" | LibraryItemKind;
 export type LibraryCollection = {
   id: string;
   title: string;
+  sourceLibraryId?: string;
   items: LibraryItemSummary[];
 };
 
@@ -49,6 +50,7 @@ export function buildLibraryCollections(
     collections.set(collection.id, {
       id: collection.id,
       title: collection.title,
+      ...(collection.sourceLibraryId ? { sourceLibraryId: collection.sourceLibraryId } : {}),
       items: [],
     });
   }

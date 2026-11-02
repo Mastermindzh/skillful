@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { AppError } from "../../shared/errors";
@@ -13,30 +12,19 @@ import type {
 } from "../../shared/types";
 import { ensureDirectory, pathExists } from "../fs";
 import { settingsDirectory } from "../settings";
+import {
+  classifyGitFailure,
+  cleanBranch,
+  GitCommandError,
+  gitAvailable,
+  gitErrorMessage,
+  runGit,
+  validateRemoteUrlTransport,
+} from "./command";
 
-const GIT_TIMEOUT_MS = 120_000;
 const SETTINGS_GIT_PATH = "settings.json";
 const DEFAULT_LIBRARY_GIT_PATHS = ["skills", "agents"];
 const MANAGED_GIT_PATHS = [".gitignore", SETTINGS_GIT_PATH, ...DEFAULT_LIBRARY_GIT_PATHS];
-
-type GitCommandResult = {
-  stdout: string;
-  stderr: string;
-};
-
-class GitCommandError extends Error {
-  readonly code: number | null;
-  readonly stdout: string;
-  readonly stderr: string;
-
-  constructor(message: string, code: number | null, stdout: string, stderr: string) {
-    super(message);
-    this.name = "GitCommandError";
-    this.code = code;
-    this.stdout = stdout;
-    this.stderr = stderr;
-  }
-}
 
 function disabledStatus(config: GitBackupConfig): GitBackupStatus {
   return {
@@ -56,10 +44,6 @@ function notConfiguredStatus(config: GitBackupConfig, message = "Git backup is n
   };
 }
 
-function cleanBranch(value: string) {
-  return value.trim();
-}
-
 function validateConfiguredBackup(config: GitBackupConfig) {
   if (!config.enabled) return disabledStatus(config);
 
@@ -74,113 +58,16 @@ function validateConfiguredBackup(config: GitBackupConfig) {
     throw new AppError("invalid-name", "Backup branch cannot contain whitespace.");
   }
 
+  validateRemoteUrlTransport(remoteUrl);
+
   return null;
 }
 
-function gitEnv() {
-  return {
-    ...process.env,
-    GCM_INTERACTIVE: "never",
-    GIT_TERMINAL_PROMPT: "0",
-  };
-}
-
-function sanitizedGitMessage(message: string, remoteUrl: string) {
-  return message
-    .split(remoteUrl)
-    .join("[remote]")
-    .replace(/https:\/\/[^/@\s]+@/g, "https://[credentials]@")
-    .trim();
-}
-
-function runCommand(command: string, args: string[], cwd?: string): Promise<GitCommandResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      env: gitEnv(),
-      shell: false,
-      windowsHide: true,
-    });
-    let stdout = "";
-    let stderr = "";
-    let settled = false;
-    const timer = setTimeout(() => {
-      settled = true;
-      child.kill("SIGTERM");
-      reject(new GitCommandError(`${command} timed out.`, null, stdout, stderr));
-    }, GIT_TIMEOUT_MS);
-
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-    child.stdout?.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr?.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", (error) => {
-      clearTimeout(timer);
-      if (settled) return;
-      settled = true;
-      reject(error);
-    });
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      if (settled) return;
-      settled = true;
-      if (code === 0) {
-        resolve({ stdout, stderr });
-        return;
-      }
-      reject(new GitCommandError(`${command} exited with code ${code}.`, code, stdout, stderr));
-    });
-  });
-}
-
-async function runGit(args: string[], cwd?: string) {
-  return runCommand("git", args, cwd);
-}
-
-async function gitAvailable() {
-  try {
-    await runGit(["--version"]);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function mapGitFailure(error: unknown, config: GitBackupConfig): GitBackupStatus {
-  const remoteUrl = config.remoteUrl.trim();
-  const rawMessage =
-    error instanceof GitCommandError
-      ? `${error.stderr || error.stdout || error.message}`
-      : error instanceof Error
-        ? error.message
-        : String(error);
-  const message = sanitizedGitMessage(rawMessage, remoteUrl);
-  const lower = message.toLowerCase();
-  let state: GitBackupState = "error";
-
-  if (
-    lower.includes("permission denied") ||
-    lower.includes("authentication failed") ||
-    lower.includes("publickey") ||
-    lower.includes("could not read username") ||
-    lower.includes("could not read password") ||
-    lower.includes("interactivity has been disabled") ||
-    lower.includes("terminal prompts disabled")
-  ) {
-    state = "auth-failed";
-  } else if (
-    lower.includes("could not resolve hostname") ||
-    lower.includes("could not read from remote repository") ||
-    lower.includes("repository not found") ||
-    lower.includes("failed to connect") ||
-    lower.includes("unable to access")
-  ) {
-    state = "remote-unreachable";
-  }
+  const message = gitErrorMessage(error, config.remoteUrl);
+  const kind = classifyGitFailure(message);
+  // Backups have no host-trust prompt, so an unverified host reads as an auth problem.
+  const state: GitBackupState = kind === "host-key-unverified" ? "auth-failed" : kind;
 
   return {
     state,

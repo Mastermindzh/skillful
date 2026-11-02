@@ -27,6 +27,8 @@ type UseLibraryItemToolsOptions = {
  * Coordinates skill-to-tool mappings with the real install state on disk.
  * Tool actions update settings only after the backend install/remove/repair work succeeds.
  */
+const NO_TOOL_STATUSES: LibraryItemToolStatus[] = [];
+
 export function useLibraryItemTools({
   activeLibraryItem,
   setAppSettings,
@@ -171,10 +173,8 @@ export function useLibraryItemTools({
   }, [missingParentRequest, runToolAction, setError, t]);
 
   useEffect(() => {
-    if (!activeLibraryItem?.item.id) {
-      setToolStatuses([]);
-      return;
-    }
+    if (!activeLibraryItem?.item.id) return;
+    // oxlint-disable-next-line react/set-state-in-effect -- loads statuses from the main process; state is only set after the RPC resolves
     void loadToolStatuses(activeLibraryItem.item.id);
   }, [activeLibraryItem, loadToolStatuses]);
 
@@ -194,6 +194,6 @@ export function useLibraryItemTools({
     refreshToolStatuses,
     runToolAction,
     toolActionId,
-    toolStatuses,
+    toolStatuses: activeLibraryItem ? toolStatuses : NO_TOOL_STATUSES,
   };
 }

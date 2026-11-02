@@ -6,6 +6,7 @@ import {
   ipcMain,
   Menu,
   type OpenDialogOptions,
+  session,
   shell,
   Tray,
 } from "electron";
@@ -18,7 +19,7 @@ import { AppError } from "../shared/errors";
 import type { GitHubImportDraft } from "../shared/githubImport";
 import type { AppRPC } from "../shared/rpc";
 import { wrapRequestHandlersWithAppErrorEncoding } from "../shared/rpcAdapter";
-import type { GitBackupResult, LibraryItemSummary } from "../shared/types";
+import type { GitBackupResult, GitLibrarySyncResult, LibraryItemSummary } from "../shared/types";
 import type { UpdateStatusEntry } from "../shared/updates";
 import { checkForUpdatesAfterStartup, electronUpdater } from "./updater";
 import {
@@ -71,6 +72,11 @@ function rendererIndexPath() {
   return path.join(app.getAppPath(), "dist", "index.html");
 }
 
+function resolveDevServerUrl() {
+  const shouldUseDevServer = !app.isPackaged && process.env.SKILLFUL_ELECTRON_LOAD_FILE !== "1";
+  return process.env.VITE_DEV_SERVER_URL ?? (shouldUseDevServer ? "http://127.0.0.1:5173" : null);
+}
+
 function preloadPath() {
   return path.join(__dirname, "preload.cjs");
 }
@@ -92,6 +98,10 @@ function sendUpdateStatusChanged(entry: UpdateStatusEntry) {
 
 function sendAutoGitBackupCompleted(result: GitBackupResult) {
   sendRendererMessage("autoGitBackupCompleted", result);
+}
+
+function sendGitLibrarySynced(result: GitLibrarySyncResult) {
+  sendRendererMessage("gitLibrarySynced", result);
 }
 
 function sendGitHubImportRequested(payload: GitHubImportDraft) {
@@ -182,6 +192,80 @@ function registerDeepLinkProtocol() {
   }
 }
 
+/**
+ * Installs a Content-Security-Policy on every response so a sanitizer bypass or supply-chain
+ * script injection cannot reach a remote origin. The renderer never talks to the network
+ * directly (all I/O is brokered through the typed RPC), so `connect-src` stays `'self'` in
+ * production and only opens up to the Vite dev server / HMR socket during development.
+ */
+function applyContentSecurityPolicy(devServerUrl: string | null) {
+  const isDev = Boolean(devServerUrl);
+  const scriptSrc = isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self'";
+  const connectSrc = isDev
+    ? "connect-src 'self' ws: http://127.0.0.1:5173 http://localhost:5173"
+    : "connect-src 'self'";
+  const policy = [
+    "default-src 'self'",
+    scriptSrc,
+    // Mantine and CodeMirror inject inline styles, so 'unsafe-inline' is required for styles.
+    "style-src 'self' 'unsafe-inline'",
+    // Allow data:/https: images so skill markdown can render embedded and remote images.
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    connectSrc,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-src 'none'",
+    "frame-ancestors 'none'",
+  ].join("; ");
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [policy],
+      },
+    });
+  });
+}
+
+/**
+ * Locks navigation down to the app's own renderer. Any attempt to navigate the main frame
+ * elsewhere, or to open a new window, is blocked; vetted external https links are handed to
+ * the OS browser instead of loading inside the Electron context.
+ */
+function applyWebContentsSecurity(window: BrowserWindow, devServerUrl: string | null) {
+  const allowedOrigin = devServerUrl ? new URL(devServerUrl).origin : null;
+
+  const isInternalNavigation = (target: string) => {
+    let url: URL;
+    try {
+      url = new URL(target);
+    } catch {
+      return false;
+    }
+    if (url.protocol === "file:") return true;
+    return allowedOrigin !== null && url.origin === allowedOrigin;
+  };
+
+  const openExternalIfHttps = (target: string) => {
+    if (/^https:\/\//i.test(target)) {
+      void shell.openExternal(target);
+    }
+  };
+
+  window.webContents.on("will-navigate", (event, target) => {
+    if (isInternalNavigation(target)) return;
+    event.preventDefault();
+    openExternalIfHttps(target);
+  });
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    openExternalIfHttps(url);
+    return { action: "deny" };
+  });
+}
+
 async function createWindow() {
   const state = await loadWindowState();
   const window = new BrowserWindow({
@@ -198,6 +282,7 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
       preload: preloadPath(),
     },
   });
@@ -209,9 +294,8 @@ async function createWindow() {
   mainWindow = window;
   rendererReady = false;
 
-  const shouldUseDevServer = !app.isPackaged && process.env.SKILLFUL_ELECTRON_LOAD_FILE !== "1";
-  const devServerUrl =
-    process.env.VITE_DEV_SERVER_URL ?? (shouldUseDevServer ? "http://127.0.0.1:5173" : null);
+  const devServerUrl = resolveDevServerUrl();
+  applyWebContentsSecurity(window, devServerUrl);
   if (devServerUrl) {
     void window.loadURL(devServerUrl);
     if (process.env.SKILLFUL_ELECTRON_DEVTOOLS === "1") {
@@ -332,6 +416,7 @@ async function start() {
   registerAppLifecycleHandlers();
   logger.watch(ipcMain);
   await app.whenReady();
+  applyContentSecurityPolicy(resolveDevServerUrl());
   createTray();
 
   const runtime = await createDesktopRuntime({
@@ -340,6 +425,7 @@ async function start() {
     sendLibraryItemsUpdated,
     sendUpdateStatusChanged,
     sendAutoGitBackupCompleted,
+    sendGitLibrarySynced,
     shell: {
       openPath: async (target) => {
         // `shell.openPath` resolves with an empty string on success and an error string on

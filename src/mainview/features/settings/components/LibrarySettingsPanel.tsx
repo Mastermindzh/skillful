@@ -1,12 +1,15 @@
 import { ActionIcon, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { Minus, Plus, Undo2 } from "lucide-react";
+import type { Platform } from "../../../../shared/types";
 import { useAppTranslation } from "../../../i18n/i18n";
 import type { ScanRootIssue, ScanRootRow } from "../model/scanRoots";
 import { preventFileUriDrop } from "../utils/dnd";
+import { OtherPlatformPathNotice } from "./OtherPlatformPathNotice";
 import { PendingRemovalBadge } from "./PendingRemovalBadge";
 
 export type LibrarySettingsPanelProps = {
   defaultScanRoot: string;
+  platform?: Platform;
   scanRoots: ScanRootRow[];
   validationById: Record<string, ScanRootIssue | null>;
   onScanRootChange: (id: string, value: string) => void;
@@ -17,6 +20,7 @@ export type LibrarySettingsPanelProps = {
 
 export function LibrarySettingsPanel({
   defaultScanRoot,
+  platform,
   scanRoots,
   validationById,
   onScanRootChange,
@@ -60,7 +64,9 @@ export function LibrarySettingsPanel({
                     color="gray"
                     size={36}
                     onClick={() => onRestoreScanRoot(scanRoot.id)}
-                    aria-label={t("settings.library.restorePath", { index: index + 1 })}
+                    aria-label={t("settings.library.restorePath", {
+                      index: index + 1,
+                    })}
                   >
                     <Undo2 size={16} />
                   </ActionIcon>
@@ -70,7 +76,9 @@ export function LibrarySettingsPanel({
                     color="gray"
                     size={36}
                     onClick={() => onRemoveScanRoot(scanRoot.id)}
-                    aria-label={t("settings.library.removePath", { index: index + 1 })}
+                    aria-label={t("settings.library.removePath", {
+                      index: index + 1,
+                    })}
                   >
                     <Minus size={16} />
                   </ActionIcon>
@@ -84,9 +92,12 @@ export function LibrarySettingsPanel({
               {issue && !pending ? (
                 <Text size="xs" c="red.6">
                   {t(issue.messageKey ?? "settings.error.absolutePath", {
-                    ...(issue.values ?? {}),
+                    ...issue.values,
                   })}
                 </Text>
+              ) : null}
+              {!issue && !pending ? (
+                <OtherPlatformPathNotice path={scanRoot.path} platform={platform} />
               ) : null}
             </Stack>
           );

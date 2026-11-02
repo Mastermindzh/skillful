@@ -13,7 +13,7 @@ import { settingsDirectory } from "./settings";
  * changes so stale caches are silently dropped instead of misread.
  */
 const CACHE_FILE_NAME = "scan-index.json";
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 type PersistedCacheEntry = {
   entryPath: string;

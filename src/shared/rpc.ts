@@ -9,6 +9,8 @@ import type {
   GitBackupConfig,
   GitBackupRestoreMode,
   GitBackupResult,
+  GitLibraryHostKey,
+  GitLibrarySyncResult,
   ImportCollectionFromArchiveInput,
   ImportCollectionFromPathInput,
   LibraryItemCollectionSummary,
@@ -75,6 +77,34 @@ export type AppRPC = {
       restoreGitBackup: {
         params: { gitBackup: GitBackupConfig; mode: GitBackupRestoreMode };
         response: AppSettings;
+      };
+      getGitLibraryStatuses: {
+        params: undefined;
+        response: GitLibrarySyncResult[];
+      };
+      syncGitLibrary: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      syncAllGitLibraries: {
+        params: undefined;
+        response: GitLibrarySyncResult[];
+      };
+      pushGitLibraryChanges: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      discardGitLibraryChanges: {
+        params: { libraryId: string };
+        response: GitLibrarySyncResult;
+      };
+      scanGitLibraryHostKey: {
+        params: { host: string };
+        response: GitLibraryHostKey | null;
+      };
+      trustGitLibraryHost: {
+        params: { hostKey: GitLibraryHostKey };
+        response: undefined;
       };
       importCollection: {
         params: ImportCollectionFromPathInput;
@@ -215,6 +245,7 @@ export type AppRPC = {
       githubImportRequested: GitHubImportDraft;
       updateStatusChanged: UpdateStatusEntry;
       autoGitBackupCompleted: GitBackupResult;
+      gitLibrarySynced: GitLibrarySyncResult;
     };
   };
   webview: {

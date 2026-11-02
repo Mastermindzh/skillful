@@ -60,7 +60,8 @@ duplicates functionality of the AI tools Skillful installs into.
 
 ## Code standards
 
-- Indent with 2 spaces. Biome is the formatter/linter; respect `biome.json`.
+- Indent with 2 spaces. oxfmt is the formatter and oxlint the linter; respect
+  `.oxfmtrc.json` and `.oxlintrc.json`.
 - Prefer Mantine components over rebuilding primitives.
 - Keep filesystem helpers in `src/main/`, not in UI components.
 - Add or update tests for user-facing behavior changes
